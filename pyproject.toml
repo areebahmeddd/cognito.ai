@@ -1,0 +1,9 @@
+[project]
+name = "cognito-ai"
+version = "1.0.0"
+description = "Natural language interface for digital forensic evidence"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pre-commit>=4.0.0",
+]
