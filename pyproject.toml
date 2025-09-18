@@ -6,4 +6,6 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "pre-commit>=4.0.0",
+    "elasticsearch>=9.1.0",
+    "python-dateutil>=2.9.0",
 ]
