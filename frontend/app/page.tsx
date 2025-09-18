@@ -40,17 +40,20 @@ export default function HomePage() {
   ];
 
   useEffect(() => {
+    // Don't animate when modal is shown
+    if (showUploadModal) return;
+
     const interval = setInterval(() => {
       setIsVisible(false);
       setTimeout(() => {
         setCurrentTextIndex(
-          (prevIndex) => (prevIndex + 1) % animatedTexts.length,
+          (prevIndex) => (prevIndex + 1) % animatedTexts.length
         );
         setIsVisible(true);
       }, 300);
     }, 3000);
     return () => clearInterval(interval);
-  }, [animatedTexts.length]);
+  }, [animatedTexts.length, showUploadModal]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -61,7 +64,7 @@ export default function HomePage() {
   };
 
   const handleModalFileUpload = (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = event.target.files;
     if (files) {
