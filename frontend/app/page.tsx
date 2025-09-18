@@ -4,6 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+// Temporarily disabled 3D components due to React version compatibility issues
+// import dynamic from "next/dynamic";
+// const Scene3D = dynamic(() => import("@/components/Scene3D"), {
+//   ssr: false,
+//   loading: () => null,
+// });
 import {
   Mic,
   Upload,
@@ -21,6 +27,7 @@ export default function HomePage() {
   const [isVisible, setIsVisible] = useState(true);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showSpeechMessage, setShowSpeechMessage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const animatedTexts = [
@@ -60,9 +67,16 @@ export default function HomePage() {
 
   const handleSubmit = () => {
     if (inputValue.trim()) {
-      console.log("Search query:", inputValue);
-      // TODO: Implement search functionality
+      // Navigate to dashboard page
+      window.location.href = "/dashboard";
     }
+  };
+
+  const handleSpeechClick = () => {
+    setShowSpeechMessage(true);
+    setTimeout(() => {
+      setShowSpeechMessage(false);
+    }, 3000);
   };
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
@@ -86,8 +100,19 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100">
-      <nav className="flex justify-between items-center pt-6 pb-3 px-6">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
+      {/* CSS-based animated background instead of 3D */}
+      <div className="absolute inset-0 z-0">
+        <div className="particle-bg">
+          <div className="particle particle-1"></div>
+          <div className="particle particle-2"></div>
+          <div className="particle particle-3"></div>
+          <div className="particle particle-4"></div>
+          <div className="particle particle-5"></div>
+          <div className="particle particle-6"></div>
+        </div>
+      </div>
+      <nav className="flex justify-between items-center pt-6 pb-3 px-6 relative z-10">
         <div className="flex-1 flex justify-start">
           <a
             href="/"
@@ -98,16 +123,18 @@ export default function HomePage() {
         </div>
         <div className="flex space-x-8">
           <a
-            href="/details"
-            className="text-slate-600 hover:text-slate-900 transition-colors duration-300 font-medium"
+            href="/how-it-works"
+            className="text-slate-600 hover:text-slate-900 transition-colors duration-300 font-medium relative group"
           >
             How it works
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
           </a>
           <a
-            href="/team"
-            className="text-slate-600 hover:text-slate-900 transition-colors duration-300 font-medium"
+            href="/how-to-use"
+            className="text-slate-600 hover:text-slate-900 transition-colors duration-300 font-medium relative group"
           >
-            Team
+            How to use it
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
           </a>
         </div>
         <div className="flex-1 flex justify-end">
@@ -123,13 +150,13 @@ export default function HomePage() {
       </nav>
 
       <main className="flex flex-1 flex-col items-center justify-center min-h-[70vh] px-4">
-        <div className="text-center max-w-2xl mx-auto mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 text-balance">
+        <div className="text-center max-w-2xl mx-auto mb-8 relative z-10">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 text-balance drop-shadow-sm">
             Welcome, how may I help you?
           </h1>
           <div className="h-12 flex items-center justify-center">
             <p
-              className={`text-lg text-slate-600 transition-all duration-300 ease-in-out ${
+              className={`text-lg text-slate-600 transition-all duration-300 ease-in-out drop-shadow-sm ${
                 isVisible
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-4"
@@ -140,14 +167,14 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="w-full max-w-2xl mx-auto mb-6">
+        <div className="w-full max-w-2xl mx-auto mb-6 relative z-10">
           <div className="relative">
             <Textarea
               placeholder="Ask me anything about your UFDR data..."
               value={inputValue}
               onChange={handleTextareaChange}
               onKeyDown={handleKeyPress}
-              className="w-full min-h-[48px] max-h-[200px] text-base bg-white border-2 border-black focus:ring-2 focus:ring-black focus:border-black placeholder:text-slate-400 pr-20 pl-4 py-3 rounded-lg resize-none"
+              className="w-full min-h-[48px] max-h-[200px] text-base bg-white border-2 border-black focus:outline-none placeholder:text-slate-400 pr-20 pl-4 py-3 rounded-lg resize-none shadow-lg hover:shadow-xl transition-all duration-300"
               rows={1}
             />
             <div
@@ -159,6 +186,7 @@ export default function HomePage() {
                 size="sm"
                 variant="ghost"
                 className="h-8 w-8 p-0 hover:bg-slate-100 transition-colors duration-200"
+                onClick={handleSpeechClick}
               >
                 <Mic className="h-4 w-4 text-slate-500" />
               </Button>
@@ -232,9 +260,20 @@ export default function HomePage() {
             </div>
           )}
         </div>
+
+        {/* Speech feature message */}
+        {showSpeechMessage && (
+          <div className="w-full max-w-2xl mx-auto mt-4 relative z-10">
+            <div className="bg-white border-2 border-slate-300 rounded-lg shadow-lg px-6 py-4 text-center">
+              <p className="text-slate-700 font-medium">
+                🎤 Voice input feature is under development
+              </p>
+            </div>
+          </div>
+        )}
       </main>
 
-      <footer className="text-center pb-4 mt-auto pt-4">
+      <footer className="text-center pb-4 mt-auto pt-4 relative z-10">
         <p className="text-slate-600 flex items-center justify-center gap-2">
           Built with <Heart className="h-4 w-4 text-red-500 fill-current" /> for
           Smart India Hackathon
