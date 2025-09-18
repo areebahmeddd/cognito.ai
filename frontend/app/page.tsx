@@ -3,13 +3,24 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mic, Upload, Heart, Github, Home, X, FileText } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Mic,
+  Upload,
+  Heart,
+  Github,
+  Home,
+  X,
+  FileText,
+  Send,
+} from "lucide-react";
 
 export default function HomePage() {
   const [inputValue, setInputValue] = useState("");
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isExpanded, setIsExpanded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const animatedTexts = [
@@ -23,7 +34,7 @@ export default function HomePage() {
       setIsVisible(false);
       setTimeout(() => {
         setCurrentTextIndex(
-          (prevIndex) => (prevIndex + 1) % animatedTexts.length
+          (prevIndex) => (prevIndex + 1) % animatedTexts.length,
         );
         setIsVisible(true);
       }, 300);
@@ -45,6 +56,33 @@ export default function HomePage() {
 
   const removeFile = (index: number) => {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = () => {
+    if (inputValue.trim()) {
+      console.log("Search query:", inputValue);
+      // TODO: Implement search functionality
+    }
+  };
+
+  const handleKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputValue(e.target.value);
+
+    // Auto-resize textarea
+    const textarea = e.target;
+    textarea.style.height = "auto";
+    const newHeight = Math.min(textarea.scrollHeight, 200);
+    textarea.style.height = newHeight + "px";
+
+    // Check if textarea is expanded (more than single line)
+    setIsExpanded(newHeight > 48);
   };
 
   return (
@@ -104,14 +142,19 @@ export default function HomePage() {
 
         <div className="w-full max-w-2xl mx-auto mb-6">
           <div className="relative">
-            <Input
-              type="text"
+            <Textarea
               placeholder="Ask me anything about your UFDR data..."
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className="w-full h-12 text-base bg-white border-2 border-black focus:ring-2 focus:ring-black focus:border-black placeholder:text-slate-400 pr-20 rounded-lg"
+              onChange={handleTextareaChange}
+              onKeyDown={handleKeyPress}
+              className="w-full min-h-[48px] max-h-[200px] text-base bg-white border-2 border-black focus:ring-2 focus:ring-black focus:border-black placeholder:text-slate-400 pr-20 pl-4 py-3 rounded-lg resize-none"
+              rows={1}
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-2">
+            <div
+              className={`absolute right-3 flex items-center space-x-2 ${
+                isExpanded ? "top-3" : "top-1/2 -translate-y-1/2"
+              }`}
+            >
               <Button
                 size="sm"
                 variant="ghost"
@@ -126,6 +169,18 @@ export default function HomePage() {
                 onClick={handleUploadClick}
               >
                 <Upload className="h-4 w-4 text-slate-500" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className={`h-8 w-8 p-0 transition-colors duration-200 ${
+                  inputValue.trim()
+                    ? "bg-black text-white hover:bg-slate-800"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                }`}
+                onClick={handleSubmit}
+              >
+                <Send className="h-4 w-4" />
               </Button>
             </div>
           </div>
