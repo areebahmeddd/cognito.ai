@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 
 from ....models.schemas import (
@@ -9,17 +9,37 @@ from ....models.schemas import (
     UFDRDocument,
     TimelineBucket,
 )
-from ....services.elasticsearch_service import search_text, get_time
+from ....services.elasticsearch_service import search_text, get_time, es_client, index_name
+from ....services.forensic_query_service import get_forensic_converter, ForensicQueryConverter
 
 router = APIRouter(tags=["search"])
 
 
 @router.post("/search", response_model=SearchResponse)
-async def search_content_endpoint(request: SearchRequest):
+async def search_content_endpoint(
+    request: SearchRequest,
+    converter: ForensicQueryConverter = Depends(get_forensic_converter)
+):
     try:
-        response = search_text(
-            query=request.query, size=request.size, from_=request.from_
-        )
+        if request.use_natural_language:
+            # Convert natural language query to Elasticsearch DSL
+            converted_query = converter.convert_to_elasticsearch(request.query)
+            
+            # Execute the converted query
+            search_body = {
+                "query": converted_query.query,
+                "size": request.size,
+                "from": request.from_,
+                "sort": converted_query.sort,
+                "highlight": converted_query.highlight
+            }
+            
+            response = es_client.search(index=index_name, body=search_body)
+        else:
+            # Use the original text search
+            response = search_text(
+                query=request.query, size=request.size, from_=request.from_
+            )
 
         hits = []
         for hit in response["hits"]["hits"]:
