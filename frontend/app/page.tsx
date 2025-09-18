@@ -44,7 +44,7 @@ export default function HomePage() {
       setIsVisible(false);
       setTimeout(() => {
         setCurrentTextIndex(
-          (prevIndex) => (prevIndex + 1) % animatedTexts.length
+          (prevIndex) => (prevIndex + 1) % animatedTexts.length,
         );
         setIsVisible(true);
       }, 300);
@@ -61,7 +61,7 @@ export default function HomePage() {
   };
 
   const handleModalFileUpload = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = event.target.files;
     if (files) {
@@ -81,7 +81,15 @@ export default function HomePage() {
   };
 
   const removeFile = (index: number) => {
-    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    setUploadedFiles((prev) => {
+      const newFiles = prev.filter((_, i) => i !== index);
+      // If no files left, show upload modal again
+      if (newFiles.length === 0) {
+        setShowUploadModal(true);
+        setHasUploadedUFDR(false);
+      }
+      return newFiles;
+    });
   };
 
   const handleSubmit = () => {
