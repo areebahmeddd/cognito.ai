@@ -172,17 +172,19 @@ export default function HomePage() {
           <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 text-balance drop-shadow-sm">
             Welcome, how may I help you?
           </h1>
-          <div className="h-12 flex items-center justify-center">
-            <p
-              className={`text-lg text-slate-600 transition-all duration-300 ease-in-out drop-shadow-sm ${
-                isVisible
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-4"
-              }`}
-            >
-              {animatedTexts[currentTextIndex]}
-            </p>
-          </div>
+          {!showUploadModal && (
+            <div className="h-12 flex items-center justify-center">
+              <p
+                className={`text-lg text-slate-600 transition-all duration-300 ease-in-out drop-shadow-sm ${
+                  isVisible
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-4"
+                }`}
+              >
+                {animatedTexts[currentTextIndex]}
+              </p>
+            </div>
+          )}
         </div>
 
         {!showUploadModal && (
@@ -328,7 +330,7 @@ export default function HomePage() {
                       to upload
                     </p>
                     <p className="text-xs text-slate-500">
-                      Supported: .ufdr files
+                      Supported types: *.ufdr
                     </p>
                   </div>
                 </div>
