@@ -8,4 +8,8 @@ dependencies = [
     "pre-commit>=4.0.0",
     "elasticsearch>=9.1.0",
     "python-dateutil>=2.9.0",
+    "fastapi>=0.116.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+    "requests>=2.32.5",
 ]
