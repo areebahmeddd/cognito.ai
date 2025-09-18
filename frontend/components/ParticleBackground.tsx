@@ -8,12 +8,10 @@ import * as THREE from "three";
 export default function ParticleBackground() {
   const pointsRef = useRef<THREE.Points>(null);
 
-  // Create particle positions - representing data points in cyberspace
   const particlePositions = useMemo(() => {
-    const positions = new Float32Array(500 * 3); // Reduced particles for better performance
+    const positions = new Float32Array(500 * 3);
 
     for (let i = 0; i < 500; i++) {
-      // Create a more structured pattern - like network nodes
       const radius = Math.random() * 15 + 5;
       const angle = Math.random() * Math.PI * 2;
       const height = (Math.random() - 0.5) * 8;
@@ -28,7 +26,6 @@ export default function ParticleBackground() {
 
   useFrame((state) => {
     if (pointsRef.current) {
-      // Subtle rotation to simulate data flow
       pointsRef.current.rotation.y = state.clock.elapsedTime * 0.03;
       pointsRef.current.rotation.x =
         Math.sin(state.clock.elapsedTime * 0.01) * 0.05;
@@ -44,7 +41,7 @@ export default function ParticleBackground() {
     >
       <PointMaterial
         transparent
-        color="#64748b" // slate-500
+        color="#64748b"
         size={0.03}
         sizeAttenuation={true}
         depthWrite={false}

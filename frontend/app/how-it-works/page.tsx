@@ -5,7 +5,6 @@ import { Home, Github, Heart } from "lucide-react";
 export default function DetailsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
-      {/* CSS-based animated background */}
       <div className="absolute inset-0 z-0">
         <div className="particle-bg">
           <div className="particle particle-1"></div>
@@ -37,7 +36,7 @@ export default function DetailsPage() {
             href="/how-to-use"
             className="text-slate-600 hover:text-slate-900 transition-colors duration-300 font-medium relative group"
           >
-            How to use it
+            How to use
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
           </a>
         </div>

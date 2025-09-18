@@ -19,7 +19,6 @@ export default function Scene3D({ isExpanded }: Scene3DProps) {
           style={{ background: "transparent" }}
           gl={{ antialias: false, alpha: true }}
         >
-          {/* Lighting */}
           <ambientLight intensity={0.4} />
           <directionalLight position={[10, 10, 5]} intensity={0.6} />
           <pointLight
@@ -28,16 +27,12 @@ export default function Scene3D({ isExpanded }: Scene3DProps) {
             color="#64748b"
           />
 
-          {/* Environment - simplified */}
           <fog attach="fog" args={["#f8fafc", 10, 50]} />
 
-          {/* Particle background */}
           <ParticleBackground />
 
-          {/* 3D Search bar */}
           <SearchBar3D isExpanded={isExpanded} />
 
-          {/* Subtle controls for debugging (can be removed in production) */}
           <OrbitControls
             enableZoom={false}
             enablePan={false}

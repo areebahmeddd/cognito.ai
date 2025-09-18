@@ -4,7 +4,6 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated color tokens for modernistic emerald theme */
   --background: oklch(1 0 0);
   --foreground: oklch(0.35 0.01 258);
   --card: oklch(0.97 0.01 258);
@@ -125,14 +124,12 @@
   }
 }
 
-/* Removed all 3D animations and complex effects */
 .glass-morphism {
   backdrop-filter: blur(16px) saturate(180%);
   background-color: rgba(255, 255, 255, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.125);
 }
 
-/* Animation for text transitions */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -148,7 +145,6 @@
   animation: fadeIn 0.5s ease-in-out;
 }
 
-/* CSS-based particle background */
 .particle-bg {
   position: absolute;
   width: 100%;
@@ -320,7 +316,6 @@
   }
 }
 
-/* Remove all focus styles */
 textarea:focus,
 input:focus {
   outline: none !important;

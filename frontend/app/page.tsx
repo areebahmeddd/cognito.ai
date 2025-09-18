@@ -4,12 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-// Temporarily disabled 3D components due to React version compatibility issues
-// import dynamic from "next/dynamic";
-// const Scene3D = dynamic(() => import("@/components/Scene3D"), {
-//   ssr: false,
-//   loading: () => null,
-// });
 import {
   Mic,
   Upload,
@@ -40,14 +34,13 @@ export default function HomePage() {
   ];
 
   useEffect(() => {
-    // Don't animate when modal is shown
     if (showUploadModal) return;
 
     const interval = setInterval(() => {
       setIsVisible(false);
       setTimeout(() => {
         setCurrentTextIndex(
-          (prevIndex) => (prevIndex + 1) % animatedTexts.length
+          (prevIndex) => (prevIndex + 1) % animatedTexts.length,
         );
         setIsVisible(true);
       }, 300);
@@ -64,7 +57,7 @@ export default function HomePage() {
   };
 
   const handleModalFileUpload = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = event.target.files;
     if (files) {
@@ -86,7 +79,6 @@ export default function HomePage() {
   const removeFile = (index: number) => {
     setUploadedFiles((prev) => {
       const newFiles = prev.filter((_, i) => i !== index);
-      // If no files left, show upload modal again
       if (newFiles.length === 0) {
         setShowUploadModal(true);
         setHasUploadedUFDR(false);
@@ -97,7 +89,6 @@ export default function HomePage() {
 
   const handleSubmit = () => {
     if (inputValue.trim()) {
-      // Navigate to dashboard page
       window.location.href = "/dashboard";
     }
   };
@@ -119,19 +110,16 @@ export default function HomePage() {
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
 
-    // Auto-resize textarea
     const textarea = e.target;
     textarea.style.height = "auto";
     const newHeight = Math.min(textarea.scrollHeight, 200);
     textarea.style.height = newHeight + "px";
 
-    // Check if textarea is expanded (more than single line)
     setIsExpanded(newHeight > 48);
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
-      {/* CSS-based animated background instead of 3D */}
       <div className="absolute inset-0 z-0">
         <div className="particle-bg">
           <div className="particle particle-1"></div>
@@ -163,7 +151,7 @@ export default function HomePage() {
             href="/how-to-use"
             className="text-slate-600 hover:text-slate-900 transition-colors duration-300 font-medium relative group"
           >
-            How to use it
+            How to use
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
           </a>
         </div>
@@ -180,7 +168,6 @@ export default function HomePage() {
       </nav>
 
       <main className="flex flex-1 flex-col items-center justify-center min-h-[70vh] px-4">
-        {/* Always show the main landing page content */}
         <div className="text-center max-w-2xl mx-auto mb-8 relative z-10">
           <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 text-balance drop-shadow-sm">
             Welcome, how may I help you?
@@ -239,7 +226,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Hidden file inputs */}
         <input
           ref={modalFileInputRef}
           type="file"
@@ -257,7 +243,6 @@ export default function HomePage() {
           accept=".pdf,.doc,.docx,.txt,.json,.xml,.csv,.log,.pcap,.zip,.rar,.7z"
         />
 
-        {/* Uploaded files display */}
         {!showUploadModal && uploadedFiles.length > 0 && (
           <div className="w-full max-w-2xl mx-auto mt-4 space-y-2 relative z-10">
             <p className="text-sm text-slate-600 font-medium">
@@ -294,7 +279,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Speech feature message */}
         {!showUploadModal && showSpeechMessage && (
           <div className="w-full max-w-2xl mx-auto mt-4 relative z-10">
             <div className="bg-white border-2 border-slate-300 rounded-lg shadow-lg px-6 py-4 text-center">
@@ -306,11 +290,9 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* Upload Modal Popup */}
       {showUploadModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 animate-in fade-in duration-300">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 animate-in zoom-in-95 duration-300">
-            {/* Modal Header */}
             <div className="flex justify-between items-center p-4 border-b border-slate-200">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">
@@ -328,7 +310,6 @@ export default function HomePage() {
               </button>
             </div>
 
-            {/* Modal Content */}
             <div className="p-4">
               <div
                 className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-slate-400 transition-colors duration-200 cursor-pointer"
