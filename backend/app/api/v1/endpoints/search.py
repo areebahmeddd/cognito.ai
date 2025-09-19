@@ -10,34 +10,17 @@ from ....models.schemas import (
     TimelineBucket,
 )
 from ....services.elasticsearch_service import search_text, get_time, search_with_dsl, es_client, index_name
-from ....services.forensic_query_service import get_forensic_converter, ForensicQueryConverter
 
 router = APIRouter(tags=["search"])
 
 
 @router.post("/search", response_model=SearchResponse)
-async def search_content_endpoint(
-    request: SearchRequest,
-    converter: ForensicQueryConverter = Depends(get_forensic_converter)
-):
+async def search_content_endpoint(request: SearchRequest):
     try:
-        if request.use_natural_language:
-            # Convert natural language query to Elasticsearch DSL
-            converted_query = converter.convert_to_elasticsearch(request.query)
-            
-            # Execute the converted query using modern DSL
-            response = search_with_dsl(
-                query_dict=converted_query.query,
-                size=request.size,
-                from_=request.from_,
-                sort=converted_query.sort,
-                highlight=converted_query.highlight
-            )
-        else:
-            # Use the original text search
-            response = search_text(
-                query=request.query, size=request.size, from_=request.from_
-            )
+        # Use the original text search
+        response = search_text(
+            query=request.query, size=request.size, from_=request.from_
+        )
 
         hits = []
         for hit in response["hits"]["hits"]:

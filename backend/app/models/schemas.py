@@ -67,7 +67,6 @@ class SearchRequest(BaseModel):
     filters: Optional[Dict[str, Any]] = None
     size: int = Field(default=10, ge=1, le=100)
     from_: int = Field(default=0, ge=0, alias="from")
-    use_natural_language: bool = Field(default=False, description="Convert query using AI before searching")
 
 
 class SearchResponse(BaseModel):
@@ -103,51 +102,3 @@ class EntityResponse(BaseModel):
     took: int
 
 
-# Forensic Query Converter Models
-class SortOrder(str, Enum):
-    asc = "asc"
-    desc = "desc"
-
-
-class SortField(BaseModel):
-    field: str
-    order: SortOrder = SortOrder.desc
-
-
-class QueryCondition(BaseModel):
-    field: str
-    value: str
-    query_type: str = Field(description="match, term, range, wildcard, etc.")
-
-
-class ElasticsearchQuery(BaseModel):
-    """Elasticsearch Query DSL for forensic data analysis"""
-    must: List[Dict[str, Any]] = Field(default=[], description="Required conditions (AND logic)")
-    should: List[Dict[str, Any]] = Field(default=[], description="Optional conditions (OR logic)")  
-    must_not: List[Dict[str, Any]] = Field(default=[], description="Excluded conditions (NOT logic)")
-    filter: List[Dict[str, Any]] = Field(default=[], description="Exact matches and ranges")
-    size: int = Field(default=20, ge=1, le=100, description="Number of results to return")
-    sort: List[Dict[str, Dict[str, str]]] = Field(default=[{"timestamp": {"order": "desc"}}])
-    highlight: Optional[Dict[str, Any]] = Field(default={"fields": {"text": {}}})
-    
-
-class ForensicQueryResponse(BaseModel):
-    """Complete Elasticsearch query with metadata"""
-    query: Dict[str, Any] = Field(description="The bool query structure")  
-    size: int
-    sort: List[Dict[str, Dict[str, str]]]
-    highlight: Optional[Dict[str, Any]]
-    query_intent: str = Field(description="Human-readable explanation of what this query searches for")
-
-
-class NaturalLanguageQueryRequest(BaseModel):
-    """Request model for natural language query conversion"""
-    query: str = Field(description="Natural language query to convert")
-    size: int = Field(default=20, ge=1, le=100, description="Number of results to return")
-
-
-class NaturalLanguageQueryResponse(BaseModel):
-    """Response model for natural language query conversion"""
-    original_query: str
-    converted_query: ForensicQueryResponse
-    execution_time_ms: int
