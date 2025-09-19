@@ -21,7 +21,6 @@ export default function HomePage() {
   const [isVisible, setIsVisible] = useState(true);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [showSpeechMessage, setShowSpeechMessage] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(true);
   const [hasUploadedUFDR, setHasUploadedUFDR] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,7 +39,7 @@ export default function HomePage() {
       setIsVisible(false);
       setTimeout(() => {
         setCurrentTextIndex(
-          (prevIndex) => (prevIndex + 1) % animatedTexts.length,
+          (prevIndex) => (prevIndex + 1) % animatedTexts.length
         );
         setIsVisible(true);
       }, 300);
@@ -57,7 +56,7 @@ export default function HomePage() {
   };
 
   const handleModalFileUpload = (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = event.target.files;
     if (files) {
@@ -93,13 +92,6 @@ export default function HomePage() {
     }
   };
 
-  const handleSpeechClick = () => {
-    setShowSpeechMessage(true);
-    setTimeout(() => {
-      setShowSpeechMessage(false);
-    }, 3000);
-  };
-
   const handleKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -130,7 +122,7 @@ export default function HomePage() {
           <div className="particle particle-6"></div>
         </div>
       </div>
-      <nav className="flex justify-between items-center pt-6 pb-3 px-6 relative z-10">
+      <nav className="flex justify-between items-center pt-6 pb-3 px-6 relative z-30">
         <div className="flex-1 flex justify-start">
           <a
             href="/"
@@ -207,7 +199,15 @@ export default function HomePage() {
                   size="sm"
                   variant="ghost"
                   className="h-8 w-8 p-0 hover:bg-slate-100 transition-colors duration-200"
-                  onClick={handleSpeechClick}
+                  onClick={handleUploadClick}
+                  aria-label="Upload more files"
+                >
+                  <Upload className="h-4 w-4 text-slate-500" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0 hover:bg-slate-100 transition-colors duration-200"
                 >
                   <Mic className="h-4 w-4 text-slate-500" />
                 </Button>
@@ -280,21 +280,12 @@ export default function HomePage() {
             </div>
           </div>
         )}
-
-        {!showUploadModal && showSpeechMessage && (
-          <div className="w-full max-w-2xl mx-auto mt-4 relative z-10">
-            <div className="bg-white border-2 border-slate-300 rounded-lg shadow-lg px-6 py-4 text-center">
-              <p className="text-slate-700 font-medium">
-                🎤 Voice input feature is under development
-              </p>
-            </div>
-          </div>
-        )}
       </main>
 
       {showUploadModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 animate-in fade-in duration-300">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 animate-in zoom-in-95 duration-300">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm pointer-events-none"></div>
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 animate-in zoom-in-95 duration-300 pointer-events-auto relative z-20">
             <div className="flex justify-between items-center p-4 border-b border-slate-200">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">
@@ -340,7 +331,7 @@ export default function HomePage() {
         </div>
       )}
 
-      <footer className="text-center pb-4 mt-auto pt-4 relative z-10">
+      <footer className="text-center pb-4 mt-auto pt-4 relative z-30">
         <p className="text-slate-600 flex items-center justify-center gap-2">
           Built with <Heart className="h-4 w-4 text-red-500 fill-current" /> for
           Smart India Hackathon
