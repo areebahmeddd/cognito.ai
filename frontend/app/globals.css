@@ -4,7 +4,6 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated color tokens for modernistic emerald theme */
   --background: oklch(1 0 0);
   --foreground: oklch(0.35 0.01 258);
   --card: oklch(0.97 0.01 258);
@@ -125,14 +124,12 @@
   }
 }
 
-/* Removed all 3D animations and complex effects */
 .glass-morphism {
   backdrop-filter: blur(16px) saturate(180%);
   background-color: rgba(255, 255, 255, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.125);
 }
 
-/* Animation for text transitions */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -146,4 +143,186 @@
 
 .animate-fade-in {
   animation: fadeIn 0.5s ease-in-out;
+}
+
+.particle-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  background: #64748b;
+  border-radius: 3px;
+  opacity: 0;
+  z-index: 10;
+  box-shadow: 0 0 12px rgba(100, 116, 139, 0.5);
+  animation-fill-mode: both;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.particle-1 {
+  width: 16px;
+  height: 16px;
+  top: 20%;
+  left: 10%;
+  background: #f59e0b;
+  border-radius: 3px;
+  animation: dataFlow1 8s infinite ease-in-out;
+  animation-delay: 0.2s;
+}
+
+.particle-2 {
+  width: 14px;
+  height: 14px;
+  top: 60%;
+  right: 15%;
+  background: #ef4444;
+  border-radius: 3px;
+  animation: dataFlow2 9s infinite ease-in-out;
+  animation-delay: 0.8s;
+}
+
+.particle-3 {
+  width: 18px;
+  height: 18px;
+  top: 40%;
+  left: 70%;
+  background: #10b981;
+  border-radius: 3px;
+  animation: dataFlow3 7.5s infinite ease-in-out;
+  animation-delay: 1.4s;
+}
+
+.particle-4 {
+  width: 15px;
+  height: 15px;
+  top: 80%;
+  left: 30%;
+  background: #8b5cf6;
+  border-radius: 3px;
+  animation: dataFlow1 8.5s infinite ease-in-out;
+  animation-delay: 0.5s;
+}
+
+.particle-5 {
+  width: 12px;
+  height: 12px;
+  top: 10%;
+  right: 40%;
+  background: #06b6d4;
+  border-radius: 3px;
+  animation: dataFlow2 7s infinite ease-in-out;
+  animation-delay: 1.1s;
+}
+
+.particle-6 {
+  width: 17px;
+  height: 17px;
+  top: 70%;
+  left: 50%;
+  background: #f97316;
+  border-radius: 3px;
+  animation: dataFlow3 9.5s infinite ease-in-out;
+  animation-delay: 1.7s;
+}
+
+@keyframes dataFlow1 {
+  0% {
+    transform: translateY(0px) translateX(0px) scale(1);
+    opacity: 0.4;
+  }
+  20% {
+    transform: translateY(-20px) translateX(30px) scale(1.1);
+    opacity: 0.7;
+  }
+  40% {
+    transform: translateY(-10px) translateX(-15px) scale(0.9);
+    opacity: 0.6;
+  }
+  60% {
+    transform: translateY(-25px) translateX(45px) scale(1.05);
+    opacity: 0.8;
+  }
+  80% {
+    transform: translateY(-5px) translateX(-10px) scale(0.95);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0px) translateX(0px) scale(1);
+    opacity: 0.4;
+  }
+}
+
+@keyframes dataFlow2 {
+  0% {
+    transform: translateY(0px) translateX(0px) scale(1);
+    opacity: 0.5;
+  }
+  25% {
+    transform: translateY(-18px) translateX(-25px) scale(1.15);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-8px) translateX(35px) scale(0.85);
+    opacity: 0.6;
+  }
+  75% {
+    transform: translateY(-22px) translateX(-20px) scale(1.08);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(0px) translateX(0px) scale(1);
+    opacity: 0.5;
+  }
+}
+
+@keyframes dataFlow3 {
+  0% {
+    transform: translateY(0px) translateX(0px) scale(1);
+    opacity: 0.3;
+  }
+  15% {
+    transform: translateY(-15px) translateX(20px) scale(1.2);
+    opacity: 0.6;
+  }
+  30% {
+    transform: translateY(-6px) translateX(-12px) scale(0.8);
+    opacity: 0.4;
+  }
+  45% {
+    transform: translateY(-20px) translateX(28px) scale(1.1);
+    opacity: 0.7;
+  }
+  60% {
+    transform: translateY(-3px) translateX(-8px) scale(0.9);
+    opacity: 0.5;
+  }
+  75% {
+    transform: translateY(-18px) translateX(25px) scale(1.05);
+    opacity: 0.6;
+  }
+  90% {
+    transform: translateY(-2px) translateX(-5px) scale(0.95);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(0px) translateX(0px) scale(1);
+    opacity: 0.3;
+  }
+}
+
+textarea:focus,
+input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.bg-dot-pattern {
+  background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+  background-size: 20px 20px;
 }
