@@ -6,7 +6,7 @@ router = APIRouter(tags=["data"])
 
 
 @router.post("/load")
-async def load_data_endpoint(file_path: str = "data/ufdr.jsonl"):
+async def load_sample_data(file_path: str = "data/ufdr.jsonl"):
     try:
         count = load_data(file_path)
         return JSONResponse(

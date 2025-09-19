@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     cors_methods: list[str] = ["*"]
     cors_headers: list[str] = ["*"]
     cors_credentials: bool = True
-    api_v1_prefix: str = "/api/v1"
+    api_prefix: str = "/api/v1"
     gemini_api_key: Optional[str] = None
 
     class Config:
