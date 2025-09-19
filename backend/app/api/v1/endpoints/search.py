@@ -9,7 +9,7 @@ from ....models.schemas import (
     UFDRDocument,
     TimelineBucket,
 )
-from ....services.elasticsearch_service import search_text, get_time, es_client, index_name
+from ....services.elasticsearch_service import search_text, get_time, search_with_dsl, es_client, index_name
 from ....services.forensic_query_service import get_forensic_converter, ForensicQueryConverter
 
 router = APIRouter(tags=["search"])
@@ -25,16 +25,14 @@ async def search_content_endpoint(
             # Convert natural language query to Elasticsearch DSL
             converted_query = converter.convert_to_elasticsearch(request.query)
             
-            # Execute the converted query
-            search_body = {
-                "query": converted_query.query,
-                "size": request.size,
-                "from": request.from_,
-                "sort": converted_query.sort,
-                "highlight": converted_query.highlight
-            }
-            
-            response = es_client.search(index=index_name, body=search_body)
+            # Execute the converted query using modern DSL
+            response = search_with_dsl(
+                query_dict=converted_query.query,
+                size=request.size,
+                from_=request.from_,
+                sort=converted_query.sort,
+                highlight=converted_query.highlight
+            )
         else:
             # Use the original text search
             response = search_text(
