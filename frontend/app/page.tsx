@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import Link from "next/link";
 import {
   Mic,
   Upload,
@@ -124,37 +125,37 @@ export default function HomePage() {
       </div>
       <nav className="flex justify-between items-center pt-6 pb-3 px-6 relative z-30">
         <div className="flex-1 flex justify-start">
-          <a
+          <Link
             href="/"
-            className="text-slate-700 hover:text-slate-900 transition-colors duration-200"
+            className="text-slate-700 hover:bg-gray-200 p-2 rounded-sm hover:text-slate-900 transition-colors duration-200"
           >
-            <Home className="h-6 w-6" />
-          </a>
+            <Home className="h-5 w-5" />
+          </Link>
         </div>
         <div className="flex space-x-8">
-          <a
+          <Link
             href="/how-it-works"
             className="text-slate-600 hover:text-slate-900 transition-colors duration-300 font-medium relative group"
           >
             How it works
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/how-to-use"
             className="text-slate-600 hover:text-slate-900 transition-colors duration-300 font-medium relative group"
           >
             How to use
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
-          </a>
+          </Link>
         </div>
         <div className="flex-1 flex justify-end">
           <a
             href="https://github.com/areebahmeddd/cognito.ai"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-slate-700 hover:text-slate-900 transition-colors duration-200"
+            className="text-slate-700 hover:bg-gray-200 p-2 rounded-sm hover:text-slate-900 transition-colors duration-200"
           >
-            <Github className="h-6 w-6" />
+            <Github className="h-5 w-5" />
           </a>
         </div>
       </nav>
@@ -187,18 +188,18 @@ export default function HomePage() {
                 value={inputValue}
                 onChange={handleTextareaChange}
                 onKeyDown={handleKeyPress}
-                className="w-full min-h-[48px] max-h-[200px] text-base bg-white border-2 border-black focus:outline-none placeholder:text-slate-400 pr-16 pl-4 py-3 rounded-lg resize-none shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full min-h-[48px] max-h-[200px] text-base rounded-2xl bg-white border-2 border-gray-400 focus:outline-none placeholder:text-slate-400 pr-16 pl-4 py-3 resize-none shadow-lg hover:shadow-xl transition-all duration-300"
                 rows={1}
               />
               <div
-                className={`absolute right-3 flex items-center space-x-2 ${
+                className={`absolute right-2 flex items-center space-x-2 ${
                   isExpanded ? "top-3" : "top-1/2 -translate-y-1/2"
                 }`}
               >
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-8 w-8 p-0 hover:bg-slate-100 transition-colors duration-200"
+                  className="h-8 w-8 p-0 rounded-sm hover:bg-slate-100 transition-colors duration-200"
                   onClick={handleUploadClick}
                   aria-label="Upload more files"
                 >
@@ -207,17 +208,17 @@ export default function HomePage() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-8 w-8 p-0 hover:bg-slate-100 transition-colors duration-200"
+                  className="h-8 w-8 p-0 rounded-sm hover:bg-slate-100 transition-colors duration-200"
                 >
                   <Mic className="h-4 w-4 text-slate-500" />
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className={`h-8 w-8 p-0 transition-colors duration-200 ${
+                  className={`h-8 w-8 p-0 rounded-sm transition-colors duration-200 ${
                     inputValue.trim()
-                      ? "bg-black text-white hover:bg-slate-800"
-                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                      ? "bg-accent/80 text-white hover:bg-slate-800"
+                      : "text-slate-300 bg-slate-100"
                   }`}
                   onClick={handleSubmit}
                 >
@@ -333,7 +334,7 @@ export default function HomePage() {
 
       <footer className="text-center pb-4 mt-auto pt-4 relative z-30">
         <p className="text-slate-600 flex items-center justify-center gap-2">
-          Built with <Heart className="h-4 w-4 text-red-500 fill-current" /> for
+          Built with <Heart className="h-4 w-4 text-accent fill-current" /> for
           Smart India Hackathon
         </p>
       </footer>
