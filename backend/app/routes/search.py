@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 
-from ....models.schemas import (
+from ..models.schemas import (
     SearchRequest,
     SearchResponse,
     TimelineRequest,
@@ -9,7 +9,7 @@ from ....models.schemas import (
     UFDRDocument,
     TimelineBucket,
 )
-from ....services.elasticsearch_service import search_text, get_time, search_with_dsl, es_client, index_name
+from ..services.elasticsearch import search_text, get_time, search_with_dsl, es_client, index_name
 
 router = APIRouter(tags=["search"])
 

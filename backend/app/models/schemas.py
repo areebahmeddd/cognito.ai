@@ -16,7 +16,6 @@ class HashModel(BaseModel):
 
 
 class UFDRDocument(BaseModel):
-    _id: str
     artifact_id: str
     case_id: str
     device_id: str
@@ -90,15 +89,11 @@ class TimelineResponse(BaseModel):
     took: int
 
 
-class EntityRelationship(BaseModel):
-    source: str
-    target: str
-    weight: int
-    common_artifacts: List[str]
-
-
-class EntityResponse(BaseModel):
-    relationships: List[EntityRelationship]
-    took: int
+class ForensicQueryResponse(BaseModel):
+    query: Dict[str, Any]
+    query_intent: str
+    size: int
+    sort: List[Dict[str, Any]]
+    highlight: Dict[str, Any]
 
 

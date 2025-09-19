@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
-from ....services.elasticsearch_service import load_data, get_count
+from ..services.elasticsearch import load_data, get_count
 
 router = APIRouter(tags=["data"])
 
