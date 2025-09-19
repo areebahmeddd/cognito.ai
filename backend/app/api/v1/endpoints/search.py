@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 
 from ....models.schemas import (
@@ -9,7 +9,7 @@ from ....models.schemas import (
     UFDRDocument,
     TimelineBucket,
 )
-from ....services.elasticsearch_service import search_text, get_time
+from ....services.elasticsearch_service import search_text, get_time, search_with_dsl, es_client, index_name
 
 router = APIRouter(tags=["search"])
 
@@ -17,6 +17,7 @@ router = APIRouter(tags=["search"])
 @router.post("/search", response_model=SearchResponse)
 async def search_content_endpoint(request: SearchRequest):
     try:
+        # Use the original text search
         response = search_text(
             query=request.query, size=request.size, from_=request.from_
         )

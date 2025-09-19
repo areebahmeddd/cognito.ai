@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
+from enum import Enum
 
 
 class LocationModel(BaseModel):
@@ -99,3 +100,5 @@ class EntityRelationship(BaseModel):
 class EntityResponse(BaseModel):
     relationships: List[EntityRelationship]
     took: int
+
+

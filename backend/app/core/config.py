@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     # API settings
     api_v1_prefix: str = "/api/v1"
     
+    # Gemini AI settings
+    gemini_api_key: Optional[str] = None
+    
     class Config:
         env_file = ".env"
         case_sensitive = False
