@@ -40,7 +40,7 @@ export default function HomePage() {
       setIsVisible(false);
       setTimeout(() => {
         setCurrentTextIndex(
-          (prevIndex) => (prevIndex + 1) % animatedTexts.length
+          (prevIndex) => (prevIndex + 1) % animatedTexts.length,
         );
         setIsVisible(true);
       }, 300);
@@ -57,7 +57,7 @@ export default function HomePage() {
   };
 
   const handleModalFileUpload = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = event.target.files;
     if (files) {
