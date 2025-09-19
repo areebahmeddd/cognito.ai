@@ -187,18 +187,18 @@ export default function HomePage() {
                 value={inputValue}
                 onChange={handleTextareaChange}
                 onKeyDown={handleKeyPress}
-                className="w-full min-h-[48px] max-h-[200px] text-base bg-white border-2 border-black focus:outline-none placeholder:text-slate-400 pr-16 pl-4 py-3 rounded-lg resize-none shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full min-h-[48px] max-h-[200px] text-base rounded-2xl bg-white border-2 border-gray-400 focus:outline-none placeholder:text-slate-400 pr-16 pl-4 py-3 resize-none shadow-lg hover:shadow-xl transition-all duration-300"
                 rows={1}
               />
               <div
-                className={`absolute right-3 flex items-center space-x-2 ${
+                className={`absolute right-2 flex items-center space-x-2 ${
                   isExpanded ? "top-3" : "top-1/2 -translate-y-1/2"
                 }`}
               >
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-8 w-8 p-0 hover:bg-slate-100 transition-colors duration-200"
+                  className="h-8 w-8 p-0 rounded-sm hover:bg-slate-100 transition-colors duration-200"
                   onClick={handleUploadClick}
                   aria-label="Upload more files"
                 >
@@ -207,17 +207,17 @@ export default function HomePage() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-8 w-8 p-0 hover:bg-slate-100 transition-colors duration-200"
+                  className="h-8 w-8 p-0 rounded-sm hover:bg-slate-100 transition-colors duration-200"
                 >
                   <Mic className="h-4 w-4 text-slate-500" />
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className={`h-8 w-8 p-0 transition-colors duration-200 ${
+                  className={`h-8 w-8 p-0 rounded-sm transition-colors duration-200 ${
                     inputValue.trim()
-                      ? "bg-black text-white hover:bg-slate-800"
-                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                      ? "bg-accent/80 text-white hover:bg-slate-800"
+                      : "text-slate-300 bg-slate-100"
                   }`}
                   onClick={handleSubmit}
                 >
