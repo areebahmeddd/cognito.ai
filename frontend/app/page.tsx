@@ -334,7 +334,7 @@ export default function HomePage() {
 
       <footer className="text-center pb-4 mt-auto pt-4 relative z-30">
         <p className="text-slate-600 flex items-center justify-center gap-2">
-          Built with <Heart className="h-4 w-4 text-red-500 fill-current" /> for
+          Built with <Heart className="h-4 w-4 text-accent fill-current" /> for
           Smart India Hackathon
         </p>
       </footer>
