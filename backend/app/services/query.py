@@ -1,85 +1,46 @@
-"""Forensic Query Service for Natural Language to Elasticsearch DSL conversion using Gemini AI."""
-
 import json
-import os
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
-from app.core.config import settings
-from app.models.schemas import ForensicQueryResponse
-
 import google.generativeai as genai
+from app.core.config import settings
+from app.models.schemas import QueryResponse
 
 
-class ForensicQueryConverter:
-    """Converts natural language queries to Elasticsearch DSL queries using Gemini AI."""
-
+class QueryConverter:
     def __init__(self):
-        """Initialize the converter with Gemini AI."""
-        self.gemini_api_key = settings.gemini_api_key or os.getenv('GEMINI_API_KEY')
+        genai.configure(api_key=settings.gemini_api_key)
+        self.model = genai.GenerativeModel("gemini-2.5-flash")
 
-        if not self.gemini_api_key:
-            raise ValueError("GEMINI_API_KEY must be set in environment variables or settings")
+    def convert_query(self, query: str) -> QueryResponse:
+        return self._convert_ai(query)
 
-        genai.configure(api_key=self.gemini_api_key)
-        self.model = genai.GenerativeModel('gemini-2.5-flash')
-
-    def convert_to_elasticsearch(self, query: str) -> ForensicQueryResponse:
-        """
-        Convert natural language query to Elasticsearch DSL.
-
-        Args:
-            query: Natural language query string
-
-        Returns:
-            ForensicQueryResponse with converted query
-        """
-        return self._convert_with_ai(query)
-
-    def _convert_with_ai(self, query: str) -> ForensicQueryResponse:
-        """Convert using Gemini AI."""
-        prompt = self._create_conversion_prompt(query)
-
+    def _convert_ai(self, query: str) -> QueryResponse:
+        prompt = self._create_prompt(query)
         response = self.model.generate_content(prompt)
-
-        if not response.text or response.text.strip() == "":
-            raise ValueError("Gemini API returned empty response")
-
-        # Clean the response - remove markdown code blocks if present
         response_text = response.text.strip()
-        if response_text.startswith("```json"):
-            # Remove ```json at the start and ``` at the end
-            response_text = response_text[7:]  # Remove "```json"
-            if response_text.endswith("```"):
-                response_text = response_text[:-3]  # Remove "```"
-        elif response_text.startswith("```"):
-            # Handle case where it just starts with ```
-            response_text = response_text[3:]
-            if response_text.endswith("```"):
-                response_text = response_text[:-3]
 
-        response_text = response_text.strip()
+        if "```json" in response_text:
+            response_text = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            response_text = response_text.split("```")[1].strip()
 
-        try:
-            result = json.loads(response_text)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Failed to parse Gemini response as JSON: {e}")
-
-        return ForensicQueryResponse(
+        result = json.loads(response_text)
+        return QueryResponse(
             query=result.get("query", {}),
             query_intent=result.get("query_intent", "general_search"),
-            size=result.get("size", 10000),  # Large size to get all results
+            size=result.get("size", 10000),
             sort=result.get("sort", [{"timestamp": {"order": "desc"}}]),
-            highlight=result.get("highlight", {
-                "fields": {
-                    "text": {"fragment_size": 150, "number_of_fragments": 2},
-                    "display_from": {"fragment_size": 50},
-                    "display_to": {"fragment_size": 50}
-                }
-            })
+            highlight=result.get(
+                "highlight",
+                {
+                    "fields": {
+                        "text": {"fragment_size": 150, "number_of_fragments": 2},
+                        "display_from": {"fragment_size": 50},
+                        "display_to": {"fragment_size": 50},
+                    }
+                },
+            ),
         )
 
-    def _create_conversion_prompt(self, query: str) -> str:
-        """Create prompt for Gemini AI conversion."""
+    def _create_prompt(self, query: str) -> str:
         return f"""
 You are a forensic data analysis expert. Convert the following natural language query into an Elasticsearch DSL query for searching UFDR (Universal Forensic Data Report) data.
 
@@ -148,8 +109,5 @@ Convert the query now:
 """
 
 
-
-
-def get_forensic_converter() -> ForensicQueryConverter:
-    """Get forensic query converter instance."""
-    return ForensicQueryConverter()
+def get_converter() -> QueryConverter:
+    return QueryConverter()
