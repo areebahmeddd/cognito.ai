@@ -2,11 +2,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-
 from .core.config import settings
-from .core.database import es_client
-from .services.elasticsearch_service import wait_es, create_index
-from .api.v1.api import api_router
+from .services.elasticsearch import wait_es, create_index
+from .routes.api import api_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -22,15 +20,13 @@ app.add_middleware(
     allow_credentials=settings.cors_credentials,
 )
 
-# Include the API router
-app.include_router(api_router, prefix=settings.api_v1_prefix)
+app.include_router(api_router)
 
 
 @app.on_event("startup")
 async def startup_event():
     if not wait_es():
         raise RuntimeError("Could not connect to Elasticsearch")
-
     create_index()
     print("Elasticsearch index created/verified")
 

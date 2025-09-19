@@ -1,7 +1,7 @@
 import json
 import time
 from elasticsearch import Elasticsearch, helpers
-from elasticsearch.dsl import Search, Q, A
+from elasticsearch.dsl import Search, Q
 from elasticsearch.exceptions import ConnectionError, NotFoundError
 from typing import Any, Dict, List, Optional
 
@@ -23,7 +23,6 @@ def wait_es(max_retries: int = 30, delay: float = 1.0) -> bool:
 def create_index() -> None:
     if es_client.indices.exists(index=index_name):
         return
-
     settings = {
         "settings": {
             "analysis": {
@@ -101,7 +100,6 @@ def create_index() -> None:
             },
         },
     }
-
     es_client.indices.create(index=index_name, **settings)
 
 
@@ -130,141 +128,24 @@ def load_data(file_path: str) -> int:
     return len(docs)
 
 
-def search_text(query: str, size: int = 10, from_: int = 0) -> Dict[str, Any]:
-    """
-    Search for text using modern Elasticsearch DSL.
-    """
-    s = Search(using=es_client, index=index_name) \
-        .query(
-            Q("multi_match",
-              query=query,
-              fields=[
-                  "text^2", 
-                  "display_from^1.5", 
-                  "display_to^1.5", 
-                  "notes^1.2",
-                  "channel^1.8",
-                  "service^1.8",
-                  "platform^1.5",
-                  "app^1.3",
-                  "type^1.2",
-                  "data_type^1.2"
-              ],
-              type="best_fields",
-              fuzziness="AUTO")
-        ) \
-        .highlight('text', 'display_from', 'display_to') \
-        .extra(size=size, from_=from_) \
-        .sort('-timestamp')
-    
-    # Configure highlighting
-    s = s.highlight('text', fragment_size=150, number_of_fragments=2)
-    s = s.highlight('display_from', fragment_size=50)
-    s = s.highlight('display_to', fragment_size=50)
-    
-    response = s.execute()
-    return response.to_dict()
-
-
-def get_time(
-    interval: str = "1d", filters: Optional[Dict[str, Any]] = None
+def search_dsl(
+    query_dict: Dict[str, Any],
+    size: int = 10,
+    from_: int = 0,
+    sort: Optional[List[Dict[str, Any]]] = None,
+    highlight: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """
-    Get timeline data using modern Elasticsearch DSL.
-    """
-    s = Search(using=es_client, index=index_name)
-    
-    # Build query
-    if filters:
-        must_queries = [Q("term", **{k: v}) for k, v in filters.items()]
-        s = s.query(Q("bool", must=must_queries))
-    else:
-        s = s.query(Q("match_all"))
-    
-    # Add aggregation
-    s.aggs.bucket('timeline', A('date_histogram', 
-                                field='timestamp', 
-                                calendar_interval=interval, 
-                                min_doc_count=1))
-    
-    s = s.extra(size=0)
-    
-    response = s.execute()
-    return response.to_dict()
-
-
-def get_geo(size: int = 10) -> Dict[str, Any]:
-    """
-    Get geo data using modern Elasticsearch DSL.
-    """
-    s = Search(using=es_client, index=index_name) \
-        .query(
-            Q("bool",
-              must=[
-                  Q("exists", field="location"),
-                  Q("range", timestamp={"gte": "now-30d"})
-              ])
-        ) \
-        .extra(size=size) \
-        .sort('-timestamp')
-    
-    response = s.execute()
-    return response.to_dict()
-
-
-def get_entities(min_doc_count: int = 2) -> Dict[str, Any]:
-    """
-    Get entities using modern Elasticsearch DSL.
-    """
-    s = Search(using=es_client, index=index_name) \
-        .query(Q("match_all")) \
-        .extra(size=0)
-    
-    # Add participants aggregation with sub-aggregation
-    participants_agg = A('terms', 
-                        field='participants', 
-                        min_doc_count=min_doc_count, 
-                        size=50)
-    
-    # Add co-participants sub-aggregation
-    co_participants_agg = A('terms', 
-                           field='participants', 
-                           min_doc_count=min_doc_count, 
-                           size=10)
-    
-    participants_agg.bucket('co_participants', co_participants_agg)
-    s.aggs.bucket('participants', participants_agg)
-    
-    response = s.execute()
-    return response.to_dict()
-
-
-def search_with_dsl(query_dict: Dict[str, Any], size: int = 10, from_: int = 0, 
-                   sort: Optional[List[Dict[str, Any]]] = None, 
-                   highlight: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """
-    Execute a search using DSL query dictionary with modern Elasticsearch DSL.
-    This function bridges the gap between raw JSON queries and DSL.
-    """
-    s = Search(using=es_client, index=index_name) \
-        .extra(size=size, from_=from_)
-    
-    # Apply query
+    s = Search(using=es_client, index=index_name).extra(size=size, from_=from_)
     if query_dict:
         s = s.query(Q(query_dict))
-    
-    # Apply sorting
     if sort:
         for sort_item in sort:
             field = list(sort_item.keys())[0]
-            order = sort_item[field].get('order', 'desc')
-            s = s.sort(f'-{field}' if order == 'desc' else field)
-    
-    # Apply highlighting
+            order = sort_item[field].get("order", "desc")
+            s = s.sort(f"-{field}" if order == "desc" else field)
     if highlight:
-        for field, config in highlight.get('fields', {}).items():
+        for field, config in highlight.get("fields", {}).items():
             s = s.highlight(field, **config)
-    
     response = s.execute()
     return response.to_dict()
 

@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
-from enum import Enum
 
 
 class LocationModel(BaseModel):
@@ -16,7 +15,6 @@ class HashModel(BaseModel):
 
 
 class UFDRDocument(BaseModel):
-    _id: str
     artifact_id: str
     case_id: str
     device_id: str
@@ -24,7 +22,6 @@ class UFDRDocument(BaseModel):
     data_type: str
     timestamp: datetime
     source_path: str
-
     channel: Optional[str] = None
     platform: Optional[str] = None
     service: Optional[str] = None
@@ -62,43 +59,13 @@ class UFDRDocument(BaseModel):
         populate_by_name = True
 
 
-class SearchRequest(BaseModel):
+class QueryRequest(BaseModel):
     query: str
-    filters: Optional[Dict[str, Any]] = None
-    size: int = Field(default=10, ge=1, le=100)
-    from_: int = Field(default=0, ge=0, alias="from")
 
 
-class SearchResponse(BaseModel):
-    hits: List[UFDRDocument]
-    total: int
-    took: int
-
-
-class TimelineRequest(BaseModel):
-    interval: str = Field(default="1d", description="Time interval (1h, 1d, 1w, 1M)")
-    filters: Optional[Dict[str, Any]] = None
-
-
-class TimelineBucket(BaseModel):
-    timestamp: str
-    count: int
-
-
-class TimelineResponse(BaseModel):
-    buckets: List[TimelineBucket]
-    took: int
-
-
-class EntityRelationship(BaseModel):
-    source: str
-    target: str
-    weight: int
-    common_artifacts: List[str]
-
-
-class EntityResponse(BaseModel):
-    relationships: List[EntityRelationship]
-    took: int
-
-
+class QueryResponse(BaseModel):
+    query: Dict[str, Any]
+    query_intent: str
+    size: int
+    sort: List[Dict[str, Any]]
+    highlight: Dict[str, Any]
