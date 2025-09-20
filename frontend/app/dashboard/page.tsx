@@ -179,7 +179,7 @@ export default function DashboardPage() {
 
       <main className="flex-1 relative z-10 px-6 overflow-hidden">
         <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0">
-          <div className="flex-1 relative bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="flex-1 relative border border-slate-200 bg-white rounded-xl overflow-hidden">
             <div className="absolute inset-0 bg-dot-pattern opacity-50"></div>
             <div
               className="relative h-full flex items-center justify-center p-8 overflow-hidden cursor-grab active:cursor-grabbing"
