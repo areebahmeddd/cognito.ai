@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { PointMaterial, Points } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { Points, PointMaterial } from "@react-three/drei";
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
 export default function ParticleBackground() {

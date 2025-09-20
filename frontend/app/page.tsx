@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Mic, Upload, Heart, X, FileText, Send } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { FileText, Mic, Send, Upload, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 export default function HomePage() {
   const [inputValue, setInputValue] = useState("");

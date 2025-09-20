@@ -1,7 +1,6 @@
-import React from "react";
-import Link from "next/link";
-import { Home, Github } from "lucide-react";
+import { Github } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Navbar() {
   return (

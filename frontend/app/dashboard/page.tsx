@@ -1,25 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
 import {
-  Home,
-  Github,
-  Heart,
-  User,
-  Laptop,
   BarChart3,
-  Trash2,
-  Plus,
-  Minus,
-  Square,
-  TrendingUp,
   Download,
-  FileText,
   FileJson,
   FileSpreadsheet,
+  FileText,
+  Laptop,
+  Minus,
+  Plus,
+  Square,
+  Trash2,
+  TrendingUp,
+  User,
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { useEffect, useRef, useState } from "react";
 
 interface GraphNode {
   id: string;
