@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Home, Github } from "lucide-react";
+import Image from "next/image";
 
 export default function Navbar() {
   return (
@@ -8,9 +9,16 @@ export default function Navbar() {
       <div className="flex-1 flex justify-start">
         <Link
           href="/"
-          className="text-slate-700 hover:bg-gray-200 p-2 rounded-sm hover:text-slate-900 transition-colors duration-200"
+          className="text-slate-700 flex items-center gap-2 hover:bg-gray-200 p-2 rounded-sm hover:text-slate-900 transition-colors duration-200"
         >
-          <Home className="h-5 w-5" />
+          <Image
+            src="/logo.png"
+            alt="logo"
+            width={100}
+            height={100}
+            className="h-5 w-5"
+          />
+          <span className="text-slate-700 text-md font-bold">Cognito AI</span>
         </Link>
       </div>
       <div className="flex space-x-8">
