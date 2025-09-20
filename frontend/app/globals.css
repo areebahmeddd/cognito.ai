@@ -326,3 +326,14 @@ input:focus {
   background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
   background-size: 20px 20px;
 }
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
