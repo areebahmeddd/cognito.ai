@@ -4,7 +4,7 @@ import { Home, Github } from "lucide-react";
 
 export default function Navbar() {
   return (
-    <nav className="flex justify-between items-center pt-6 pb-3 px-6 relative z-30">
+    <nav className="flex justify-between items-center p-4 relative z-30">
       <div className="flex-1 flex justify-start">
         <Link
           href="/"
