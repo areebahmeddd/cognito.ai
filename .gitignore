@@ -94,3 +94,14 @@ target/
 cython_debug/
 *.manifest
 *.spec
+
+*.zip
+*.tsv
+*.json
+*.csv
+*.txt
+*.pdf
+*.docx
+*.doc
+*.xls
+*.xlsx
