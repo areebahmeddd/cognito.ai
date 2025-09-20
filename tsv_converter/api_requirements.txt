@@ -1,0 +1,16 @@
+# Forensic API Requirements
+# ========================
+
+# FastAPI and server
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# File handling
+python-multipart>=0.0.6
+
+# HTTP client for testing
+requests>=2.31.0
+
+# Existing converter dependencies
+pydantic>=2.0.0
+pyyaml>=6.0
