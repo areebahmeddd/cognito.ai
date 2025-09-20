@@ -179,7 +179,7 @@ export default function DashboardPage() {
 
       <main className="flex-1 flex relative z-10 px-6">
         <div className="flex-1 flex gap-6">
-          <div className="flex-1 relative bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+          <div className="flex-1 relative bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div className="absolute inset-0 bg-slate-50 bg-dot-pattern opacity-50"></div>
             <div
               className="relative h-full flex items-center justify-center p-8 overflow-hidden cursor-grab active:cursor-grabbing"
@@ -221,8 +221,8 @@ export default function DashboardPage() {
                   <div
                     className={`absolute cursor-pointer transition-all duration-300 hover:scale-110 ${
                       selectedNode?.id === "1"
-                        ? "ring-4 ring-gray-300 shadow-xl"
-                        : "hover:shadow-lg"
+                        ? "ring-4 ring-gray-300"
+                        : "hover:"
                     }`}
                     style={{
                       left: "50%",
@@ -231,13 +231,13 @@ export default function DashboardPage() {
                     }}
                     onClick={() => handleNodeClick(nodes[0])}
                   >
-                    <div className="bg-black text-white px-4 py-3 rounded-xl flex items-center space-x-2 shadow-lg">
+                    <div className="bg-black text-white px-4 py-3 rounded-xl flex items-center space-x-2">
                       <User className="h-4 w-4" />
                       <span className="text-sm font-medium">
                         areeb@testing.com
                       </span>
                     </div>
-                    <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-gray-600 rounded-full shadow-sm"></div>
+                    <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-gray-600 rounded-full"></div>
                   </div>
                 </div>
               </div>
@@ -246,26 +246,26 @@ export default function DashboardPage() {
             <div className="absolute bottom-4 left-4 flex space-x-2">
               <button
                 onClick={handleZoomIn}
-                className="p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-md hover:bg-white hover:shadow-lg transition-all duration-200 border border-slate-200"
+                className="p-2 bg-white/80 backdrop-blur-sm rounded-lg hover:bg-white transition-all duration-200 border border-slate-200"
               >
                 <Plus className="h-4 w-4 text-slate-600" />
               </button>
               <button
                 onClick={handleZoomOut}
-                className="p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-md hover:bg-white hover:shadow-lg transition-all duration-200 border border-slate-200"
+                className="p-2 bg-white/80 backdrop-blur-sm rounded-lg hover:bg-white transition-all duration-200 border border-slate-200"
               >
                 <Minus className="h-4 w-4 text-slate-600" />
               </button>
               <button
                 onClick={handleResetView}
-                className="p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-md hover:bg-white hover:shadow-lg transition-all duration-200 border border-slate-200"
+                className="p-2 bg-white/80 backdrop-blur-sm rounded-lg hover:bg-white transition-all duration-200 border border-slate-200"
               >
                 <Square className="h-4 w-4 text-slate-600" />
               </button>
             </div>
 
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-              <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-lg p-2 shadow-md">
+              <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-lg p-2">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-black rounded-full"></div>
                   <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
@@ -275,7 +275,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="w-96 flex flex-col gap-4">
-            <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 flex-1 overflow-y-auto">
+            <div className="bg-white rounded-xl border border-slate-200 p-6 flex-1 overflow-y-auto">
               {selectedNode ? (
                 <div>
                   <div className="flex items-center space-x-2 mb-4">
@@ -296,11 +296,11 @@ export default function DashboardPage() {
                   </p>
 
                   <div className="flex space-x-2 mb-6">
-                    <button className="flex-1 flex items-center justify-center space-x-1 px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-all duration-200 shadow-md hover:shadow-lg">
+                    <button className="flex-1 flex items-center justify-center space-x-1 px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-all duration-200">
                       <TrendingUp className="h-3 w-3" />
                       <span>Analytics</span>
                     </button>
-                    <button className="flex-1 flex items-center justify-center space-x-1 px-4 py-2 bg-white text-black border-2 border-black rounded-lg text-sm hover:bg-gray-100 transition-all duration-200 shadow-md hover:shadow-lg">
+                    <button className="flex-1 flex items-center justify-center space-x-1 px-4 py-2 bg-white text-black border-2 border-black rounded-lg text-sm hover:bg-gray-100 transition-all duration-200">
                       <Trash2 className="h-3 w-3" />
                       <span>Delete</span>
                     </button>
@@ -362,7 +362,7 @@ export default function DashboardPage() {
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                    <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center mx-auto mb-4">
                       <BarChart3 className="h-8 w-8 text-slate-500" />
                     </div>
                     <h3 className="text-lg font-semibold text-slate-900 mb-2">
@@ -376,7 +376,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 flex-1">
+            <div className="bg-white rounded-xl border border-slate-200 p-6 flex-1">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <BarChart3 className="h-5 w-5 text-slate-600" />
@@ -392,7 +392,7 @@ export default function DashboardPage() {
                     <Download className="h-4 w-4 text-slate-600" />
                   </button>
                   {showExportMenu && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-lg z-50">
                       <div className="py-2">
                         <button
                           onClick={() => handleExport("pdf")}
