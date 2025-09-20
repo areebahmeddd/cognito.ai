@@ -39,7 +39,7 @@ def convert_query(query: str) -> QueryResponse:
 
 def create_prompt(query: str) -> str:
     return f"""
-You are a forensic data analysis expert. Convert the following natural language query into an Elasticsearch DSL query for searching UFDR (Universal Forensic Data Report) data.
+You are a forensic data analysis expert. Convert the following natural language query into a SIMPLE Elasticsearch DSL query for searching UFDR (Universal Forensic Data Report) data.
 
 Query: "{query}"
 
@@ -73,7 +73,7 @@ Available fields in the data:
 Return a JSON response with this exact structure:
 {{
     "query": {{
-        // Elasticsearch DSL query object
+        // SIMPLE Elasticsearch DSL query object - avoid complex nested structures
     }},
     "query_intent": "brief description of what the query is looking for",
     "size": 10000,
@@ -87,20 +87,26 @@ Return a JSON response with this exact structure:
     }}
 }}
 
-Guidelines:
-1. Use multi_match queries for text searches across multiple fields
-2. Use term queries for exact matches on categorical fields
-3. Use range queries for time-based searches
-4. Use bool queries to combine multiple conditions
-5. Weight important fields higher (text^2, display_from^1.5, etc.)
-6. Include fuzziness for text searches to handle typos
-7. Use wildcard queries for partial matches on identifiers
-8. Consider both exact and fuzzy matching for phone numbers and addresses
-9. IMPORTANT: For cryptocurrency searches, look in currency field (BTC, ETH, etc.) and method field (crypto)
-10. IMPORTANT: For financial transactions, check type="transaction" and data_type="payments"
-11. IMPORTANT: For UPI searches, look in entities.upi field and method field
-12. IMPORTANT: For Bitcoin searches, look for "BTC" in currency field, not "bitcoin" in text
-13. IMPORTANT: For Ethereum searches, look for "ETH" in currency field, not "ethereum" in text
+CRITICAL GUIDELINES - KEEP QUERIES SIMPLE:
+1. Use simple multi_match queries for text searches
+2. Use simple term queries for exact matches
+3. Use simple range queries for time-based searches
+4. Use simple bool queries with basic must/should clauses
+5. AVOID complex nested structures, comments, or overly complicated logic
+6. AVOID using 'comment' fields in queries
+7. For cryptocurrency: search currency field for "BTC", "ETH", etc.
+8. For financial transactions: search type="transaction" and data_type="payments"
+9. For UPI: search entities.upi field and method field
+10. For Bitcoin: search currency="BTC", not text="bitcoin"
+11. For Ethereum: search currency="ETH", not text="ethereum"
+12. For foreign communications: search for international phone numbers (+971, +92, etc.)
+13. For suspicious activities: use simple multi_match with relevant keywords
 
-Convert the query now:
+Examples of SIMPLE queries:
+- All messages: {{"term": {{"type": "message"}}}}
+- Bitcoin transactions: {{"term": {{"currency": "BTC"}}}}
+- Messages from Amit: {{"term": {{"display_from": "Amit"}}}}
+- Time range: {{"range": {{"timestamp": {{"gte": "2024-05-01", "lte": "2024-05-05"}}}}}}
+
+Convert the query now with a SIMPLE structure:
 """
