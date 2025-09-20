@@ -4,17 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import Link from "next/link";
-import {
-  Mic,
-  Upload,
-  Heart,
-  Github,
-  Home,
-  X,
-  FileText,
-  Send,
-} from "lucide-react";
+import { Mic, Upload, Heart, X, FileText, Send } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function HomePage() {
   const [inputValue, setInputValue] = useState("");
@@ -40,7 +32,7 @@ export default function HomePage() {
       setIsVisible(false);
       setTimeout(() => {
         setCurrentTextIndex(
-          (prevIndex) => (prevIndex + 1) % animatedTexts.length,
+          (prevIndex) => (prevIndex + 1) % animatedTexts.length
         );
         setIsVisible(true);
       }, 300);
@@ -57,7 +49,7 @@ export default function HomePage() {
   };
 
   const handleModalFileUpload = (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = event.target.files;
     if (files) {
@@ -123,42 +115,8 @@ export default function HomePage() {
           <div className="particle particle-6"></div>
         </div>
       </div>
-      <nav className="flex justify-between items-center pt-6 pb-3 px-6 relative z-30">
-        <div className="flex-1 flex justify-start">
-          <Link
-            href="/"
-            className="text-slate-700 hover:bg-gray-200 p-2 rounded-sm hover:text-slate-900 transition-colors duration-200"
-          >
-            <Home className="h-5 w-5" />
-          </Link>
-        </div>
-        <div className="flex space-x-8">
-          <Link
-            href="/how-it-works"
-            className="text-slate-600 hover:text-slate-900 transition-colors duration-300 font-medium relative group"
-          >
-            How it works
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
-          </Link>
-          <Link
-            href="/how-to-use"
-            className="text-slate-600 hover:text-slate-900 transition-colors duration-300 font-medium relative group"
-          >
-            How to use
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
-          </Link>
-        </div>
-        <div className="flex-1 flex justify-end">
-          <a
-            href="https://github.com/areebahmeddd/cognito.ai"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-slate-700 hover:bg-gray-200 p-2 rounded-sm hover:text-slate-900 transition-colors duration-200"
-          >
-            <Github className="h-5 w-5" />
-          </a>
-        </div>
-      </nav>
+
+      <Navbar />
 
       <main className="flex flex-1 flex-col items-center justify-center min-h-[70vh] px-4">
         <div className="text-center max-w-2xl mx-auto mb-8 relative z-10">
@@ -332,12 +290,7 @@ export default function HomePage() {
         </div>
       )}
 
-      <footer className="text-center pb-4 mt-auto pt-4 relative z-30">
-        <p className="text-slate-600 flex items-center justify-center gap-2">
-          Built with <Heart className="h-4 w-4 text-accent fill-current" /> for
-          Smart India Hackathon
-        </p>
-      </footer>
+      <Footer />
     </div>
   );
 }
