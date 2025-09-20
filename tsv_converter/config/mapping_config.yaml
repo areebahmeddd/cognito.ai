@@ -1,0 +1,243 @@
+# TSV to JSON Converter Configuration
+# ===================================
+
+# Header variations mapping TSV headers to standardized JSON keys
+header_variations:
+  timestamp:
+    - "Call Date"
+    - "Date"
+    - "Timestamp"
+    - "Time"
+    - "Created Date"
+    - "Last Access Date"
+    - "Last Visit Time"
+    - "Added Date"
+  
+  phone_number:
+    - "Phone Number"
+    - "Address"
+    - "Phone"
+    - "Number"
+    - "Partner"
+    - "Phone Account Address"
+    - "From"
+    - "To"
+  
+  duration:
+    - "Duration"
+    - "Duration in Secs"
+    - "Duration_sec"
+    - "Call Duration"
+  
+  message_text:
+    - "Body"
+    - "Message"
+    - "Text"
+    - "Content"
+    - "Subject"
+    - "Title"
+  
+  url:
+    - "URL"
+    - "Link"
+    - "Address"
+    - "Website"
+  
+  location:
+    - "Location"
+    - "Address"
+    - "Place"
+    - "Country"
+    - "City"
+  
+  latitude:
+    - "Latitude"
+    - "Lat"
+    - "Latitude"
+    - "Lat_coord"
+  
+  longitude:
+    - "Longitude"
+    - "Lon"
+    - "Lng"
+    - "Lng_coord"
+  
+  filename:
+    - "Filename"
+    - "File"
+    - "Name"
+    - "Source File"
+  
+  email:
+    - "Email"
+    - "Email Address"
+    - "Mail"
+  
+  amount:
+    - "Amount"
+    - "Value"
+    - "Price"
+    - "Cost"
+  
+  message_id:
+    - "MSG ID"
+    - "Message ID"
+    - "ID"
+  
+  thread_id:
+    - "Thread ID"
+    - "Thread"
+  
+  source_path:
+    - "Source File"
+    - "Source Path"
+    - "File Path"
+
+# Data type detection indicators
+data_type_indicators:
+  call:
+    required: ["timestamp", "phone_number"]
+    optional: ["duration", "type", "direction"]
+    keywords: ["call", "phone", "duration", "incoming", "outgoing", "missed", "rejected"]
+  
+  message:
+    required: ["timestamp", "message_text"]
+    optional: ["from", "to", "thread_id"]
+    keywords: ["message", "sms", "text", "body", "thread", "chat", "msg"]
+  
+  contact:
+    required: ["name", "phone_number"]
+    optional: ["email", "display_name"]
+    keywords: ["contact", "name", "phone", "email", "address", "display"]
+  
+  browser:
+    required: ["url"]
+    optional: ["title", "timestamp", "visit_count"]
+    keywords: ["url", "history", "bookmark", "cookie", "browser", "web", "chrome", "firefox", "edge"]
+  
+  location:
+    required: ["latitude", "longitude"]
+    optional: ["address", "label", "timestamp"]
+    keywords: ["latitude", "longitude", "address", "place", "location", "coordinates", "maps"]
+  
+  file:
+    required: ["filename"]
+    optional: ["path", "size", "hash"]
+    keywords: ["filename", "path", "size", "hash", "file", "download"]
+  
+  email:
+    required: ["subject", "from", "to"]
+    optional: ["timestamp", "body"]
+    keywords: ["subject", "from", "to", "email", "message", "body", "gmail"]
+  
+  transaction:
+    required: ["amount", "timestamp"]
+    optional: ["from", "to", "method"]
+    keywords: ["amount", "transaction", "payment", "money", "currency", "upi"]
+
+# Timestamp formats to try
+timestamp_formats:
+  - "%Y-%m-%d %H:%M:%S"
+  - "%Y-%m-%dT%H:%M:%SZ"
+  - "%Y-%m-%dT%H:%M:%S.%fZ"
+  - "%Y-%m-%dT%H:%M:%S.%f%z"
+  - "%Y-%m-%dT%H:%M:%S%z"
+  - "%Y-%m-%d %H:%M:%S.%f"
+  - "%Y-%m-%d %H:%M:%S.%f%z"
+  - "%Y-%m-%d %H:%M:%S%z"
+  - "%Y-%m-%d"
+  - "%m/%d/%Y"
+  - "%d/%m/%Y"
+  - "%Y-%m-%d %H:%M:%S.%f%z"
+  - "%Y-%m-%d %H:%M:%S.%f+00:00"
+
+# Entity extraction patterns
+entity_patterns:
+  phone:
+    - "\\+?[1-9]\\d{1,14}"
+    - "\\(\\d{3}\\)\\s?\\d{3}-\\d{4}"
+    - "\\d{3}-\\d{3}-\\d{4}"
+    - "\\d{3}\\.\\d{3}\\.\\d{4}"
+    - "\\d{10}"
+    - "\\+?\\d{1,3}[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}"
+  
+  email:
+    - "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+  
+  url:
+    - "https?://[^\\s<>\"{}|\\\\^`\\[\\]]+"
+    - "www\\.[^\\s<>\"{}|\\\\^`\\[\\]]+"
+    - "[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(?:/[^\\s<>\"{}|\\\\^`\\[\\]]*)?"
+  
+  ip_address:
+    - "\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b"
+    - "\\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\b"
+  
+  upi:
+    - "[a-zA-Z0-9._%+-]+@[a-zA-Z]{2,}"
+    - "[a-zA-Z0-9._%+-]+\\.[a-zA-Z]{2,}"
+  
+  ifsc:
+    - "[A-Z]{4}0[A-Z0-9]{6}"
+  
+  bitcoin:
+    - "\\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\\b"
+    - "\\bbc1[a-z0-9]{39,59}\\b"
+  
+  coordinates:
+    - "-?\\d{1,3}\\.\\d+,\\s*-?\\d{1,3}\\.\\d+"
+    - "-?\\d{1,3}\\.\\d+\\s*,\\s*-?\\d{1,3}\\.\\d+"
+
+# File-specific mappings
+file_mappings:
+  "Call Logs.tsv":
+    type: "call"
+    data_type: "call_logs"
+    mapper: "CallLogsMapper"
+  
+  "sms messages.tsv":
+    type: "message"
+    data_type: "chat"
+    channel: "sms"
+    mapper: "MessagesMapper"
+  
+  "mms messages.tsv":
+    type: "message"
+    data_type: "chat"
+    channel: "mms"
+    mapper: "MessagesMapper"
+  
+  "Contacts.tsv":
+    type: "contact"
+    data_type: "contacts"
+    mapper: "ContactsMapper"
+  
+  "Chrome - Web History.tsv":
+    type: "browser"
+    data_type: "web_history"
+    mapper: "BrowserMapper"
+  
+  "Chrome - Cookies.tsv":
+    type: "browser"
+    data_type: "cookies"
+    mapper: "BrowserMapper"
+  
+  "Chrome - Bookmarks.tsv":
+    type: "browser"
+    data_type: "bookmarks"
+    mapper: "BrowserMapper"
+  
+  "Google Maps Label Places.tsv":
+    type: "location"
+    data_type: "places"
+    mapper: "LocationMapper"
+
+# Conversion settings
+conversion_settings:
+  max_file_size_mb: 100
+  batch_size: 1000
+  encoding: "utf-8"
+  error_handling: "continue"
+  validation: true
+  logging_level: "INFO"
+
