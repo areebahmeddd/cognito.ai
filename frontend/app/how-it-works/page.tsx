@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 
 export default function DetailsPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="absolute inset-0 z-0">
         <div className="particle-bg">
           <div className="particle particle-1"></div>
@@ -19,12 +19,12 @@ export default function DetailsPage() {
       </div>
       <Navbar />
 
-      <main className="flex flex-1 flex-col items-center justify-center min-h-[70vh] px-4">
-        <div className="text-center max-w-2xl mx-auto relative z-10">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+      <main className="flex min-h-[70vh] flex-1 flex-col items-center justify-center px-4">
+        <div className="relative z-10 mx-auto max-w-2xl text-center">
+          <h1 className="mb-6 text-4xl font-bold text-slate-900 md:text-5xl">
             How it works
           </h1>
-          <p className="text-slate-600 text-lg">This page is coming soon...</p>
+          <p className="text-lg text-slate-600">This page is coming soon...</p>
         </div>
       </main>
 

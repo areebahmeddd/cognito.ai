@@ -150,7 +150,7 @@ export default function DashboardPage() {
     } else if (format === "pdf") {
       // For PDF, we'll create a simple text-based PDF using a library or show a message
       alert(
-        "PDF export feature will be implemented with a PDF library. For now, please use JSON or CSV export."
+        "PDF export feature will be implemented with a PDF library. For now, please use JSON or CSV export.",
       );
     }
 
@@ -174,15 +174,15 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
+    <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
       <Navbar />
 
-      <main className="flex-1 relative z-10 px-6 overflow-hidden">
-        <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0">
-          <div className="flex-1 relative border border-slate-200 bg-white rounded-xl overflow-hidden">
-            <div className="absolute inset-0 bg-dot-pattern opacity-50"></div>
+      <main className="relative z-10 flex-1 overflow-hidden px-6">
+        <div className="flex h-full min-h-0 flex-col gap-6 lg:flex-row">
+          <div className="relative flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <div className="bg-dot-pattern absolute inset-0 opacity-50"></div>
             <div
-              className="relative h-full flex items-center justify-center p-8 overflow-hidden cursor-grab active:cursor-grabbing"
+              className="relative flex h-full cursor-grab items-center justify-center overflow-hidden p-8 active:cursor-grabbing"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
@@ -221,7 +221,7 @@ export default function DashboardPage() {
                   <div
                     className={`absolute cursor-pointer transition-all duration-300 hover:scale-110 ${
                       selectedNode?.id === "1"
-                        ? "ring-4 ring-gray-300 rounded-xl"
+                        ? "rounded-xl ring-4 ring-gray-300"
                         : "hover:"
                     }`}
                     style={{
@@ -231,13 +231,13 @@ export default function DashboardPage() {
                     }}
                     onClick={() => handleNodeClick(nodes[0])}
                   >
-                    <div className="bg-black text-white px-4 py-3 rounded-xl flex items-center gap-2">
+                    <div className="flex items-center gap-2 rounded-xl bg-black px-4 py-3 text-white">
                       <User className="h-4 w-4" />
                       <span className="text-sm font-medium">
                         areeb@testing.com
                       </span>
                     </div>
-                    <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-gray-600 rounded-full"></div>
+                    <div className="absolute top-1/2 -right-1 h-3 w-3 -translate-y-1/2 transform rounded-full bg-gray-600"></div>
                   </div>
                 </div>
               </div>
@@ -246,36 +246,36 @@ export default function DashboardPage() {
             <div className="absolute bottom-4 left-4 flex gap-2">
               <button
                 onClick={handleZoomIn}
-                className="p-2 bg-white/80 backdrop-blur-sm rounded-lg hover:bg-white transition-all duration-200 border border-slate-200"
+                className="rounded-lg border border-slate-200 bg-white/80 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white"
               >
                 <Plus className="h-4 w-4 text-slate-600" />
               </button>
               <button
                 onClick={handleZoomOut}
-                className="p-2 bg-white/80 backdrop-blur-sm rounded-lg hover:bg-white transition-all duration-200 border border-slate-200"
+                className="rounded-lg border border-slate-200 bg-white/80 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white"
               >
                 <Minus className="h-4 w-4 text-slate-600" />
               </button>
               <button
                 onClick={handleResetView}
-                className="p-2 bg-white/80 backdrop-blur-sm rounded-lg hover:bg-white transition-all duration-200 border border-slate-200"
+                className="rounded-lg border border-slate-200 bg-white/80 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white"
               >
                 <Square className="h-4 w-4 text-slate-600" />
               </button>
             </div>
 
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-              <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-lg p-2">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 transform">
+              <div className="rounded-lg border border-slate-200 bg-white/80 p-2 backdrop-blur-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-black rounded-full"></div>
-                  <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
+                  <div className="h-3 w-3 rounded-full bg-black"></div>
+                  <div className="h-3 w-3 rounded-full bg-gray-600"></div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="w-full lg:w-80 xl:w-96 flex flex-col gap-6 h-full">
-            <div className="bg-white rounded-xl border border-slate-200 p-6 h-[35%] overflow-y-auto min-h-0 scrollbar-hide">
+          <div className="flex h-full w-full flex-col gap-6 lg:w-80 xl:w-96">
+            <div className="scrollbar-hide h-[35%] min-h-0 overflow-y-auto rounded-xl border border-slate-200 bg-white p-6">
               {selectedNode ? (
                 <div className="h-full">
                   <div className="flex items-center gap-2">
@@ -289,18 +289,18 @@ export default function DashboardPage() {
                     </h2>
                   </div>
 
-                  <p className="text-sm text-slate-600 mb-4">
+                  <p className="mb-4 text-sm text-slate-600">
                     {selectedNode.type === "user"
                       ? "A user account in the system"
                       : "An environment on a host with address [redacted IP address]"}
                   </p>
 
-                  <div className="flex flex-col sm:flex-row gap-2 mb-6">
-                    <button className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-all duration-200">
+                  <div className="mb-6 flex flex-col gap-2 sm:flex-row">
+                    <button className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-black px-4 py-2 text-sm text-white transition-all duration-200 hover:bg-gray-800">
                       <TrendingUp className="h-3 w-3" />
                       <span>Analytics</span>
                     </button>
-                    <button className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-white text-black border-2 border-black rounded-lg text-sm hover:bg-gray-100 transition-all duration-200">
+                    <button className="flex flex-1 items-center justify-center gap-1 rounded-lg border-2 border-black bg-white px-4 py-2 text-sm text-black transition-all duration-200 hover:bg-gray-100">
                       <Trash2 className="h-3 w-3" />
                       <span>Delete</span>
                     </button>
@@ -308,7 +308,7 @@ export default function DashboardPage() {
 
                   <div className="space-y-2">
                     {selectedNode.address && (
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                         <span className="text-sm font-medium text-slate-700">
                           Address:
                         </span>
@@ -318,7 +318,7 @@ export default function DashboardPage() {
                       </div>
                     )}
                     {selectedNode.created && (
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                         <span className="text-sm font-medium text-slate-700">
                           Created:
                         </span>
@@ -328,7 +328,7 @@ export default function DashboardPage() {
                       </div>
                     )}
                     {selectedNode.description && (
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                         <span className="text-sm font-medium text-slate-700">
                           Description:
                         </span>
@@ -338,7 +338,7 @@ export default function DashboardPage() {
                       </div>
                     )}
                     {selectedNode.host && (
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                         <span className="text-sm font-medium text-slate-700">
                           Host:
                         </span>
@@ -348,7 +348,7 @@ export default function DashboardPage() {
                       </div>
                     )}
                     {selectedNode.updated && (
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                         <span className="text-sm font-medium text-slate-700">
                           Updated:
                         </span>
@@ -360,12 +360,12 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-full">
+                <div className="flex h-full items-center justify-center">
                   <div className="text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200">
                       <BarChart3 className="h-8 w-8 text-slate-500" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                    <h3 className="mb-2 text-lg font-semibold text-slate-900">
                       Node Information
                     </h3>
                     <p className="text-sm text-slate-600">
@@ -376,8 +376,8 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-6 flex-1 min-h-0 overflow-y-auto scrollbar-hide">
-              <div className="flex items-center justify-between mb-4">
+            <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-200 bg-white p-6">
+              <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-slate-600" />
                   <h3 className="text-lg font-semibold text-slate-900">
@@ -387,30 +387,30 @@ export default function DashboardPage() {
                 <div className="relative" ref={exportMenuRef}>
                   <button
                     onClick={() => setShowExportMenu(!showExportMenu)}
-                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors duration-200"
+                    className="rounded-lg p-2 transition-colors duration-200 hover:bg-slate-100"
                   >
                     <Download className="h-4 w-4 text-slate-600" />
                   </button>
                   {showExportMenu && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-lg z-50">
+                    <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border border-slate-200 bg-white">
                       <div className="py-2">
                         <button
                           onClick={() => handleExport("pdf")}
-                          className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors duration-200"
+                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 transition-colors duration-200 hover:bg-slate-50"
                         >
                           <FileText className="h-4 w-4 text-red-500" />
                           <span>Export as PDF</span>
                         </button>
                         <button
                           onClick={() => handleExport("json")}
-                          className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors duration-200"
+                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 transition-colors duration-200 hover:bg-slate-50"
                         >
                           <FileJson className="h-4 w-4 text-yellow-500" />
                           <span>Export as JSON</span>
                         </button>
                         <button
                           onClick={() => handleExport("csv")}
-                          className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors duration-200"
+                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 transition-colors duration-200 hover:bg-slate-50"
                         >
                           <FileSpreadsheet className="h-4 w-4 text-green-500" />
                           <span>Export as CSV</span>
@@ -420,59 +420,59 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 bg-slate-50 rounded-lg h-20 flex flex-col justify-center">
-                  <p className="text-sm font-medium text-slate-700 mb-1">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700">
                     Total Nodes
                   </p>
                   <p className="text-lg font-bold text-slate-900">
                     {nodes.length}
                   </p>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-lg h-20 flex flex-col justify-center">
-                  <p className="text-sm font-medium text-slate-700 mb-1">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700">
                     Connections
                   </p>
                   <p className="text-lg font-bold text-slate-900">1</p>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-lg h-20 flex flex-col justify-center">
-                  <p className="text-sm font-medium text-slate-700 mb-1">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700">
                     Threat Level
                   </p>
                   <p className="text-sm text-slate-600">
                     {selectedNode ? "Low" : "Unknown"}
                   </p>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-lg h-20 flex flex-col justify-center">
-                  <p className="text-sm font-medium text-slate-700 mb-1">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700">
                     Security Status
                   </p>
                   <p className="text-sm text-slate-600">
                     {selectedNode ? "Analyzed" : "Pending"}
                   </p>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-lg h-20 flex flex-col justify-center">
-                  <p className="text-sm font-medium text-slate-700 mb-1">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700">
                     Data Sources
                   </p>
                   <p className="text-lg font-bold text-slate-900">3</p>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-lg h-20 flex flex-col justify-center">
-                  <p className="text-sm font-medium text-slate-700 mb-1">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700">
                     Last Scan
                   </p>
                   <p className="text-sm text-slate-600">
                     {selectedNode ? "2 min ago" : "Never"}
                   </p>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-lg h-20 flex flex-col justify-center">
-                  <p className="text-sm font-medium text-slate-700 mb-1">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700">
                     Crypto Addresses
                   </p>
                   <p className="text-lg font-bold text-slate-900">12</p>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-lg h-20 flex flex-col justify-center">
-                  <p className="text-sm font-medium text-slate-700 mb-1">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700">
                     Foreign Comms
                   </p>
                   <p className="text-lg font-bold text-slate-900">5</p>
