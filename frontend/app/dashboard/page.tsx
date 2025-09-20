@@ -180,7 +180,7 @@ export default function DashboardPage() {
       <main className="flex-1 flex relative z-10 px-4">
         <div className="flex-1 flex gap-4">
           <div className="flex-1 relative bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="absolute inset-0 bg-slate-50 bg-dot-pattern opacity-50"></div>
+            <div className="absolute inset-0 bg-dot-pattern opacity-50"></div>
             <div
               className="relative h-full flex items-center justify-center p-8 overflow-hidden cursor-grab active:cursor-grabbing"
               onMouseDown={handleMouseDown}
