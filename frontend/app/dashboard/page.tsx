@@ -425,7 +425,7 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-slate-700 mb-1">
                     Total Nodes
                   </p>
-                  <p className="text-xl font-bold text-slate-900">
+                  <p className="text-lg font-bold text-slate-900">
                     {nodes.length}
                   </p>
                 </div>
@@ -433,7 +433,7 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-slate-700 mb-1">
                     Connections
                   </p>
-                  <p className="text-xl font-bold text-slate-900">1</p>
+                  <p className="text-lg font-bold text-slate-900">1</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg h-20 flex flex-col justify-center">
                   <p className="text-sm font-medium text-slate-700 mb-1">
@@ -455,7 +455,7 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-slate-700 mb-1">
                     Data Sources
                   </p>
-                  <p className="text-xl font-bold text-slate-900">3</p>
+                  <p className="text-lg font-bold text-slate-900">3</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg h-20 flex flex-col justify-center">
                   <p className="text-sm font-medium text-slate-700 mb-1">
@@ -469,13 +469,13 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-slate-700 mb-1">
                     Crypto Addresses
                   </p>
-                  <p className="text-xl font-bold text-slate-900">12</p>
+                  <p className="text-lg font-bold text-slate-900">12</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-lg h-20 flex flex-col justify-center">
                   <p className="text-sm font-medium text-slate-700 mb-1">
                     Foreign Comms
                   </p>
-                  <p className="text-xl font-bold text-slate-900">5</p>
+                  <p className="text-lg font-bold text-slate-900">5</p>
                 </div>
               </div>
             </div>
