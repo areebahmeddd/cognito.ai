@@ -221,7 +221,7 @@ export default function DashboardPage() {
                   <div
                     className={`absolute cursor-pointer transition-all duration-300 hover:scale-110 ${
                       selectedNode?.id === "1"
-                        ? "ring-4 ring-gray-300"
+                        ? "ring-4 ring-gray-300 rounded-xl"
                         : "hover:"
                     }`}
                     style={{
@@ -306,7 +306,7 @@ export default function DashboardPage() {
                     </button>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {selectedNode.address && (
                       <div>
                         <span className="text-sm font-medium text-slate-700">
