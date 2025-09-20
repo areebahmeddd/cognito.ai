@@ -1,10 +1,10 @@
 import uvicorn
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from .core.config import settings
-from .services.elasticsearch import wait_es, create_index
 from .routes.api import api_router
+from .services.elasticsearch import wait_es, create_index
 
 app = FastAPI(
     title=settings.app_name,

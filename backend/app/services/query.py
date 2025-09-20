@@ -4,44 +4,41 @@ from app.core.config import settings
 from app.models.schemas import QueryResponse
 
 
-class QueryConverter:
-    def __init__(self):
-        genai.configure(api_key=settings.gemini_api_key)
-        self.model = genai.GenerativeModel("gemini-2.5-flash")
+def convert_query(query: str) -> QueryResponse:
+    genai.configure(api_key=settings.gemini_api_key)
+    model = genai.GenerativeModel("gemini-2.5-flash")
 
-    def convert_query(self, query: str) -> QueryResponse:
-        return self._convert_ai(query)
+    prompt = create_prompt(query)
+    response = model.generate_content(prompt)
+    response_text = response.text.strip()
 
-    def _convert_ai(self, query: str) -> QueryResponse:
-        prompt = self._create_prompt(query)
-        response = self.model.generate_content(prompt)
-        response_text = response.text.strip()
+    if "```json" in response_text:
+        response_text = response_text.split("```json")[1].split("```")[0].strip()
+    elif "```" in response_text:
+        response_text = response_text.split("```")[1].strip()
 
-        if "```json" in response_text:
-            response_text = response_text.split("```json")[1].split("```")[0].strip()
-        elif "```" in response_text:
-            response_text = response_text.split("```")[1].strip()
+    result = json.loads(response_text)
 
-        result = json.loads(response_text)
-        return QueryResponse(
-            query=result.get("query", {}),
-            query_intent=result.get("query_intent", "general_search"),
-            size=result.get("size", 10000),
-            sort=result.get("sort", [{"timestamp": {"order": "desc"}}]),
-            highlight=result.get(
-                "highlight",
-                {
-                    "fields": {
-                        "text": {"fragment_size": 150, "number_of_fragments": 2},
-                        "display_from": {"fragment_size": 50},
-                        "display_to": {"fragment_size": 50},
-                    }
-                },
-            ),
-        )
+    return QueryResponse(
+        query=result.get("query", {}),
+        query_intent=result.get("query_intent", "general_search"),
+        size=result.get("size", 10000),
+        sort=result.get("sort", [{"timestamp": {"order": "desc"}}]),
+        highlight=result.get(
+            "highlight",
+            {
+                "fields": {
+                    "text": {"fragment_size": 150, "number_of_fragments": 2},
+                    "display_from": {"fragment_size": 50},
+                    "display_to": {"fragment_size": 50},
+                }
+            },
+        ),
+    )
 
-    def _create_prompt(self, query: str) -> str:
-        return f"""
+
+def create_prompt(query: str) -> str:
+    return f"""
 You are a forensic data analysis expert. Convert the following natural language query into an Elasticsearch DSL query for searching UFDR (Universal Forensic Data Report) data.
 
 Query: "{query}"
@@ -107,7 +104,3 @@ Guidelines:
 
 Convert the query now:
 """
-
-
-def get_converter() -> QueryConverter:
-    return QueryConverter()

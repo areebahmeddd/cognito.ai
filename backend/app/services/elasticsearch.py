@@ -1,9 +1,9 @@
 import json
 import time
+from typing import Any, Dict, List, Optional
 from elasticsearch import Elasticsearch, helpers
 from elasticsearch.dsl import Search, Q
 from elasticsearch.exceptions import ConnectionError, NotFoundError
-from typing import Any, Dict, List, Optional
 
 es_client = Elasticsearch("http://localhost:9200")
 index_name = "ufdr"
@@ -23,6 +23,7 @@ def wait_es(max_retries: int = 30, delay: float = 1.0) -> bool:
 def create_index() -> None:
     if es_client.indices.exists(index=index_name):
         return
+
     settings = {
         "settings": {
             "analysis": {
@@ -136,16 +137,20 @@ def search_dsl(
     highlight: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     s = Search(using=es_client, index=index_name).extra(size=size, from_=from_)
+
     if query_dict:
         s = s.query(Q(query_dict))
+
     if sort:
         for sort_item in sort:
             field = list(sort_item.keys())[0]
             order = sort_item[field].get("order", "desc")
             s = s.sort(f"-{field}" if order == "desc" else field)
+
     if highlight:
         for field, config in highlight.get("fields", {}).items():
             s = s.highlight(field, **config)
+
     response = s.execute()
     return response.to_dict()
 
