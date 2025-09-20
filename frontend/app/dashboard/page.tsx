@@ -177,8 +177,8 @@ export default function DashboardPage() {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
       <Navbar />
 
-      <main className="flex-1 flex relative z-10 px-6">
-        <div className="flex-1 flex gap-6">
+      <main className="flex-1 flex relative z-10 px-4">
+        <div className="flex-1 flex gap-4">
           <div className="flex-1 relative bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div className="absolute inset-0 bg-slate-50 bg-dot-pattern opacity-50"></div>
             <div
