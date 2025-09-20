@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { Box } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { Text, Box } from "@react-three/drei";
+import { useRef } from "react";
 import * as THREE from "three";
 
 interface SearchBar3DProps {

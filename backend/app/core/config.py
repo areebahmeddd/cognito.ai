@@ -4,6 +4,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     app_name: str = "Cognito AI"
+    app_description: str = "Natural language interface for digital forensic evidence"
     app_version: str = "1.0.0"
     debug: bool = False
     elasticsearch_url: str = "http://localhost:9200"

@@ -8,7 +8,7 @@ from .services.elasticsearch import wait_es, create_index
 
 app = FastAPI(
     title=settings.app_name,
-    description="Natural Language Interface for Digital Forensic Evidence",
+    description=settings.app_description,
     version=settings.app_version,
 )
 
