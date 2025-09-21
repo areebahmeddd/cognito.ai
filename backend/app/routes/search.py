@@ -3,6 +3,7 @@ from typing import Dict, Any
 from ..models.schemas import QueryRequest, UFDRDocument
 from ..services.elasticsearch import search_dsl
 from ..services.query import convert_query
+from ..services.forensic_graph import forensic_graph_builder
 
 router = APIRouter(tags=["search"])
 
@@ -28,12 +29,16 @@ async def search_query(request: QueryRequest):
 
         analysis = _analyze_results(hits, request.query)
 
+        # Generate graph data from search results
+        graph_data = forensic_graph_builder.create_graph_from_search_results(hits)
+
         return {
             "query": request.query,
             "query_intent": converted_query.query_intent,
             "total_results": response["hits"]["total"]["value"],
             "analysis": analysis,
             "results": hits,
+            "graph_data": graph_data,  # NEW: Auto-generated graph visualization
             "took": response["took"],
         }
     except Exception as e:
