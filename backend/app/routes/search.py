@@ -4,7 +4,7 @@ from ..models.schemas import QueryRequest, UFDRDocument
 from ..services.elasticsearch import search_dsl
 from ..services.query import convert_query
 
-router = APIRouter(tags=["search"])
+router = APIRouter()
 
 
 @router.post("/query", response_model=Dict[str, Any])

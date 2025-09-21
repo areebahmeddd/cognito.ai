@@ -3,7 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from .core.config import settings
-from .routes.api import api_router
+from .routes.data import router as data_router
+from .routes.search import router as search_router
 from .services.elasticsearch import wait_es, create_index
 
 app = FastAPI(
@@ -20,7 +21,8 @@ app.add_middleware(
     allow_credentials=settings.cors_credentials,
 )
 
-app.include_router(api_router)
+app.include_router(data_router, prefix="/api/v1/data", tags=["data"])
+app.include_router(search_router, prefix="/api/v1/search", tags=["search"])
 
 
 @app.on_event("startup")

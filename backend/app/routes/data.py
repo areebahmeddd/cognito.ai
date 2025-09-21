@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from ..services.elasticsearch import load_data, get_count
 
-router = APIRouter(tags=["data"])
+router = APIRouter()
 
 
 @router.post("/load")
