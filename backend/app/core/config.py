@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
     gemini_api_key: Optional[str] = None
 
+    # Neo4j configuration
+    neo4j_uri: str = "bolt://localhost:7687"
+    neo4j_username: str = "neo4j"
+    neo4j_password: str = "password"
+    neo4j_database: str = "neo4j"
+
     class Config:
         env_file = ".env"
         case_sensitive = False
