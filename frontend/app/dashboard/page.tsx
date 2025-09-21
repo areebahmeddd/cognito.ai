@@ -145,7 +145,6 @@ export default function DashboardPage() {
       link.click();
       URL.revokeObjectURL(url);
     } else if (format === "pdf") {
-      // For PDF, we'll create a simple text-based PDF using a library or show a message
       alert(
         "PDF export feature will be implemented with a PDF library. For now, please use JSON or CSV export.",
       );
@@ -171,12 +170,12 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <Navbar />
 
       <main className="relative z-10 flex-1 overflow-hidden px-6">
         <div className="flex h-full min-h-0 flex-col gap-6 lg:flex-row">
-          <div className="relative flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="relative flex-1 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
             <div className="bg-dot-pattern absolute inset-0 opacity-50"></div>
             <div
               className="relative flex h-full cursor-grab items-center justify-center overflow-hidden p-8 active:cursor-grabbing"
@@ -207,6 +206,7 @@ export default function DashboardPage() {
                         d="M 20 0 L 0 0 0 20"
                         fill="none"
                         stroke="#cbd5e1"
+                        className="dark:stroke-slate-600"
                         strokeWidth="1"
                       />
                     </pattern>
@@ -218,7 +218,7 @@ export default function DashboardPage() {
                   <div
                     className={`absolute cursor-pointer transition-all duration-300 hover:scale-110 ${
                       selectedNode?.id === "1"
-                        ? "rounded-xl ring-4 ring-gray-300"
+                        ? "rounded-xl ring-4 ring-gray-300 dark:ring-gray-600"
                         : "hover:"
                     }`}
                     style={{
@@ -234,7 +234,7 @@ export default function DashboardPage() {
                         areeb@testing.com
                       </span>
                     </div>
-                    <div className="absolute top-1/2 -right-1 h-3 w-3 -translate-y-1/2 transform rounded-full bg-gray-600"></div>
+                    <div className="absolute top-1/2 -right-1 h-3 w-3 -translate-y-1/2 transform rounded-full bg-gray-600 dark:bg-gray-400"></div>
                   </div>
                 </div>
               </div>
@@ -243,61 +243,61 @@ export default function DashboardPage() {
             <div className="absolute bottom-4 left-4 flex gap-2">
               <button
                 onClick={handleZoomIn}
-                className="rounded-lg border border-slate-200 bg-white/80 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white"
+                className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white dark:hover:bg-slate-800"
               >
-                <Plus className="h-4 w-4 text-slate-600" />
+                <Plus className="h-4 w-4 text-slate-600 dark:text-slate-400" />
               </button>
               <button
                 onClick={handleZoomOut}
-                className="rounded-lg border border-slate-200 bg-white/80 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white"
+                className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white dark:hover:bg-slate-800"
               >
-                <Minus className="h-4 w-4 text-slate-600" />
+                <Minus className="h-4 w-4 text-slate-600 dark:text-slate-400" />
               </button>
               <button
                 onClick={handleResetView}
-                className="rounded-lg border border-slate-200 bg-white/80 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white"
+                className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white dark:hover:bg-slate-800"
               >
-                <Square className="h-4 w-4 text-slate-600" />
+                <Square className="h-4 w-4 text-slate-600 dark:text-slate-400" />
               </button>
             </div>
 
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 transform">
-              <div className="rounded-lg border border-slate-200 bg-white/80 p-2 backdrop-blur-sm">
+              <div className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 p-2 backdrop-blur-sm">
                 <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-black"></div>
-                  <div className="h-3 w-3 rounded-full bg-gray-600"></div>
+                  <div className="h-3 w-3 rounded-full bg-black dark:bg-white"></div>
+                  <div className="h-3 w-3 rounded-full bg-gray-600 dark:bg-gray-400"></div>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="flex h-full w-full flex-col gap-6 lg:w-80 xl:w-96">
-            <div className="scrollbar-hide h-[35%] min-h-0 overflow-y-auto rounded-xl border border-slate-200 bg-white p-6">
+            <div className="scrollbar-hide h-[35%] min-h-0 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
               {selectedNode ? (
                 <div className="h-full">
                   <div className="flex items-center gap-2">
                     {selectedNode.type === "user" ? (
-                      <User className="h-5 w-5 text-slate-600" />
+                      <User className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                     ) : (
-                      <Laptop className="h-5 w-5 text-slate-600" />
+                      <Laptop className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                     )}
-                    <h2 className="text-lg font-semibold text-slate-900">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                       {selectedNode.label}
                     </h2>
                   </div>
 
-                  <p className="mb-4 text-sm text-slate-600">
+                  <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
                     {selectedNode.type === "user"
                       ? "A user account in the system"
                       : "An environment on a host with address [redacted IP address]"}
                   </p>
 
                   <div className="mb-6 flex flex-col gap-2 sm:flex-row">
-                    <button className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-black px-4 py-2 text-sm text-white transition-all duration-200 hover:bg-gray-800">
+                    <button className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-black dark:bg-white px-4 py-2 text-sm text-white dark:text-black transition-all duration-200 hover:bg-gray-800 dark:hover:bg-gray-200">
                       <TrendingUp className="h-3 w-3" />
                       <span>Analytics</span>
                     </button>
-                    <button className="flex flex-1 items-center justify-center gap-1 rounded-lg border-2 border-black bg-white px-4 py-2 text-sm text-black transition-all duration-200 hover:bg-gray-100">
+                    <button className="flex flex-1 items-center justify-center gap-1 rounded-lg border-2 border-black dark:border-white bg-white dark:bg-slate-800 px-4 py-2 text-sm text-black dark:text-white transition-all duration-200 hover:bg-gray-100 dark:hover:bg-slate-700">
                       <Trash2 className="h-3 w-3" />
                       <span>Delete</span>
                     </button>
@@ -306,50 +306,50 @@ export default function DashboardPage() {
                   <div className="space-y-2">
                     {selectedNode.address && (
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                           Address:
                         </span>
-                        <span className="text-sm text-slate-600">
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
                           {selectedNode.address}
                         </span>
                       </div>
                     )}
                     {selectedNode.created && (
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                           Created:
                         </span>
-                        <span className="text-sm text-slate-600">
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
                           {selectedNode.created}
                         </span>
                       </div>
                     )}
                     {selectedNode.description && (
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                           Description:
                         </span>
-                        <span className="text-sm text-slate-600">
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
                           {selectedNode.description}
                         </span>
                       </div>
                     )}
                     {selectedNode.host && (
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                           Host:
                         </span>
-                        <span className="text-sm text-slate-600">
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
                           {selectedNode.host}
                         </span>
                       </div>
                     )}
                     {selectedNode.updated && (
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                           Updated:
                         </span>
-                        <span className="text-sm text-slate-600">
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
                           {selectedNode.updated}
                         </span>
                       </div>
@@ -359,13 +359,13 @@ export default function DashboardPage() {
               ) : (
                 <div className="flex h-full items-center justify-center">
                   <div className="text-center">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200">
-                      <BarChart3 className="h-8 w-8 text-slate-500" />
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600">
+                      <BarChart3 className="h-8 w-8 text-slate-500 dark:text-slate-400" />
                     </div>
-                    <h3 className="mb-2 text-lg font-semibold text-slate-900">
+                    <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
                       Node Information
                     </h3>
-                    <p className="text-sm text-slate-600">
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
                       Click on a node in the graph to view its details
                     </p>
                   </div>
@@ -373,41 +373,41 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-200 bg-white p-6">
+            <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-slate-600" />
-                  <h3 className="text-lg font-semibold text-slate-900">
+                  <BarChart3 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                     Summary
                   </h3>
                 </div>
                 <div className="relative" ref={exportMenuRef}>
                   <button
                     onClick={() => setShowExportMenu(!showExportMenu)}
-                    className="rounded-lg p-2 transition-colors duration-200 hover:bg-slate-100"
+                    className="rounded-lg p-2 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                   >
                     <Download className="h-4 w-4 text-slate-600" />
                   </button>
                   {showExportMenu && (
-                    <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border border-slate-200 bg-white">
+                    <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
                       <div className="py-2">
                         <button
                           onClick={() => handleExport("pdf")}
-                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 transition-colors duration-200 hover:bg-slate-50"
+                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 transition-colors duration-200 hover:bg-slate-50 dark:hover:bg-slate-700"
                         >
                           <FileText className="h-4 w-4 text-red-500" />
                           <span>Export as PDF</span>
                         </button>
                         <button
                           onClick={() => handleExport("json")}
-                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 transition-colors duration-200 hover:bg-slate-50"
+                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 transition-colors duration-200 hover:bg-slate-50 dark:hover:bg-slate-700"
                         >
                           <FileJson className="h-4 w-4 text-yellow-500" />
                           <span>Export as JSON</span>
                         </button>
                         <button
                           onClick={() => handleExport("csv")}
-                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 transition-colors duration-200 hover:bg-slate-50"
+                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 transition-colors duration-200 hover:bg-slate-50 dark:hover:bg-slate-700"
                         >
                           <FileSpreadsheet className="h-4 w-4 text-green-500" />
                           <span>Export as CSV</span>
@@ -418,61 +418,69 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
                     Total Nodes
                   </p>
-                  <p className="text-lg font-bold text-slate-900">
+                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
                     {nodes.length}
                   </p>
                 </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
                     Connections
                   </p>
-                  <p className="text-lg font-bold text-slate-900">1</p>
+                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    1
+                  </p>
                 </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
                     Threat Level
                   </p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     {selectedNode ? "Low" : "Unknown"}
                   </p>
                 </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
                     Security Status
                   </p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     {selectedNode ? "Analyzed" : "Pending"}
                   </p>
                 </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
                     Data Sources
                   </p>
-                  <p className="text-lg font-bold text-slate-900">3</p>
+                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    3
+                  </p>
                 </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
                     Last Scan
                   </p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     {selectedNode ? "2 min ago" : "Never"}
                   </p>
                 </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
                     Crypto Addresses
                   </p>
-                  <p className="text-lg font-bold text-slate-900">12</p>
+                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    12
+                  </p>
                 </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700">
+                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
+                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
                     Foreign Comms
                   </p>
-                  <p className="text-lg font-bold text-slate-900">5</p>
+                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    5
+                  </p>
                 </div>
               </div>
             </div>

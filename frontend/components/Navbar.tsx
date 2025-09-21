@@ -1,4 +1,5 @@
-import { Github, Home, Sun } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Github, Home } from "lucide-react";
 import Link from "next/link";
 
 export default function Navbar() {
@@ -7,47 +8,34 @@ export default function Navbar() {
       <div className="flex flex-1 justify-start">
         <Link
           href="/"
-          className="flex items-center gap-2 rounded-sm p-2 text-slate-700 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900"
+          className="flex items-center gap-2 rounded-sm p-2 text-slate-700 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-gray-700 dark:hover:text-slate-100"
         >
-          {/* <Image
-            src="/logo.png"
-            alt="logo"
-            width={100}
-            height={100}
-            className="h-5 w-5"
-          />
-          <span className="text-md font-bold text-slate-700">cognito.ai</span> */}
           <Home className="h-5 w-5" />
         </Link>
       </div>
       <div className="flex space-x-8">
         <Link
           href="/how-it-works"
-          className="group relative font-medium text-slate-600 transition-colors duration-300 hover:text-slate-900"
+          className="group relative font-medium text-slate-600 transition-colors duration-300 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
         >
           How it works
-          <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
+          <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-slate-900 transition-all duration-300 group-hover:w-full dark:bg-slate-100"></span>
         </Link>
         <Link
           href="/how-to-use"
-          className="group relative font-medium text-slate-600 transition-colors duration-300 hover:text-slate-900"
+          className="group relative font-medium text-slate-600 transition-colors duration-300 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
         >
           How to use
-          <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
+          <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-slate-900 transition-all duration-300 group-hover:w-full dark:bg-slate-100"></span>
         </Link>
       </div>
       <div className="flex flex-1 justify-end items-center space-x-2">
-        <button
-          className="rounded-sm p-2 text-slate-700 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900"
-          aria-label="Toggle theme"
-        >
-          <Sun className="h-5 w-5" />
-        </button>
+        <ThemeToggle />
         <a
           href="https://github.com/areebahmeddd/cognito.ai"
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-sm p-2 text-slate-700 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900"
+          className="rounded-sm p-2 text-slate-700 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-gray-700 dark:hover:text-slate-100"
         >
           <Github className="h-5 w-5" />
         </a>
