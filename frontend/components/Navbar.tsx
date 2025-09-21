@@ -1,5 +1,4 @@
-import { Github } from "lucide-react";
-import Image from "next/image";
+import { Github, Home, Sun } from "lucide-react";
 import Link from "next/link";
 
 export default function Navbar() {
@@ -10,14 +9,15 @@ export default function Navbar() {
           href="/"
           className="flex items-center gap-2 rounded-sm p-2 text-slate-700 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900"
         >
-          <Image
+          {/* <Image
             src="/logo.png"
             alt="logo"
             width={100}
             height={100}
             className="h-5 w-5"
           />
-          <span className="text-md font-bold text-slate-700">Cognito AI</span>
+          <span className="text-md font-bold text-slate-700">cognito.ai</span> */}
+          <Home className="h-5 w-5" />
         </Link>
       </div>
       <div className="flex space-x-8">
@@ -36,7 +36,13 @@ export default function Navbar() {
           <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-slate-900 transition-all duration-300 group-hover:w-full"></span>
         </Link>
       </div>
-      <div className="flex flex-1 justify-end">
+      <div className="flex flex-1 justify-end items-center space-x-2">
+        <button
+          className="rounded-sm p-2 text-slate-700 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900"
+          aria-label="Toggle theme"
+        >
+          <Sun className="h-5 w-5" />
+        </button>
         <a
           href="https://github.com/areebahmeddd/cognito.ai"
           target="_blank"
