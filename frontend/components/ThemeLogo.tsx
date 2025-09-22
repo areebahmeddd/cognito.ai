@@ -14,7 +14,7 @@ interface ThemeLogoProps {
 export function ThemeLogo({
   width = 32,
   height = 32,
-  className = "rounded-sm h-5 w-5",
+  className = "h-5 w-5",
   alt = "logo",
 }: ThemeLogoProps) {
   const { theme } = useTheme();
