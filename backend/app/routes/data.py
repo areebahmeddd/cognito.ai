@@ -1,10 +1,8 @@
 import os
 import tempfile
 import zipfile
-
 from fastapi import APIRouter, HTTPException, File, UploadFile
 from fastapi.responses import JSONResponse
-
 from ..services.index import get_count, get_index_name, check_status
 from ..services.parser import convert_files
 
