@@ -1,6 +1,6 @@
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeLogo } from "@/components/ThemeLogo";
 import { Github } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 
 export default function Navbar() {
@@ -11,13 +11,7 @@ export default function Navbar() {
           href="/"
           className="flex items-center gap-2 rounded-sm p-2 text-slate-700 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-gray-700 dark:hover:text-slate-100"
         >
-          <Image
-            src="/logo.png"
-            alt="logo"
-            width={32}
-            height={32}
-            className="rounded-sm h-6 w-6"
-          />
+          <ThemeLogo />
           <span className="text-md font-medium">cognito.ai</span>
         </Link>
       </div>
