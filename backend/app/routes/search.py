@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
 from ..models.schemas import QueryRequest, UFDRDocument
-from ..services.elasticsearch import search_dsl
-from ..services.query import convert_query
+from ..services.index import search_dsl
+from ..services.agent import convert_query
 
 router = APIRouter()
 
@@ -26,7 +26,7 @@ async def search_query(request: QueryRequest):
                 doc_data["highlight"] = hit["highlight"]
             hits.append(UFDRDocument(**doc_data))
 
-        analysis = _analyze_results(hits, request.query)
+        analysis = analyze_results(hits, request.query)
 
         return {
             "query": request.query,
@@ -40,7 +40,7 @@ async def search_query(request: QueryRequest):
         raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
 
-def _analyze_results(hits: list, query: str) -> Dict[str, Any]:
+def analyze_results(hits: list, query: str) -> Dict[str, Any]:
     if not hits:
         return {
             "summary": "No relevant evidence found for the query.",

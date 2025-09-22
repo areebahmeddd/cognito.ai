@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from .core.config import settings
 from .routes.data import router as data_router
 from .routes.search import router as search_router
-from .services.elasticsearch import wait_es, create_index
+from .services.index import wait_es, create_index
 
 app = FastAPI(
     title=settings.app_name,

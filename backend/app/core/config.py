@@ -6,14 +6,15 @@ class Settings(BaseSettings):
     app_name: str = "Cognito AI"
     app_description: str = "Natural language interface for digital forensic evidence"
     app_version: str = "1.0.0"
-    debug: bool = False
-    elasticsearch_url: str = "http://localhost:9200"
-    elasticsearch_index: str = "ufdr"
+    # debug: bool = False
     cors_origins: list[str] = ["*"]
     cors_methods: list[str] = ["*"]
     cors_headers: list[str] = ["*"]
     cors_credentials: bool = True
-    api_prefix: str = "/api/v1"
+
+    elasticsearch_url: str = "http://localhost:9200"
+    elasticsearch_index: str = "ufdr"
+
     gemini_api_key: Optional[str] = None
 
     class Config:
