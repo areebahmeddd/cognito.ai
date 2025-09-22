@@ -43,9 +43,9 @@ export default function Navbar() {
           href="https://github.com/areebahmeddd/cognito.ai"
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-sm p-2 text-slate-700 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-gray-700 dark:hover:text-slate-100"
+          className="rounded-sm p-2 text-slate-500 transition-colors duration-200 hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-gray-700 dark:hover:text-slate-100"
         >
-          <Github className="h-5 w-5" />
+          <Github className="h-4 w-4" />
         </a>
       </div>
     </nav>
