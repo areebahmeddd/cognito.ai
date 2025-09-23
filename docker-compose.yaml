@@ -1,5 +1,5 @@
 networks:
-  cognito:
+  default:
     name: cognito
 
 volumes:
