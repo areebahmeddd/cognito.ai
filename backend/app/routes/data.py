@@ -1,18 +1,24 @@
 import os
 import tempfile
 import zipfile
+import shutil
 from fastapi import APIRouter, HTTPException, File, UploadFile
 from fastapi.responses import JSONResponse
-from ..services.index import get_count, get_index_name, check_status
+from ..services.elasticsearch import (
+    get_total,
+    get_name,
+    check_health,
+    create_index,
+    bulk_index,
+    ensure_map,
+)
 from ..services.parser import convert_files
 
 router = APIRouter()
 
 
 @router.post("/upload")
-async def upload_zip(
-    file: UploadFile = File(...),
-):
+async def upload_zip(file: UploadFile = File(...)):
     try:
         if not file.filename.endswith(".zip"):
             raise HTTPException(status_code=400, detail="Only ZIP files are supported")
@@ -35,16 +41,27 @@ async def upload_zip(
                 status_code=400, detail="No TSV files found in the ZIP file"
             )
 
-        try:
-            result = convert_files(zip_path, tsv_files, temp_dir)
-            results = [result]
-        except Exception as e:
-            results = [{"status": "failed", "error": str(e)}]
+        create_index()
+        ensure_map()
+        result = convert_files(zip_path, tsv_files, temp_dir)
+        temp_dir = result.get("temp_dir")
+        indexed = 0
+
+        if temp_dir and os.path.isdir(temp_dir):
+            indexed = bulk_index(temp_dir)
+
+        if indexed > 0:
+            try:
+                shutil.rmtree(temp_dir, ignore_errors=True)
+            except Exception:
+                pass
 
         return JSONResponse(
             content={
-                "message": f"Processed {len(tsv_files)} TSV files",
-                "results": results,
+                "message": "Data successfully loaded into Elasticsearch",
+                "files_processed": len(tsv_files),
+                "documents_indexed": indexed,
+                "status": "success",
             }
         )
 
@@ -57,9 +74,9 @@ async def upload_zip(
 @router.get("/stats")
 async def get_stats():
     try:
-        count = get_count()
-        index_name = get_index_name()
-        status = check_status()
+        count = get_total()
+        index_name = get_name()
+        status = check_health()
         return JSONResponse(
             content={
                 "total_documents": count,
