@@ -1,0 +1,53 @@
+"use client";
+
+import { Menu } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+
+export function MobileNav() {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger
+        aria-label="Open menu"
+        className="rounded-sm p-2 text-slate-500 transition-colors duration-200 hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-gray-700 dark:hover:text-slate-100"
+      >
+        <Menu className="h-5 w-5" />
+      </SheetTrigger>
+      <SheetContent side="left" className="p-0">
+        <nav className="flex flex-col gap-1 p-4">
+          <SheetClose asChild>
+            <Link
+              href="/how-it-works"
+              className="rounded-sm px-3 py-2 text-slate-700 transition-colors duration-200 hover:bg-gray-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-slate-100"
+            >
+              How it works
+            </Link>
+          </SheetClose>
+          <SheetClose asChild>
+            <Link
+              href="/how-to-use"
+              className="rounded-sm px-3 py-2 text-slate-700 transition-colors duration-200 hover:bg-gray-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-slate-100"
+            >
+              How to use
+            </Link>
+          </SheetClose>
+        </nav>
+      </SheetContent>
+    </Sheet>
+  );
+}
