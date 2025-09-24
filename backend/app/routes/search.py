@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
 from ..models.schemas import QueryRequest, UFDRDocument
-from ..services.agent import build_dsl_from_intent, to_es_query
+from ..services.agent import analyze_intent, build_query
 from ..services.elasticsearch import es_client, index_name
 
 router = APIRouter()
@@ -10,8 +10,8 @@ router = APIRouter()
 @router.post("/query", response_model=Dict[str, Any])
 async def search_query(request: QueryRequest):
     try:
-        plan = build_dsl_from_intent(request.query)
-        dsl = to_es_query(plan)
+        plan = analyze_intent(request.query)
+        dsl = build_query(plan)
         resp = es_client.search(index=index_name, body=dsl)
         docs = [h.get("_source", {}) for h in resp.get("hits", {}).get("hits", [])]
         hits: list[UFDRDocument] = []
