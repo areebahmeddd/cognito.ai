@@ -7,46 +7,6 @@ genai.configure(api_key=settings.gemini_api_key)
 gemini_model = genai.GenerativeModel(model_name="gemini-2.5-flash")
 
 
-def create_prompt(query: str) -> str:
-    return (
-        f"""
-You are a forensic data analysis expert. Convert the following natural language query into a SIMPLE plan for building an Elasticsearch DSL for UFDR (Universal Forensic Data Report) data.
-
-Query: "{query}"
-
-UFDR data types include: messages (SMS, WhatsApp, Signal), calls, transactions, web history, contacts, locations, files, notifications, system usage.
-
-Available fields (non-exhaustive):
-- type, data_type, channel, platform, service
-- message, body, text, title, transcription
-- from, to, sender, recipient, display_from, display_to, username, display_name
-- timestamp (ISO), message_timestamp, call_date
-- conversation_name, message_type, message_direction
-- url, host, domain, search_term
-- address, place
-- currency, amount
-- entities (may contain extracted addresses like crypto, upi, etc.)
-
-Return STRICT JSON with EXACT keys:
-{{
-  "query_intent": "brief description",
-  "search_types": ["communications" | "calls" | "web" | "location" | "social" | "system" | "contacts" | "cookies" | "notifications" | "general"],
-  "time_range": "YYYY-MM-DD to YYYY-MM-DD" (optional),
-  "fields": ["field", ...] (optional),
-  "exact_match": true | false,
-  "keywords": ["term", ...]
-}}
-
-Guidelines:
-1) Keep it simple. Favor multi_match across relevant text fields.
-2) Choose search_types that fit the intent (messages/codes -> communications; browser/cookies -> web/cookies; etc.).
-3) Include a time_range only if the query clearly specifies one.
-4) Keywords should reflect the intent (e.g., bitcoin, verification code, cookie).
-5) Do NOT include explanations or extra keys.
-"""
-    ).strip()
-
-
 def analyze_intent(query: str) -> Dict[str, Any]:
     text = create_prompt(query)
     response = gemini_model.generate_content(text)
@@ -104,8 +64,6 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
     fields: Optional[List[str]] = plan.get("fields")
     exact_match: bool = bool(plan.get("exact_match", False))
     keywords: List[str] = plan.get("keywords", [])
-
-    query_text = " ".join([str(k) for k in keywords if k])
 
     field_mappings = {
         "communications": [
@@ -235,12 +193,12 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     if fields:
-        cleaned = []
+        cleaned_fields: List[str] = []
         for field in fields:
             base = str(field).split("^")[0]
             if base in known_fields and base in text_like_fields:
-                cleaned.append(field)
-        combined_fields = cleaned if cleaned else list(known_fields)
+                cleaned_fields.append(field)
+        combined_fields = cleaned_fields if cleaned_fields else list(known_fields)
     else:
         combined_fields: List[str] = []
         for st in search_types:
@@ -270,52 +228,20 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
         "sort": [{"timestamp": {"order": "desc"}}],
     }
 
-    app_terms = {
-        "whatsapp",
-        "viber",
-        "telegram",
-        "facebook",
-        "sms",
-        "imessage",
-        "google messages",
-        "googlemessages",
-    }
-
-    non_app_keywords = [k for k in keywords if str(k).lower() not in app_terms]
-    hint_terms = {"code", "codes", "otp", "verification", "confirm", "confirmation"}
-
-    if any(t in (query_text or "").lower() for t in hint_terms):
-        if "communications" not in search_types:
-            search_types.append("communications")
-
-        if "social" in search_types and not non_app_keywords:
-            search_types = [t for t in search_types if t != "social"]
-
-        expansion = [
-            "verification code",
-            "confirmation code",
-            "security code",
-            "passcode",
-            "one time code",
-            "one-time password",
-            "otp",
-            "code",
+    if keywords:
+        target_fields = [
+            f for f in combined_fields if f.split("^")[0] in text_like_fields
+        ] or [
+            "message^3",
+            "body^3",
+            "text^3",
+            "title^2",
         ]
-
-        lower_set = {s.lower() for s in non_app_keywords}
-        for synonym in expansion:
-            if synonym.lower() not in lower_set:
-                non_app_keywords.append(synonym)
-
-        exact_match = False
-
-    if non_app_keywords:
-        target_fields = combined_fields
         if exact_match:
             query_dsl["query"]["bool"]["must"].append(
                 {
                     "multi_match": {
-                        "query": " ".join(non_app_keywords),
+                        "query": " ".join([str(k) for k in keywords if k]),
                         "fields": target_fields,
                         "type": "phrase",
                     }
@@ -325,7 +251,7 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
             query_dsl["query"]["bool"]["must"].append(
                 {
                     "multi_match": {
-                        "query": " ".join(non_app_keywords),
+                        "query": " ".join([str(k) for k in keywords if k]),
                         "fields": target_fields,
                         "fuzziness": "AUTO",
                     }
@@ -361,6 +287,18 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
         except ValueError:
             pass
 
+    filters = plan.get("filters") or {}
+    term_filters = filters.get("term") if isinstance(filters, dict) else None
+    if isinstance(term_filters, list):
+        for item in term_filters:
+            if isinstance(item, dict):
+                field = item.get("field")
+                value = item.get("value")
+                if field and value is not None:
+                    query_dsl["query"]["bool"]["filter"].append(
+                        {"term": {field: value}}
+                    )
+
     if (
         not query_dsl["query"]["bool"]["must"]
         and not query_dsl["query"]["bool"]["filter"]
@@ -369,3 +307,42 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
         query_dsl["query"] = {"match_all": {}}
 
     return query_dsl
+
+
+def create_prompt(query: str) -> str:
+    return (
+        f"""
+You are a forensic data analysis expert. Convert the following natural language query into a SIMPLE plan for building an Elasticsearch DSL for UFDR (Universal Forensic Data Report) data.
+
+Query: "{query}"
+
+UFDR data types include: messages (SMS, WhatsApp, Signal), calls, transactions, web history, contacts, locations, files, notifications, system usage.
+
+Available fields (non-exhaustive):
+- type, data_type, channel, platform, service
+- message, body, text, title, transcription
+- from, to, sender, recipient, display_from, display_to, username, display_name
+- timestamp (ISO), message_timestamp, call_date
+- conversation_name, message_type, message_direction
+- url, host, domain, search_term
+- address, place
+- currency, amount
+- entities (may contain extracted addresses like crypto, upi, etc.)
+
+Return STRICT JSON with EXACT keys:
+{{"query_intent": "brief description",
+  "search_types": ["communications" | "calls" | "web" | "location" | "social" | "system" | "contacts" | "cookies" | "notifications" | "general"],
+  "time_range": "YYYY-MM-DD to YYYY-MM-DD" (optional),
+  "fields": ["field", ...] (optional),
+  "exact_match": true | false,
+  "keywords": ["term", ...]
+}}
+
+Guidelines:
+1) Keep it simple. Favor multi_match across relevant text fields.
+2) Choose search_types that fit the intent (messages/codes -> communications; browser/cookies -> web/cookies; etc.).
+3) Include a time_range only if the query clearly specifies one.
+4) Keywords should reflect the intent (e.g., bitcoin, verification code, cookie).
+5) Do NOT include explanations or extra keys.
+"""
+    ).strip()
