@@ -7,15 +7,48 @@ genai.configure(api_key=settings.gemini_api_key)
 gemini_model = genai.GenerativeModel(model_name="gemini-2.5-flash")
 
 
-def analyze_intent(query: str) -> Dict[str, Any]:
-    prompt = (
-        "You are an AI assistant. Analyze the user query and return STRICT JSON with keys: "
-        "query_intent (string), search_types (array from communications,calls,web,location,social,system,contacts,cookies,notifications,general), "
-        "time_range (optional 'YYYY-MM-DD to YYYY-MM-DD'), fields (optional array), exact_match (boolean), keywords (array of strings). "
-        "Only JSON."
-    )
+def create_prompt(query: str) -> str:
+    return (
+        f"""
+You are a forensic data analysis expert. Convert the following natural language query into a SIMPLE plan for building an Elasticsearch DSL for UFDR (Universal Forensic Data Report) data.
 
-    text = f"{prompt}\nQuery: {query}".strip()
+Query: "{query}"
+
+UFDR data types include: messages (SMS, WhatsApp, Signal), calls, transactions, web history, contacts, locations, files, notifications, system usage.
+
+Available fields (non-exhaustive):
+- type, data_type, channel, platform, service
+- message, body, text, title, transcription
+- from, to, sender, recipient, display_from, display_to, username, display_name
+- timestamp (ISO), message_timestamp, call_date
+- conversation_name, message_type, message_direction
+- url, host, domain, search_term
+- address, place
+- currency, amount
+- entities (may contain extracted addresses like crypto, upi, etc.)
+
+Return STRICT JSON with EXACT keys:
+{{
+  "query_intent": "brief description",
+  "search_types": ["communications" | "calls" | "web" | "location" | "social" | "system" | "contacts" | "cookies" | "notifications" | "general"],
+  "time_range": "YYYY-MM-DD to YYYY-MM-DD" (optional),
+  "fields": ["field", ...] (optional),
+  "exact_match": true | false,
+  "keywords": ["term", ...]
+}}
+
+Guidelines:
+1) Keep it simple. Favor multi_match across relevant text fields.
+2) Choose search_types that fit the intent (messages/codes -> communications; browser/cookies -> web/cookies; etc.).
+3) Include a time_range only if the query clearly specifies one.
+4) Keywords should reflect the intent (e.g., bitcoin, verification code, cookie).
+5) Do NOT include explanations or extra keys.
+"""
+    ).strip()
+
+
+def analyze_intent(query: str) -> Dict[str, Any]:
+    text = create_prompt(query)
     response = gemini_model.generate_content(text)
     content = (getattr(response, "text", "") or "").strip()
 
@@ -185,11 +218,27 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
         }
     )
 
+    text_like_fields = {
+        "message",
+        "body",
+        "text",
+        "title",
+        "content",
+        "search_term",
+        "display_name",
+        "conversation_name",
+        "transcription",
+        "name",
+        "value",
+        "address",
+        "place",
+    }
+
     if fields:
         cleaned = []
         for field in fields:
             base = str(field).split("^")[0]
-            if base in known_fields:
+            if base in known_fields and base in text_like_fields:
                 cleaned.append(field)
         combined_fields = cleaned if cleaned else list(known_fields)
     else:
@@ -197,11 +246,28 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
         for st in search_types:
             combined_fields.extend(field_mappings.get(st, field_mappings["general"]))
         seen = set()
-        combined_fields = [f for f in combined_fields if not (f in seen or seen.add(f))]
+        combined_fields = [
+            f
+            for f in combined_fields
+            if not (f in seen or seen.add(f)) and f.split("^")[0] in text_like_fields
+        ]
+
+    if "general" in search_types or len(search_types) > 2:
+        combined_fields = [
+            "message^3",
+            "body^3",
+            "text^3",
+            "title^2",
+            "url^2",
+            "search_term^2",
+            "display_name^1.5",
+            "conversation_name^1.5",
+        ]
 
     query_dsl: Dict[str, Any] = {
         "query": {"bool": {"must": [], "filter": [], "should": []}},
         "size": 200,
+        "sort": [{"timestamp": {"order": "desc"}}],
     }
 
     app_terms = {
@@ -241,6 +307,8 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
             if synonym.lower() not in lower_set:
                 non_app_keywords.append(synonym)
 
+        exact_match = False
+
     if non_app_keywords:
         target_fields = combined_fields
         if exact_match:
@@ -267,20 +335,29 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
     if time_range:
         try:
             start_date_str, end_date_str = map(str.strip, time_range.split(" to "))
+            date_fields = [
+                "timestamp",
+                "message_timestamp",
+                "call_date",
+                "call_start_timestamp",
+                "call_end_timestamp",
+                "last_time_active",
+                "conversion_timestamp",
+                "creation_timestamp",
+                "last_updated_timestamp",
+                "debug_time",
+            ]
             query_dsl["query"]["bool"]["filter"].append(
-                {"range": {"timestamp": {"gte": start_date_str, "lte": end_date_str}}}
-            )
-            if "web" in search_types:
-                query_dsl["query"]["bool"]["filter"].append(
-                    {
-                        "range": {
-                            "last_visit_date": {
-                                "gte": start_date_str,
-                                "lte": end_date_str,
-                            }
-                        }
+                {
+                    "bool": {
+                        "should": [
+                            {"range": {f: {"gte": start_date_str, "lte": end_date_str}}}
+                            for f in date_fields
+                        ],
+                        "minimum_should_match": 1,
                     }
-                )
+                }
+            )
         except ValueError:
             pass
 
