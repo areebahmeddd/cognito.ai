@@ -383,7 +383,7 @@ def ensure_map() -> None:
         es_client.indices.put_mapping(index=index_name, body={"dynamic": True})
 
 
-def wait_es(max_retries: int = 10, delay: float = 1.0) -> bool:
+def wait_es(max_retries: int = 10, delay: float = 2.0) -> bool:
     for _ in range(max_retries):
         try:
             if es_client.ping():

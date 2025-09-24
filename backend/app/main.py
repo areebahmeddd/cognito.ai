@@ -26,7 +26,7 @@ app.include_router(search_router, prefix="/api/v1/search", tags=["search"])
 
 
 @app.on_event("startup")
-async def startup_event():
+async def on_startup():
     if not wait_es():
         raise RuntimeError("Could not connect to Elasticsearch")
     create_index()
