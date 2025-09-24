@@ -1,8 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
 from ..models.schemas import QueryRequest, UFDRDocument
-from ..services.agent import build_dsl_from_intent, to_es_query
-from ..services.elasticsearch import es_client, index_name
 
 router = APIRouter()
 
@@ -10,23 +8,30 @@ router = APIRouter()
 @router.post("/query", response_model=Dict[str, Any])
 async def search_query(request: QueryRequest):
     try:
-        plan = build_dsl_from_intent(request.query)
-        dsl = to_es_query(plan)
-        resp = es_client.search(index=index_name, body=dsl)
-        docs = [h.get("_source", {}) for h in resp.get("hits", {}).get("hits", [])]
-        hits: list[UFDRDocument] = []
-        for doc in docs[:50]:
-            try:
-                hits.append(UFDRDocument(**doc))
-            except Exception:
-                continue
+        converted_query = convert_query(request.query)
+        response = search_dsl(
+            query_dict=converted_query.query,
+            size=10000,
+            from_=0,
+            sort=converted_query.sort,
+            highlight=converted_query.highlight,
+        )
+
+        hits = []
+        for hit in response["hits"]["hits"]:
+            doc_data = hit["_source"]
+            if "highlight" in hit:
+                doc_data["highlight"] = hit["highlight"]
+            hits.append(UFDRDocument(**doc_data))
+
+        analysis = _analyze_results(hits, request.query)
 
         return {
             "query": request.query,
             "query_intent": plan.get("query_intent", "forensic_analysis"),
             "total_results": len(hits),
             "results": hits,
-            "took": resp.get("took", 0),
+            "took": response["took"],
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
