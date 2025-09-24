@@ -1,9 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
 from ..models.schemas import QueryRequest, UFDRDocument
-from ..services.agent import build_dsl_from_intent, to_es_query
-from ..services.elasticsearch import es_client, index_name
-from ..services.forensic_graph import forensic_graph_builder
 
 router = APIRouter()
 
