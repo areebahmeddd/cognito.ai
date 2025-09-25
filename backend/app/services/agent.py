@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from nlq_engine import (
     fetch_results_for_nl_query,
-    generate_dsl_for_query,
+    call_gemini_and_parse,
     run_dsl_against_es,
     ES_INDEX
 )
