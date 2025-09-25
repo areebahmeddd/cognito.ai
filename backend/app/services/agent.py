@@ -114,7 +114,7 @@ def execute_full_nlq_pipeline(query: str, debug: bool = True) -> Dict[str, Any]:
         # Use the complete NLQ engine pipeline
         result = fetch_results_for_nl_query(
             nl_query=query,
-            index_name=ES_INDEX,
+            index=ES_INDEX,
             debug=debug
         )
         
