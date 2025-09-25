@@ -10,7 +10,6 @@ from nlq_engine import (
 )
 import json
 from typing import Dict, Any, List, Optional, Tuple
-import json
 import google.generativeai as genai
 from typing import Dict, Any, List, Optional
 from ..core.config import settings
