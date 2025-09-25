@@ -34,7 +34,7 @@ def analyze_intent(query: str) -> Dict[str, Any]:
             if start != -1 and end != -1 and end > start:
                 intent_plan = json.loads(content[start : end + 1])
             else:
-                raise ValueError("no_json")
+                raise ValueError("No JSON found")
         except Exception:
             intent_plan = {
                 "search_type": "general",
