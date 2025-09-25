@@ -21,7 +21,6 @@ def convert_files(zip_path: str, tsv_files: List[str], temp_dir: str) -> Dict[st
     extracted_files = extract_files(zip_path, tsv_files, input_dir)
 
     successful = 0
-    failed = 0
     total_records = 0
 
     for tsv_file in extracted_files:
@@ -34,15 +33,11 @@ def convert_files(zip_path: str, tsv_files: List[str], temp_dir: str) -> Dict[st
         if num_records > 0:
             successful += 1
             total_records += num_records
-        else:
-            failed += 1
 
     return {
-        "status": "completed",
-        "successful_files": successful,
-        "failed_files": failed,
-        "total_records_converted": total_records,
         "temp_dir": output_dir,
+        "files_converted": successful,
+        "total_records": total_records,
     }
 
 

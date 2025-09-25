@@ -21,6 +21,7 @@ router = APIRouter()
 
 @router.post("/upload")
 async def upload_zip(file: UploadFile = File(...)):
+    temp_dir = None
     try:
         if not file.filename.endswith(".zip"):
             raise HTTPException(status_code=400, detail="Only ZIP files are supported")
@@ -45,28 +46,43 @@ async def upload_zip(file: UploadFile = File(...)):
 
         create_index()
         ensure_map()
-        result = convert_files(zip_path, tsv_files, temp_dir)
-        temp_dir = result.get("temp_dir")
-        indexed = 0
+
+        conversion_result = convert_files(zip_path, tsv_files, temp_dir)
+        temp_dir = conversion_result.get("temp_dir")
+
+        indexing_result = {"success_count": 0, "error_count": 0, "files_processed": 0}
 
         if temp_dir and os.path.isdir(temp_dir):
-            indexed = bulk_index(temp_dir)
+            indexing_result = bulk_index(temp_dir)
 
-        if indexed > 0:
+        if indexing_result["success_count"] > 0:
             try:
                 shutil.rmtree(temp_dir, ignore_errors=True)
             except Exception:
                 pass
 
+        if indexing_result["success_count"] == 0:
+            status = "failed"
+        elif indexing_result["error_count"] > 100:
+            status = "partial_success"
+        else:
+            status = "success"
+
         return JSONResponse(
             content={
                 "message": "Data successfully loaded into Elasticsearch",
                 "files_processed": len(tsv_files),
-                "documents_indexed": indexed,
-                "status": "success",
+                "documents_indexed": indexing_result["success_count"],
+                "failed_to_index": indexing_result["error_count"],
+                "status": status,
             }
         )
     except Exception as e:
+        if temp_dir and os.path.isdir(temp_dir):
+            try:
+                shutil.rmtree(temp_dir, ignore_errors=True)
+            except Exception:
+                pass
         raise HTTPException(
             status_code=500, detail=f"Upload processing failed: {str(e)}"
         )
@@ -87,7 +103,7 @@ async def export_report(api_response: Dict[str, Any]):
         return FileResponse(
             path=pdf_path,
             media_type="application/pdf",
-            filename=f"forensic_report_{case_id}.pdf",
+            filename=f"{case_id}.pdf",
             background=None,
         )
     except Exception as e:

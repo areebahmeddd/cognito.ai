@@ -32,7 +32,7 @@ def search_dsl(
     return response
 
 
-def bulk_index(dir_path: str) -> int:
+def bulk_index(dir_path: str) -> Dict[str, Any]:
     def iter_docs(paths: List[str]):
         for path in paths:
             try:
@@ -72,9 +72,18 @@ def bulk_index(dir_path: str) -> int:
         )
 
         es_client.indices.refresh(index=index_name)
-        return success
+
+        return {
+            "success_count": success,
+            "error_count": len(errors) if errors else 0,
+            "files_processed": len(json_files),
+        }
     except Exception:
-        return 0
+        return {
+            "success_count": 0,
+            "error_count": 1,
+            "files_processed": len(json_files),
+        }
 
 
 def create_index() -> None:
