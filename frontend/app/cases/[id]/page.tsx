@@ -83,7 +83,7 @@ export default function CasePage() {
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="messages about bitcoin"
                       className="flex-1"
-                      size="lg"
+                      size={2}
                     />
                     <Button
                       onClick={handleAnalyze}
