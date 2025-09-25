@@ -62,39 +62,10 @@ export default function CasePage() {
           {/* Sidebar */}
           <CaseSidebar caseId={caseId} />
 
-          {/* Main Content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Page Header */}
-            <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                    Case Analysis
-                  </h1>
-                  <div className="flex items-center gap-4 mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    <span>
-                      Case: <span className="font-medium">{caseId}</span>
-                    </span>
-                    <span>•</span>
-                    <span>
-                      Device:{" "}
-                      <span className="font-medium">DEVICE-{caseId}</span>
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Button variant="outline" size="sm">
-                    Export Report
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Settings
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Content Area */}
-            <div className="flex-1 overflow-y-auto p-6">
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Content Area */}
+              <div className="flex-1 overflow-y-auto p-6">
               <div className="max-w-7xl mx-auto space-y-6">
                 {/* Query Section */}
                 <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
