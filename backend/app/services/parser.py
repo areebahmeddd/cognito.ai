@@ -110,6 +110,7 @@ def create_doc(row: Dict[str, str], index: int, source_file: str) -> Dict[str, A
     source_path = get_source(row, source_file)
 
     doc = {
+        "artifact_id": f"RECORD-{index:04d}",
         "type": get_type(filename),
         "data_type": get_data(filename),
         "timestamp": get_time(row),
