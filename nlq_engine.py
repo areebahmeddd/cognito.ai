@@ -15,7 +15,7 @@ Key principles:
 import os
 import json
 import re
-from typing import Dict, Tuple, Optional
+from typing import Dict, Optional
 from datetime import datetime
 import logging
 
