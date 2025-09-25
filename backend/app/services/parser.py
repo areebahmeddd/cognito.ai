@@ -98,7 +98,6 @@ def convert_file(tsv_path: str, output_path: str, case_id: str, device_id: str) 
             json.dump(ufdr_documents, f, indent=2, ensure_ascii=False)
 
         return len(ufdr_documents)
-
     except Exception:
         return 0
 

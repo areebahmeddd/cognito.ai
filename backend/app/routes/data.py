@@ -64,7 +64,6 @@ async def upload_zip(file: UploadFile = File(...)):
                 "status": "success",
             }
         )
-
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Upload processing failed: {str(e)}"
