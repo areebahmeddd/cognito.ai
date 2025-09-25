@@ -1,7 +1,9 @@
 import os
+import json
 import tempfile
 import zipfile
 import shutil
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, File, UploadFile
 from fastapi.responses import JSONResponse, FileResponse
 from typing import Dict, Any
@@ -20,7 +22,9 @@ router = APIRouter()
 
 
 @router.post("/upload")
-async def upload_zip(file: UploadFile = File(...)):
+async def upload_zip(
+    file: UploadFile = File(...), case_id: str = None, device_id: str = None
+):
     temp_dir = None
     try:
         if not file.filename.endswith(".zip"):
@@ -50,6 +54,19 @@ async def upload_zip(file: UploadFile = File(...)):
         conversion_result = convert_files(zip_path, tsv_files, temp_dir)
         temp_dir = conversion_result.get("temp_dir")
 
+        metadata = {
+            "case_id": case_id,
+            "device_id": device_id,
+            "upload_timestamp": datetime.now().isoformat(),
+            "original_filename": file.filename,
+            "tsv_files_processed": len(tsv_files),
+            "tsv_files_list": tsv_files,
+        }
+
+        metadata_path = os.path.join(temp_dir, "metadata.json")
+        with open(metadata_path, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2, ensure_ascii=False)
+
         indexing_result = {"success_count": 0, "error_count": 0, "files_processed": 0}
 
         if temp_dir and os.path.isdir(temp_dir):
@@ -75,6 +92,7 @@ async def upload_zip(file: UploadFile = File(...)):
                 "documents_indexed": indexing_result["success_count"],
                 "failed_to_index": indexing_result["error_count"],
                 "status": status,
+                "metadata": metadata,
             }
         )
     except Exception as e:

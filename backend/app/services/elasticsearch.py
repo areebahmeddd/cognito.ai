@@ -40,18 +40,14 @@ def bulk_index(dir_path: str) -> Dict[str, Any]:
                     data = json.load(f)
                     if isinstance(data, list):
                         for doc in data:
-                            doc_id = doc.pop("_id", None)
                             yield {
                                 "_index": index_name,
-                                "_id": doc_id,
                                 "_source": doc,
                             }
                     else:
                         doc = data
-                        doc_id = doc.pop("_id", None)
                         yield {
                             "_index": index_name,
-                            "_id": doc_id,
                             "_source": doc,
                         }
             except Exception:
@@ -90,7 +86,7 @@ def create_index() -> None:
     if es_client.indices.exists(index=index_name):
         return
 
-    settings = {
+    index_settings = {
         "settings": {
             "analysis": {
                 "normalizer": {
@@ -325,11 +321,7 @@ def create_index() -> None:
             },
         },
     }
-    es_client.indices.create(index=index_name, body=settings)
-
-
-def delete_index() -> None:
-    es_client.indices.delete(index=index_name, ignore=[400, 404])
+    es_client.indices.create(index=index_name, body=index_settings)
 
 
 def ensure_map() -> None:
@@ -339,6 +331,10 @@ def ensure_map() -> None:
     current_mapping = es_client.indices.get_mapping(index=index_name)
     if not current_mapping[index_name]["mappings"].get("dynamic"):
         es_client.indices.put_mapping(index=index_name, body={"dynamic": True})
+
+
+def delete_index() -> None:
+    es_client.indices.delete(index=index_name, ignore=[400, 404])
 
 
 def wait_es(max_retries: int = 10, delay: float = 2.0) -> bool:
