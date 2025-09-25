@@ -13,7 +13,11 @@ Run:
   python reindex_and_ingest.py
 """
 
-import os, json, time, sys, re
+import os
+import json
+import time
+import sys
+import re
 from elasticsearch import Elasticsearch, helpers
 from collections import defaultdict, Counter
 from datetime import datetime
