@@ -237,3 +237,28 @@ def clean_name(header: str) -> str:
         .strip()
     )
     return cleaned
+
+
+
+
+def transform_results(results):
+    """Convert raw backend results into simplified rows for the PDF."""
+    parsed = []
+
+    for r in results:
+        parsed.append({
+            "artifact_id": r.get("artifact_id"),
+            "case_id": r.get("case_id"),
+            "device_id": r.get("device_id"),
+            "timestamp": r.get("timestamp"),
+            "message": r.get("message"),
+            "conversation_name": r.get("conversation_name"),
+            "sender": r.get("sending_party"),
+            "direction": r.get("message_direction"),
+            "reason_for_suspicion": "Contains Bitcoin/crypto promotion",  # auto-flag
+            "source_path": r.get("source_path"),
+        })
+    return parsed
+
+    
+   
