@@ -1,494 +1,124 @@
 "use client";
-
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
-import {
-  BarChart3,
-  Download,
-  FileJson,
-  FileSpreadsheet,
-  FileText,
-  Laptop,
-  Minus,
-  Plus,
-  Square,
-  Trash2,
-  TrendingUp,
-  User,
-} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-
-interface GraphNode {
-  id: string;
-  label: string;
-  type: "user" | "device";
-  email?: string;
-  hostname?: string;
-  address?: string;
-  created?: string;
-  description?: string;
-  host?: string;
-  updated?: string;
-}
+import DetailsDrawer from "@/components/dashboard/DetailsDrawer";
+import EmptyState from "@/components/dashboard/EmptyState";
+import QuickSearch from "@/components/dashboard/QuickSearch";
+import type { ResultItemData } from "@/components/dashboard/ResultItem";
+import ResultStats from "@/components/dashboard/ResultStats";
+import ResultsList from "@/components/dashboard/ResultsList";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 export default function DashboardPage() {
-  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [panX, setPanX] = useState(0);
-  const [panY, setPanY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [showExportMenu, setShowExportMenu] = useState(false);
-  const exportMenuRef = useRef<HTMLDivElement>(null);
-
-  const nodes: GraphNode[] = [
-    {
-      id: "1",
-      label: "areeb@testing.com",
-      type: "user",
-      email: "areeb@testing.com",
-      created: "07/09/2025, 4:17:11 PM",
-      updated: "07/09/2025, 4:17:11 PM",
-    },
-    {
-      id: "2",
-      label: "michael@testing",
-      type: "device",
-      hostname: "michael@testing",
-      address: "192.168.1.100",
-      created: "07/09/2025, 4:17:11 PM",
-      description: "michael@testing",
-      host: "michael; darwin; darwin; Standalone Workstation; 15.3.1; 24.3.0; arm64",
-      updated: "07/09/2025, 4:17:11 PM",
-    },
-  ];
-
-  const handleNodeClick = (node: GraphNode) => {
-    setSelectedNode(node);
-  };
-
-  const handleZoomIn = () => {
-    setZoomLevel((prev) => Math.min(prev + 0.2, 2));
-  };
-
-  const handleZoomOut = () => {
-    setZoomLevel((prev) => Math.max(prev - 0.2, 0.5));
-  };
-
-  const handleResetView = () => {
-    setZoomLevel(1);
-    setPanX(0);
-    setPanY(0);
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - panX, y: e.clientY - panY });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      setPanX(e.clientX - dragStart.x);
-      setPanY(e.clientY - dragStart.y);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleExport = (format: "pdf" | "json" | "csv") => {
-    const summaryData = {
-      totalNodes: nodes.length,
-      connections: 1,
-      threatLevel: selectedNode ? "Low" : "Unknown",
-      securityStatus: selectedNode ? "Analyzed" : "Pending",
-      dataSources: 3,
-      lastScan: selectedNode ? "2 min ago" : "Never",
-      cryptoAddresses: 12,
-      foreignComms: 5,
-      selectedNode: selectedNode?.label || "None",
-      timestamp: new Date().toISOString(),
-    };
-
-    if (format === "json") {
-      const dataStr = JSON.stringify(summaryData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: "application/json" });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "forensic-summary.json";
-      link.click();
-      URL.revokeObjectURL(url);
-    } else if (format === "csv") {
-      const csvData = [
-        ["Metric", "Value"],
-        ["Total Nodes", summaryData.totalNodes],
-        ["Connections", summaryData.connections],
-        ["Threat Level", summaryData.threatLevel],
-        ["Security Status", summaryData.securityStatus],
-        ["Data Sources", summaryData.dataSources],
-        ["Last Scan", summaryData.lastScan],
-        ["Crypto Addresses", summaryData.cryptoAddresses],
-        ["Foreign Communications", summaryData.foreignComms],
-        ["Selected Node", summaryData.selectedNode],
-        ["Export Timestamp", summaryData.timestamp],
-      ]
-        .map((row) => row.join(","))
-        .join("\n");
-
-      const dataBlob = new Blob([csvData], { type: "text/csv" });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "forensic-summary.csv";
-      link.click();
-      URL.revokeObjectURL(url);
-    } else if (format === "pdf") {
-      alert(
-        "PDF export feature will be implemented with a PDF library. For now, please use JSON or CSV export.",
-      );
-    }
-
-    setShowExportMenu(false);
-  };
+  const params = useSearchParams();
+  const query = useMemo(() => params.get("q") || "", [params]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [items, setItems] = useState<ResultItemData[]>([]);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selected, setSelected] = useState<
+    (ResultItemData & { fullText?: string }) | null
+  >(null);
+  const total = items.length;
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        exportMenuRef.current &&
-        !exportMenuRef.current.contains(event.target as Node)
-      ) {
-        setShowExportMenu(false);
+    let aborted = false;
+    async function run() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!res.ok) throw new Error(`Search failed: ${res.status}`);
+        const data = await res.json();
+        if (!aborted) {
+          setItems(data.items || []);
+        }
+      } catch (e: unknown) {
+        if (!aborted)
+          setError(e instanceof Error ? e.message : "Unknown error");
+      } finally {
+        if (!aborted) setLoading(false);
       }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
+    }
+    run();
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      aborted = true;
     };
-  }, []);
+  }, [query]);
+
+  const handleDetails = async (item: ResultItemData) => {
+    try {
+      // For mock, fetch again to get fullText if present
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      const withFull =
+        (data.items || []).find((i: any) => i.id === item.id) || item;
+      setSelected(withFull);
+      setDrawerOpen(true);
+    } catch {
+      setSelected(item);
+      setDrawerOpen(true);
+    }
+  };
+
+  const handleAdd = (item: ResultItemData) => {
+    // Placeholder: hook to future action
+    // eslint-disable-next-line no-console
+    console.log("Add", item);
+  };
 
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <Navbar />
-
-      <main className="relative z-10 flex-1 overflow-hidden px-6">
-        <div className="flex h-full min-h-0 flex-col gap-6 lg:flex-row">
-          <div className="relative flex-1 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-            <div className="bg-dot-pattern absolute inset-0 opacity-50"></div>
-            <div
-              className="relative flex h-full cursor-grab items-center justify-center overflow-hidden p-8 active:cursor-grabbing"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            >
-              <div
-                className="relative transition-transform duration-300 ease-in-out"
-                style={{
-                  transform: `scale(${zoomLevel}) translate(${panX}px, ${panY}px)`,
-                }}
-              >
-                <svg
-                  width="400"
-                  height="300"
-                  className="absolute inset-0 opacity-30"
-                >
-                  <defs>
-                    <pattern
-                      id="grid"
-                      width="20"
-                      height="20"
-                      patternUnits="userSpaceOnUse"
-                    >
-                      <path
-                        d="M 20 0 L 0 0 0 20"
-                        fill="none"
-                        stroke="#cbd5e1"
-                        className="dark:stroke-slate-600"
-                        strokeWidth="1"
-                      />
-                    </pattern>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#grid)" />
-                </svg>
-
-                <div className="relative z-10">
-                  <div
-                    className={`absolute cursor-pointer transition-all duration-300 hover:scale-110 ${
-                      selectedNode?.id === "1"
-                        ? "rounded-xl ring-4 ring-gray-300 dark:ring-gray-600"
-                        : "hover:"
-                    }`}
-                    style={{
-                      left: "50%",
-                      top: "50%",
-                      transform: "translateX(-50%)",
-                    }}
-                    onClick={() => handleNodeClick(nodes[0])}
-                  >
-                    <div className="flex items-center gap-2 rounded-xl bg-black px-4 py-3 text-white">
-                      <User className="h-4 w-4" />
-                      <span className="text-sm font-medium">
-                        areeb@testing.com
-                      </span>
-                    </div>
-                    <div className="absolute top-1/2 -right-1 h-3 w-3 -translate-y-1/2 transform rounded-full bg-gray-600 dark:bg-gray-400"></div>
-                  </div>
-                </div>
-              </div>
+      <main className="flex-1 px-6 py-6">
+        <div className="mx-auto w-full max-w-3xl space-y-4">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+            <div className="mb-3 text-sm font-medium text-slate-900 dark:text-slate-100">
+              🔍 Quick Search
             </div>
-
-            <div className="absolute bottom-4 left-4 flex gap-2">
-              <button
-                onClick={handleZoomIn}
-                className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white dark:hover:bg-slate-800"
-              >
-                <Plus className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-              </button>
-              <button
-                onClick={handleZoomOut}
-                className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white dark:hover:bg-slate-800"
-              >
-                <Minus className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-              </button>
-              <button
-                onClick={handleResetView}
-                className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 p-2 backdrop-blur-sm transition-all duration-200 hover:bg-white dark:hover:bg-slate-800"
-              >
-                <Square className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-              </button>
-            </div>
-
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 transform">
-              <div className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 p-2 backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-black dark:bg-white"></div>
-                  <div className="h-3 w-3 rounded-full bg-gray-600 dark:bg-gray-400"></div>
-                </div>
-              </div>
-            </div>
+            <QuickSearch placeholder="Search messages (e.g. crypto msgs)" />
           </div>
 
-          <div className="flex h-full w-full flex-col gap-6 lg:w-80 xl:w-96">
-            <div className="scrollbar-hide h-[35%] min-h-0 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
-              {selectedNode ? (
-                <div className="h-full">
-                  <div className="flex items-center gap-2">
-                    {selectedNode.type === "user" ? (
-                      <User className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                    ) : (
-                      <Laptop className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                    )}
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                      {selectedNode.label}
-                    </h2>
-                  </div>
+          <ResultStats total={total} query={query} />
 
-                  <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
-                    {selectedNode.type === "user"
-                      ? "A user account in the system"
-                      : "An environment on a host with address [redacted IP address]"}
-                  </p>
-
-                  <div className="mb-6 flex flex-col gap-2 sm:flex-row">
-                    <button className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-black dark:bg-white px-4 py-2 text-sm text-white dark:text-black transition-all duration-200 hover:bg-gray-800 dark:hover:bg-gray-200">
-                      <TrendingUp className="h-3 w-3" />
-                      <span>Analytics</span>
-                    </button>
-                    <button className="flex flex-1 items-center justify-center gap-1 rounded-lg border-2 border-black dark:border-white bg-white dark:bg-slate-800 px-4 py-2 text-sm text-black dark:text-white transition-all duration-200 hover:bg-gray-100 dark:hover:bg-slate-700">
-                      <Trash2 className="h-3 w-3" />
-                      <span>Delete</span>
-                    </button>
+          {loading ? (
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 text-sm text-slate-600 dark:text-slate-300">
+              Loading…
+            </div>
+          ) : error ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+              {error}
+            </div>
+          ) : items.length === 0 ? (
+            <EmptyState message="Try a different search term." />
+          ) : (
+            <div className="space-y-3">
+              {items.length > 0 && (
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+                  <div className="mb-3 text-sm font-medium text-slate-900 dark:text-slate-100">
+                    Results
                   </div>
-
-                  <div className="space-y-2">
-                    {selectedNode.address && (
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Address:
-                        </span>
-                        <span className="text-sm text-slate-600 dark:text-slate-400">
-                          {selectedNode.address}
-                        </span>
-                      </div>
-                    )}
-                    {selectedNode.created && (
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Created:
-                        </span>
-                        <span className="text-sm text-slate-600 dark:text-slate-400">
-                          {selectedNode.created}
-                        </span>
-                      </div>
-                    )}
-                    {selectedNode.description && (
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Description:
-                        </span>
-                        <span className="text-sm text-slate-600 dark:text-slate-400">
-                          {selectedNode.description}
-                        </span>
-                      </div>
-                    )}
-                    {selectedNode.host && (
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Host:
-                        </span>
-                        <span className="text-sm text-slate-600 dark:text-slate-400">
-                          {selectedNode.host}
-                        </span>
-                      </div>
-                    )}
-                    {selectedNode.updated && (
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Updated:
-                        </span>
-                        <span className="text-sm text-slate-600 dark:text-slate-400">
-                          {selectedNode.updated}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <div className="text-center">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600">
-                      <BarChart3 className="h-8 w-8 text-slate-500 dark:text-slate-400" />
-                    </div>
-                    <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
-                      Node Information
-                    </h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      Click on a node in the graph to view its details
-                    </p>
-                  </div>
+                  <ResultsList
+                    items={items}
+                    onDetails={handleDetails}
+                    onAdd={handleAdd}
+                  />
                 </div>
               )}
             </div>
-
-            <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    Summary
-                  </h3>
-                </div>
-                <div className="relative" ref={exportMenuRef}>
-                  <button
-                    onClick={() => setShowExportMenu(!showExportMenu)}
-                    className="rounded-lg p-2 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700"
-                  >
-                    <Download className="h-4 w-4 text-slate-600" />
-                  </button>
-                  {showExportMenu && (
-                    <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-                      <div className="py-2">
-                        <button
-                          onClick={() => handleExport("pdf")}
-                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 transition-colors duration-200 hover:bg-slate-50 dark:hover:bg-slate-700"
-                        >
-                          <FileText className="h-4 w-4 text-red-500" />
-                          <span>Export as PDF</span>
-                        </button>
-                        <button
-                          onClick={() => handleExport("json")}
-                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 transition-colors duration-200 hover:bg-slate-50 dark:hover:bg-slate-700"
-                        >
-                          <FileJson className="h-4 w-4 text-yellow-500" />
-                          <span>Export as JSON</span>
-                        </button>
-                        <button
-                          onClick={() => handleExport("csv")}
-                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 transition-colors duration-200 hover:bg-slate-50 dark:hover:bg-slate-700"
-                        >
-                          <FileSpreadsheet className="h-4 w-4 text-green-500" />
-                          <span>Export as CSV</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Total Nodes
-                  </p>
-                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    {nodes.length}
-                  </p>
-                </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Connections
-                  </p>
-                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    1
-                  </p>
-                </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Threat Level
-                  </p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {selectedNode ? "Low" : "Unknown"}
-                  </p>
-                </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Security Status
-                  </p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {selectedNode ? "Analyzed" : "Pending"}
-                  </p>
-                </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Data Sources
-                  </p>
-                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    3
-                  </p>
-                </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Last Scan
-                  </p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {selectedNode ? "2 min ago" : "Never"}
-                  </p>
-                </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Crypto Addresses
-                  </p>
-                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    12
-                  </p>
-                </div>
-                <div className="flex h-20 flex-col justify-center rounded-lg bg-slate-50 dark:bg-slate-700 p-3">
-                  <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Foreign Comms
-                  </p>
-                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    5
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </main>
-
       <Footer />
+      <DetailsDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        item={selected}
+      />
     </div>
   );
 }
