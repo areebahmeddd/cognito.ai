@@ -2,17 +2,12 @@ import os
 import re
 import csv
 import json
-import uuid
-import hashlib
 import zipfile
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
 
 def convert_files(zip_path: str, tsv_files: List[str], temp_dir: str) -> Dict[str, Any]:
-    ids = generate_ids()
-    case_id = ids["case_id"]
-    device_id = ids["device_id"]
     input_dir = os.path.join(temp_dir, "input")
     output_dir = os.path.join(temp_dir, "output")
     os.makedirs(input_dir, exist_ok=True)
@@ -21,29 +16,50 @@ def convert_files(zip_path: str, tsv_files: List[str], temp_dir: str) -> Dict[st
     extracted_files = extract_files(zip_path, tsv_files, input_dir)
 
     successful = 0
-    failed = 0
     total_records = 0
 
     for tsv_file in extracted_files:
         filename = os.path.basename(tsv_file)
-        output_json_path = os.path.join(
-            output_dir, f"{os.path.splitext(filename)[0]}.json"
-        )
+        output_path = os.path.join(output_dir, f"{os.path.splitext(filename)[0]}.json")
 
-        num_records = convert_file(tsv_file, output_json_path, case_id, device_id)
+        num_records = convert_file(tsv_file, output_path)
         if num_records > 0:
             successful += 1
             total_records += num_records
-        else:
-            failed += 1
 
     return {
-        "status": "completed",
-        "successful_files": successful,
-        "failed_files": failed,
-        "total_records_converted": total_records,
         "temp_dir": output_dir,
+        "files_converted": successful,
+        "total_records": total_records,
     }
+
+
+def convert_file(tsv_path: str, output_path: str) -> int:
+    try:
+        if not os.path.exists(tsv_path) or os.path.getsize(tsv_path) == 0:
+            return 0
+
+        rows = read_file(tsv_path)
+        if not rows:
+            return 0
+
+        documents = []
+        for i, row in enumerate(rows):
+            try:
+                doc = create_doc(row, i, tsv_path)
+                documents.append(doc)
+            except Exception:
+                continue
+
+        if not documents:
+            return 0
+
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(documents, f, indent=2, ensure_ascii=False)
+
+        return len(documents)
+    except Exception:
+        return 0
 
 
 def extract_files(zip_path: str, tsv_files: List[str], input_dir: str) -> List[str]:
@@ -74,34 +90,6 @@ def extract_files(zip_path: str, tsv_files: List[str], input_dir: str) -> List[s
     return extracted_files
 
 
-def convert_file(tsv_path: str, output_path: str, case_id: str, device_id: str) -> int:
-    try:
-        if not os.path.exists(tsv_path) or os.path.getsize(tsv_path) == 0:
-            return 0
-
-        rows = read_file(tsv_path)
-        if not rows:
-            return 0
-
-        ufdr_documents = []
-        for i, row in enumerate(rows):
-            try:
-                ufdr_doc = create_document(row, i, tsv_path, case_id, device_id)
-                ufdr_documents.append(ufdr_doc)
-            except Exception:
-                continue
-
-        if not ufdr_documents:
-            return 0
-
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(ufdr_documents, f, indent=2, ensure_ascii=False)
-
-        return len(ufdr_documents)
-    except Exception:
-        return 0
-
-
 def read_file(tsv_path: str) -> List[Dict[str, str]]:
     with open(tsv_path, "r", encoding="utf-8-sig", errors="replace") as f:
         reader = csv.DictReader(f, delimiter="\t")
@@ -117,45 +105,102 @@ def read_file(tsv_path: str) -> List[Dict[str, str]]:
         return list(reader)
 
 
-def create_document(
-    row: Dict[str, str], index: int, source_file: str, case_id: str, device_id: str
-) -> Dict[str, Any]:
+def create_doc(row: Dict[str, str], index: int, source_file: str) -> Dict[str, Any]:
     filename = os.path.basename(source_file)
-    row_fingerprint = hashlib.sha256(
-        json.dumps(row, sort_keys=True, ensure_ascii=False).encode("utf-8")
-    ).hexdigest()
-    deterministic_name = f"{filename}|{index:04d}|{row_fingerprint}"
-    deterministic_id = str(uuid.uuid5(uuid.NAMESPACE_URL, deterministic_name))
+    source_path = get_source(row, source_file)
 
-    original_source_path = get_source_path(row, source_file)
-
-    ufdr_doc = {
-        "_id": deterministic_id,
-        "artifact_id": deterministic_id,
-        "case_id": case_id,
-        "device_id": device_id,
-        "type": "forensic_record",
-        "data_type": "tsv_record",
-        "timestamp": extract_time(row),
-        "source_path": original_source_path,
+    doc = {
+        "type": get_type(filename),
+        "data_type": get_data(filename),
+        "timestamp": get_time(row),
+        "source_path": source_path,
         "conversion_timestamp": datetime.now().isoformat(),
     }
 
     for header, value in row.items():
         if value and str(value).strip():
-            clean_header_name = clean_name(header)
-            ufdr_doc[clean_header_name] = clean_data(value)
+            clean_header = clean_name(header)
+            doc[clean_header] = clean_data(value)
 
-    return ufdr_doc
-
-
-def generate_ids() -> Dict[str, str]:
-    uid = datetime.now().strftime("%Y%m%d%H%M%S%f")
-    return {"case_id": f"CASE-{uid}", "device_id": f"DEVICE-{uid}"}
+    return doc
 
 
-def get_source_path(row: Dict[str, str], fallback_path: str) -> str:
-    source_path_fields = [
+def get_type(filename: str) -> str:
+    base_name = filename.lower().replace(".tsv", "").replace(".txt", "")
+
+    if any(
+        keyword in base_name
+        for keyword in ["whatsapp", "chat", "groupmessages", "onetoone"]
+    ):
+        return "whatsapp_logs"
+
+    if any(
+        keyword in base_name
+        for keyword in [
+            "message",
+            "sms",
+            "mms",
+            "viber",
+            "teams",
+            "imo",
+            "burner",
+            "tiktok",
+        ]
+    ):
+        return "message_logs"
+
+    if any(keyword in base_name for keyword in ["call", "phone", "duo", "teamscall"]):
+        return "call_logs"
+
+    if any(keyword in base_name for keyword in ["contact", "friends", "users"]):
+        return "contact_data"
+
+    if any(
+        keyword in base_name for keyword in ["account", "userid", "identity", "login"]
+    ):
+        return "account_data"
+
+    if any(
+        keyword in base_name
+        for keyword in [
+            "browser",
+            "webhistory",
+            "webvisits",
+            "cookies",
+            "bookmarks",
+            "search",
+        ]
+    ):
+        return "browser_history"
+
+    if any(
+        keyword in base_name
+        for keyword in ["location", "gps", "maps", "waze", "life360"]
+    ):
+        return "location_data"
+
+    if any(
+        keyword in base_name
+        for keyword in ["file", "download", "media", "image", "video", "audio"]
+    ):
+        return "file_data"
+
+    if any(keyword in base_name for keyword in ["notification", "alert", "fcm"]):
+        return "notification_history"
+
+    return "general_data"
+
+
+def get_data(filename: str) -> str:
+    match = re.search(r"\.(\w+)$", filename.lower())
+    if match:
+        ext = match.group(1)
+        return f"{ext}_record"
+    return "unknown_record"
+
+
+def get_source(row: Dict[str, str], fallback_path: str) -> str:
+    source_fields = [
         "source_file",
         "source_path",
         "path",
@@ -163,15 +208,15 @@ def get_source_path(row: Dict[str, str], fallback_path: str) -> str:
         "originating_file",
     ]
 
-    for field in source_path_fields:
+    for field in source_fields:
         if field in row and row[field] and str(row[field]).strip():
             return str(row[field]).strip()
 
     return fallback_path
 
 
-def extract_time(row: Dict[str, str]) -> Optional[str]:
-    timestamp_fields = [
+def get_time(row: Dict[str, str]) -> Optional[str]:
+    time_fields = [
         "call_date",
         "date",
         "timestamp",
@@ -180,19 +225,19 @@ def extract_time(row: Dict[str, str]) -> Optional[str]:
         "last_access_date",
     ]
 
-    for field in timestamp_fields:
+    for field in time_fields:
         if field in row and row[field] and str(row[field]).strip():
             return str(row[field]).strip()
 
     for header, value in row.items():
         if value and str(value).strip():
-            timestamp_patterns = [
+            time_patterns = [
                 r"\d{4}-\d{2}-\d{2}",
                 r"\d{4}/\d{2}/\d{2}",
                 r"\d{2}-\d{2}-\d{4}",
                 r"\d{2}/\d{2}/\d{4}",
             ]
-            for pattern in timestamp_patterns:
+            for pattern in time_patterns:
                 if re.search(pattern, str(value)):
                     return str(value).strip()
     return None
