@@ -4,7 +4,7 @@ import tempfile
 import zipfile
 import shutil
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, File, UploadFile
+from fastapi import APIRouter, HTTPException, File, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse
 from typing import Dict, Any
 from ..services.elasticsearch import (
@@ -23,7 +23,7 @@ router = APIRouter()
 
 @router.post("/upload")
 async def upload_zip(
-    file: UploadFile = File(...), case_id: str = None, device_id: str = None
+    file: UploadFile = File(...), case_id: str = Form(None), device_id: str = Form(None)
 ):
     temp_dir = None
     try:
@@ -41,7 +41,8 @@ async def upload_zip(
             tsv_files = []
             for file_info in zip_ref.infolist():
                 if not file_info.is_dir() and file_info.filename.endswith(".tsv"):
-                    tsv_files.append(file_info.filename)
+                    clean_name = os.path.basename(file_info.filename)
+                    tsv_files.append(clean_name)
 
         if not tsv_files:
             raise HTTPException(
@@ -57,10 +58,10 @@ async def upload_zip(
         metadata = {
             "case_id": case_id,
             "device_id": device_id,
-            "upload_timestamp": datetime.now().isoformat(),
-            "original_filename": file.filename,
-            "tsv_files_processed": len(tsv_files),
-            "tsv_files_list": tsv_files,
+            "upload_time": datetime.now().isoformat(),
+            "file_name": file.filename,
+            "files_count": len(tsv_files),
+            "files_list": tsv_files,
         }
 
         metadata_path = os.path.join(temp_dir, "metadata.json")
