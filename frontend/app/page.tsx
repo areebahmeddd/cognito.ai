@@ -62,6 +62,16 @@ export default function HomePage() {
   const [showUploadModal, setShowUploadModal] = useState(true);
   const [hasUploadedUFDR, setHasUploadedUFDR] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  interface UploadResult {
+    message: string;
+    files_processed: number;
+    documents_indexed: number;
+    status: string;
+  }
+  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modalFileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -130,6 +140,7 @@ export default function HomePage() {
     if (files) {
       const newFiles = Array.from(files);
       setUploadedFiles((prev) => [...prev, ...newFiles]);
+      setUploadError(null); // Clear any previous errors
     }
   };
 
@@ -142,6 +153,7 @@ export default function HomePage() {
       setUploadedFiles((prev) => [...prev, ...newFiles]);
       setHasUploadedUFDR(true);
       setShowUploadModal(false);
+      setUploadError(null); // Clear any previous errors
     }
   };
 
@@ -164,8 +176,48 @@ export default function HomePage() {
     });
   };
 
-  const handleSubmit = () => {
-    if (inputValue.trim()) {
+  const handleSubmit = async () => {
+    if (inputValue.trim() && uploadedFiles.length > 0) {
+      setIsUploading(true);
+      setUploadError(null);
+      
+      try {
+        const formData = new FormData();
+        
+        // Add all uploaded files to form data
+        uploadedFiles.forEach((file) => {
+          formData.append('file', file);
+        });
+        
+        const response = await fetch('http://127.0.0.1:8000/api/v1/data/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+        }
+        
+        const result: UploadResult = await response.json();
+        console.log('Upload successful:', result);
+        
+        setUploadSuccess(true);
+        setUploadResult(result);
+        
+        // Navigate to dashboard after successful upload
+        // Temporarily disable auto-redirect so you can see the output
+        // setTimeout(() => {
+        //   window.location.href = "/dashboard";
+        // }, 1000);
+        
+      } catch (error) {
+        console.error('Upload error:', error);
+        setUploadError(error instanceof Error ? error.message : 'Upload failed');
+      } finally {
+        setIsUploading(false);
+      }
+    } else if (inputValue.trim()) {
+      // If there's text but no files, just navigate to dashboard
       window.location.href = "/dashboard";
     }
   };
@@ -287,10 +339,40 @@ export default function HomePage() {
                       : "bg-slate-100 text-slate-300 dark:bg-slate-700 dark:text-slate-500"
                   }`}
                   onClick={handleSubmit}
+                  disabled={isUploading}
                 >
-                  <Send className="h-4 w-4" />
+                  {isUploading ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {uploadError && (
+          <div className="relative z-10 mx-auto mt-4 w-full max-w-2xl">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+              <p className="text-sm text-red-600 dark:text-red-400">
+                {uploadError}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {uploadSuccess && (
+          <div className="relative z-10 mx-auto mt-4 w-full max-w-2xl">
+            <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20">
+              <p className="text-sm text-green-600 dark:text-green-400">
+                Files uploaded successfully! Redirecting to dashboard...
+              </p>
+              {uploadResult && (
+                <pre className="mt-2 max-h-64 overflow-auto rounded bg-white/70 p-2 text-xs text-slate-900 dark:bg-slate-900/50 dark:text-slate-100">
+{JSON.stringify(uploadResult, null, 2)}
+                </pre>
+              )}
             </div>
           </div>
         )}
