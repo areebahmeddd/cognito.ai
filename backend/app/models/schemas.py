@@ -6,7 +6,8 @@ from datetime import datetime
 class UFDRDocument(BaseModel):
     # Core forensic identification fields
     artifact_id: str
-    type: str
+    category: str
+    file_type: Optional[str] = None
     data_type: str
     source_path: str
     timestamp: Optional[Union[str, datetime]] = None

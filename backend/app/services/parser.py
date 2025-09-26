@@ -5,6 +5,7 @@ import json
 import zipfile
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+from .classifier import classify_file_type, batch_classify_files
 
 
 def convert_files(zip_path: str, tsv_files: List[str], temp_dir: str) -> Dict[str, Any]:
@@ -15,6 +16,14 @@ def convert_files(zip_path: str, tsv_files: List[str], temp_dir: str) -> Dict[st
 
     extracted_files = extract_files(zip_path, tsv_files, input_dir)
 
+    # Extract filenames for batch classification
+    filenames = [os.path.basename(tsv_file) for tsv_file in extracted_files]
+    
+    # Batch classify all files at once to avoid rate limits
+    print(f"Batch classifying {len(filenames)} files...")
+    file_classifications = batch_classify_files(filenames)
+    print("Batch classification completed!")
+
     successful = 0
     total_records = 0
 
@@ -22,7 +31,7 @@ def convert_files(zip_path: str, tsv_files: List[str], temp_dir: str) -> Dict[st
         filename = os.path.basename(tsv_file)
         output_path = os.path.join(output_dir, f"{os.path.splitext(filename)[0]}.json")
 
-        num_records = convert_file(tsv_file, output_path)
+        num_records = convert_file(tsv_file, output_path, file_classifications.get(filename))
         if num_records > 0:
             successful += 1
             total_records += num_records
@@ -34,7 +43,7 @@ def convert_files(zip_path: str, tsv_files: List[str], temp_dir: str) -> Dict[st
     }
 
 
-def convert_file(tsv_path: str, output_path: str) -> int:
+def convert_file(tsv_path: str, output_path: str, classification: Optional[Dict[str, str]] = None) -> int:
     try:
         if not os.path.exists(tsv_path) or os.path.getsize(tsv_path) == 0:
             return 0
@@ -46,7 +55,7 @@ def convert_file(tsv_path: str, output_path: str) -> int:
         documents = []
         for i, row in enumerate(rows):
             try:
-                doc = create_doc(row, i, tsv_path)
+                doc = create_doc(row, i, tsv_path, classification)
                 documents.append(doc)
             except Exception:
                 continue
@@ -105,13 +114,21 @@ def read_file(tsv_path: str) -> List[Dict[str, str]]:
         return list(reader)
 
 
-def create_doc(row: Dict[str, str], index: int, source_file: str) -> Dict[str, Any]:
+def create_doc(row: Dict[str, str], index: int, source_file: str, classification: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     filename = os.path.basename(source_file)
     source_path = get_source(row, source_file)
+    
+    # Use provided classification or fallback to individual classification
+    if classification is None:
+        classification = classify_file_type(filename)
 
     doc = {
-        "artifact_id": f"RECORD-{index + 1:04d}",
-        "type": get_type(filename),
+        "artifact_id": f"{classification['type'].lower().replace(' ', '_')}-{index + 1:04d}",
+        "category": classification["category"],  # General category (messages, calls, etc.)
+        "file_type": classification["type"],     # Specific app type (WhatsApp Messages, etc.)
+        "type": classification["type"],          # For frontend compatibility
+        "app_name": classification["type"],      # For frontend compatibility
+        "app": classification["type"],           # For frontend EvidenceItem interface
         "data_type": get_data(filename),
         "timestamp": get_time(row),
         "source_path": source_path,
@@ -127,13 +144,18 @@ def create_doc(row: Dict[str, str], index: int, source_file: str) -> Dict[str, A
 
 
 def get_type(filename: str) -> str:
+    """
+    Legacy function - now used as fallback only.
+    AI classification in classifier.py is the primary method.
+    Returns readable category names instead of old hardcoded types.
+    """
     base_name = filename.lower().replace(".tsv", "").replace(".txt", "")
 
     if any(
         keyword in base_name
         for keyword in ["whatsapp", "chat", "groupmessages", "onetoone"]
     ):
-        return "whatsapp_logs"
+        return "messages"
 
     if any(
         keyword in base_name
@@ -148,18 +170,18 @@ def get_type(filename: str) -> str:
             "tiktok",
         ]
     ):
-        return "message_logs"
+        return "messages"
 
     if any(keyword in base_name for keyword in ["call", "phone", "duo", "teamscall"]):
-        return "call_logs"
+        return "calls"
 
     if any(keyword in base_name for keyword in ["contact", "friends", "users"]):
-        return "contact_data"
+        return "contacts"
 
     if any(
         keyword in base_name for keyword in ["account", "userid", "identity", "login"]
     ):
-        return "account_data"
+        return "account data"
 
     if any(
         keyword in base_name
@@ -172,24 +194,24 @@ def get_type(filename: str) -> str:
             "search",
         ]
     ):
-        return "browser_history"
+        return "browsing history"
 
     if any(
         keyword in base_name
         for keyword in ["location", "gps", "maps", "waze", "life360"]
     ):
-        return "location_data"
+        return "location data"
 
     if any(
         keyword in base_name
         for keyword in ["file", "download", "media", "image", "video", "audio"]
     ):
-        return "file_data"
+        return "file data"
 
     if any(keyword in base_name for keyword in ["notification", "alert", "fcm"]):
-        return "notification_history"
+        return "notifications"
 
-    return "general_data"
+    return "general data"
 
 
 def get_data(filename: str) -> str:

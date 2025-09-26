@@ -112,7 +112,10 @@ def create_index() -> None:
                     "format": "strict_date_optional_time||yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis||yyyy-MM-dd HH:mm:ssXXX",
                 },
                 "source_path": {"type": "keyword"},
+                "category": {"type": "keyword"},
+                "file_type": {"type": "keyword"},
                 "type": {"type": "keyword"},
+                "app": {"type": "keyword"},
                 "data_type": {"type": "keyword"},
                 "conversion_timestamp": {
                     "type": "date",

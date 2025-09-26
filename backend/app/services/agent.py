@@ -327,7 +327,7 @@ Query: "{query}"
 UFDR data types include: messages (SMS, WhatsApp, Signal), calls, transactions, web history, contacts, locations, files, notifications, system usage.
 
 Available fields (non-exhaustive):
-- type, data_type, channel, platform, service
+- category, file_type, data_type, channel, platform, service
 - message, body, text, title, transcription
 - from, to, sender, recipient, display_from, display_to, username, display_name
 - timestamp (ISO), message_timestamp, call_date
