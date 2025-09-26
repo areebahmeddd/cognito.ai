@@ -594,9 +594,10 @@ export default function CasePage() {
 
                 {/* Timeline Tab */}
                 {activeTab === "timeline" && (
-                  <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+                  <div className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                    {/* Timeline Header */}
                     <div className="px-4 py-4 border-b border-r border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 bg-slate-200 dark:bg-slate-600 rounded-sm flex items-center justify-center">
                             <svg
@@ -617,12 +618,58 @@ export default function CasePage() {
                             Timeline Analysis
                           </h2>
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          Chronological order
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {results.length} events
+                          </div>
+                          <svg
+                            className="w-2 h-2 text-slate-400 dark:text-slate-400"
+                            fill="currentColor"
+                            viewBox="0 0 8 8"
+                          >
+                            <circle cx="4" cy="4" r="3" />
+                          </svg>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            Chronological order
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Timeline Controls */}
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-slate-600 dark:text-slate-400">
+                            Filter:
+                          </span>
+                          <select className="text-sm border border-slate-200 dark:border-slate-700 rounded px-2 py-1 bg-white dark:bg-slate-800">
+                            <option>All Events</option>
+                            <option>Messages Only</option>
+                            <option>Calls Only</option>
+                            <option>Web Activity</option>
+                            <option>Files</option>
+                          </select>
+                          <select className="text-sm border border-slate-200 dark:border-slate-700 rounded px-2 py-1 bg-white dark:bg-slate-800">
+                            <option>Last 24 Hours</option>
+                            <option>Last 7 Days</option>
+                            <option>Last 30 Days</option>
+                            <option>All Time</option>
+                          </select>
+                        </div>
+
+                        <div className="flex items-center gap-2 ml-auto">
+                          <span className="text-sm text-slate-600 dark:text-slate-400">
+                            View:
+                          </span>
+                          <button className="px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
+                            Compact
+                          </button>
+                          <button className="px-2 py-1 text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded">
+                            Detailed
+                          </button>
                         </div>
                       </div>
                     </div>
-                    <div className="">
+                    <div className="border-b border-r border-slate-200 dark:border-slate-700">
                       {results.length === 0 ? (
                         <div className="text-center py-12">
                           <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -653,102 +700,234 @@ export default function CasePage() {
                           {/* Timeline Line */}
                           <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700"></div>
 
-                          {results.map((ev, index) => (
-                            <div
-                              key={ev.id}
-                              className="relative flex items-start gap-4 p-6 border-b border-slate-200 dark:border-slate-700"
-                            >
-                              {/* Timeline Dot */}
-                              <div className="relative z-10 flex-shrink-0 w-4 h-4 bg-slate-400 dark:bg-slate-500 rounded-full border-2 border-white dark:border-slate-800"></div>
+                          {/* Group events by date */}
+                          {(() => {
+                            // Group results by date
+                            const groupedResults = results.reduce(
+                              (groups, ev) => {
+                                const date = new Date(
+                                  ev.timestamp,
+                                ).toDateString();
+                                if (!groups[date]) {
+                                  groups[date] = [];
+                                }
+                                groups[date].push(ev);
+                                return groups;
+                              },
+                              {} as Record<string, typeof results>,
+                            );
 
-                              {/* Content */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 bg-slate-200 dark:bg-slate-600 rounded-sm flex items-center justify-center">
-                                      <svg
-                                        className="w-3 h-3 text-slate-600 dark:text-slate-400"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                                        />
-                                      </svg>
-                                    </div>
-                                    <div>
-                                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                        {ev.app}
-                                      </div>
-                                      <div className="text-xs text-slate-500">
-                                        #{String(index + 1).padStart(3, "0")}
+                            return Object.entries(groupedResults).map(
+                              ([date, events], groupIndex) => (
+                                <div key={date} className="relative">
+                                  {/* Date Header */}
+                                  <div className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 px-6 py-3">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-3 h-3 bg-slate-400 dark:bg-slate-500 rounded-full"></div>
+                                      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                        {date}
+                                      </h3>
+                                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                                        {events.length} events
                                       </div>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <div className="text-xs text-slate-500 bg-slate-200 dark:bg-slate-700 px-2 py-1 font-mono rounded-full">
-                                      {ev.id}
-                                    </div>
+
+                                  {/* Events for this date */}
+                                  {events.map((ev, index) => (
                                     <div
-                                      className={`text-xs px-2 py-1 font-medium rounded-full ${
-                                        ev.direction === "Incoming"
-                                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                                          : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                                      }`}
+                                      key={ev.id}
+                                      className="relative flex items-start gap-4 p-6 border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors"
                                     >
-                                      {ev.direction}
+                                      {/* Timeline Dot */}
+                                      <div
+                                        className={`relative z-10 flex-shrink-0 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${
+                                          ev.direction === "Incoming"
+                                            ? "bg-green-500"
+                                            : "bg-blue-500"
+                                        }`}
+                                      ></div>
+
+                                      {/* Content */}
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-3 mb-3">
+                                          <div className="flex items-center gap-2">
+                                            <div
+                                              className={`w-6 h-6 rounded-sm flex items-center justify-center ${
+                                                ev.app
+                                                  .toLowerCase()
+                                                  .includes("whatsapp")
+                                                  ? "bg-green-100 dark:bg-green-900/30"
+                                                  : ev.app
+                                                        .toLowerCase()
+                                                        .includes("sms")
+                                                    ? "bg-blue-100 dark:bg-blue-900/30"
+                                                    : ev.app
+                                                          .toLowerCase()
+                                                          .includes("call")
+                                                      ? "bg-purple-100 dark:bg-purple-900/30"
+                                                      : "bg-slate-200 dark:bg-slate-600"
+                                              }`}
+                                            >
+                                              <svg
+                                                className={`w-3 h-3 ${
+                                                  ev.app
+                                                    .toLowerCase()
+                                                    .includes("whatsapp")
+                                                    ? "text-green-600 dark:text-green-400"
+                                                    : ev.app
+                                                          .toLowerCase()
+                                                          .includes("sms")
+                                                      ? "text-blue-600 dark:text-blue-400"
+                                                      : ev.app
+                                                            .toLowerCase()
+                                                            .includes("call")
+                                                        ? "text-purple-600 dark:text-purple-400"
+                                                        : "text-slate-600 dark:text-slate-400"
+                                                }`}
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                                />
+                                              </svg>
+                                            </div>
+                                            <div>
+                                              <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                                {ev.app}
+                                              </div>
+                                              <div className="text-xs text-slate-500">
+                                                {ev.message_type ||
+                                                  ev.type ||
+                                                  "Message"}
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <div className="flex items-center gap-2">
+                                            <div
+                                              className={`text-xs px-2 py-1 font-medium rounded-full ${
+                                                ev.direction === "Incoming"
+                                                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                                  : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                                              }`}
+                                            >
+                                              {ev.direction}
+                                            </div>
+                                            {ev.status === "Deleted" && (
+                                              <div className="text-xs px-2 py-1 font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
+                                                Deleted
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          <div className="text-xs text-slate-500 ml-auto">
+                                            {new Date(
+                                              ev.timestamp,
+                                            ).toLocaleTimeString()}
+                                          </div>
+                                        </div>
+
+                                        {/* Message Content */}
+                                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700 mb-3">
+                                          <div className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
+                                            {ev.content}
+                                          </div>
+                                        </div>
+
+                                        {/* Sender and Metadata */}
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3 text-sm">
+                                            <div className="flex items-center gap-2">
+                                              <div className="w-5 h-5 bg-slate-200 dark:bg-slate-700 rounded-sm flex items-center justify-center">
+                                                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                                                  {ev.sender
+                                                    .charAt(0)
+                                                    .toUpperCase()}
+                                                </span>
+                                              </div>
+                                              <span className="font-medium text-slate-700 dark:text-slate-300">
+                                                {ev.sender}
+                                              </span>
+                                            </div>
+                                            {ev.phone_number && (
+                                              <>
+                                                <div className="text-slate-400">
+                                                  •
+                                                </div>
+                                                <div className="text-slate-500 font-mono text-xs">
+                                                  {ev.phone_number}
+                                                </div>
+                                              </>
+                                            )}
+                                          </div>
+
+                                          {/* Quick Actions */}
+                                          <div className="flex items-center gap-1">
+                                            <button className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                              <svg
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                                />
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                                />
+                                              </svg>
+                                            </button>
+                                            <button className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                              <svg
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+                                                />
+                                              </svg>
+                                            </button>
+                                          </div>
+                                        </div>
+
+                                        {/* Tags */}
+                                        {ev.tagBadges.length > 0 && (
+                                          <div className="flex flex-wrap gap-1 mt-3">
+                                            {ev.tagBadges.map((tag) => (
+                                              <span
+                                                key={tag}
+                                                className="inline-flex items-center bg-amber-100 dark:bg-amber-900/30 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-300 rounded-full"
+                                              >
+                                                {tag}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
-                                  </div>
-                                  <div className="text-xs text-slate-500 ml-auto">
-                                    {ev.timestamp}
-                                  </div>
+                                  ))}
                                 </div>
-
-                                {/* Message Content */}
-                                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700 mb-3">
-                                  <div className="text-sm text-slate-800 dark:text-slate-200">
-                                    {ev.content}
-                                  </div>
-                                </div>
-
-                                {/* Sender Info */}
-                                <div className="flex items-center gap-3 text-sm mb-3">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 bg-slate-200 dark:bg-slate-700 rounded-sm flex items-center justify-center">
-                                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                        {ev.sender.charAt(0).toUpperCase()}
-                                      </span>
-                                    </div>
-                                    <span className="font-medium text-slate-700 dark:text-slate-300">
-                                      {ev.sender}
-                                    </span>
-                                  </div>
-                                  <div className="text-slate-400">•</div>
-                                  <div className="text-slate-500">
-                                    Group: Crypto market9
-                                  </div>
-                                </div>
-
-                                {/* Tags */}
-                                {ev.tagBadges.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {ev.tagBadges.map((tag) => (
-                                      <span
-                                        key={tag}
-                                        className="inline-flex items-center bg-amber-100 dark:bg-amber-900/30 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-300 rounded-full"
-                                      >
-                                        {tag}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
+                              ),
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
