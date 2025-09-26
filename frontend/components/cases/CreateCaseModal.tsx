@@ -134,19 +134,16 @@ export default function CreateCaseModal({
 
     try {
       // First, create a case
-      const caseResponse = await fetch(
-        "http://127.0.0.1:8000/api/v1/data/cases",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: caseName,
-            description: description,
-          }),
+      const caseResponse = await fetch("http://127.0.0.1:8000/api/v1/cases", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          title: caseName,
+          description: description,
+        }),
+      });
 
       if (!caseResponse.ok) {
         throw new Error("Failed to create case");
