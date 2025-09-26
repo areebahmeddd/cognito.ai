@@ -73,7 +73,7 @@ export default function CasePage() {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="Search case data... (e.g., 'messages about bitcoin')"
-                      className="h-10 pr-10"
+                      className="h-10 border border-slate-200 dark:border-slate-700 pr-10"
                       onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -85,7 +85,7 @@ export default function CasePage() {
                   <Button
                     onClick={handleAnalyze}
                     disabled={loading || !query.trim()}
-                    className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="h-10 px-6 bg-accent hover:bg-accent/80 text-white"
                   >
                     {loading ? (
                       <div className="flex items-center gap-2">
