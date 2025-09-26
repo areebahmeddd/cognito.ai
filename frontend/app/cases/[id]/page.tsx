@@ -174,7 +174,7 @@ export default function CasePage() {
                       </div>
                     </div>
                   </div>
-                  <div className="p-6">
+                  <div className="">
                     {results.length === 0 ? (
                       <div className="text-center py-12">
                         <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3">
@@ -205,11 +205,11 @@ export default function CasePage() {
                         )}
                       </div>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="">
                         {results.map((ev, index) => (
                           <div
                             key={ev.id}
-                            className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                            className="border-b border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                           >
                             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-6 py-4">
                               <div className="flex items-center gap-3">
