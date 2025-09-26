@@ -1,6 +1,5 @@
 "use client";
 
-import CasesHome from "@/components/cases/CasesHome";
 import DashboardNavbar from "@/components/DashboardNavbar";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/landing/CTASection";
@@ -10,6 +9,10 @@ import Hero from "@/components/landing/Hero";
 import HowItWorks from "@/components/landing/HowItWorks";
 import Testimonials from "@/components/landing/Testimonials";
 import Navbar from "@/components/Navbar";
+import WelcomeSection from "@/components/dashboard/WelcomeSection";
+import StatsGrid from "@/components/dashboard/StatsGrid";
+import QuickActions from "@/components/dashboard/QuickActions";
+import RecentActivity from "@/components/dashboard/RecentActivity";
 import { useEffect, useState } from "react";
 
 export default function HomePage() {
@@ -36,7 +39,16 @@ export default function HomePage() {
           <div className="flex-1 flex flex-col overflow-hidden">
             <DashboardNavbar />
             <main className="flex-1 overflow-y-auto">
-              <CasesHome />
+              <div className="mx-auto max-w-7xl px-4 py-8">
+                <div className="space-y-8">
+                  <WelcomeSection />
+                  <StatsGrid />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <QuickActions />
+                    <RecentActivity />
+                  </div>
+                </div>
+              </div>
             </main>
           </div>
         </div>
