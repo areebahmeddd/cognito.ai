@@ -157,7 +157,7 @@ export default function CasePage() {
 
                 {/* Evidence Timeline */}
                 <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
-                  <div className="px-6 py-4 border-b border-r border-slate-200 dark:border-slate-700">
+                  <div className="px-4 py-4 border-b border-r border-slate-200 dark:border-slate-700">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 bg-slate-200 dark:bg-slate-600 rounded-sm flex items-center justify-center">
@@ -211,7 +211,7 @@ export default function CasePage() {
                             key={ev.id}
                             className="border-b border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                           >
-                            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+                            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 px-4 py-4">
                               <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2">
                                   <div className="w-6 h-6 bg-slate-200 dark:bg-slate-600 rounded-sm flex items-center justify-center">
@@ -245,9 +245,9 @@ export default function CasePage() {
                                 {ev.timestamp}
                               </div>
                             </div>
-                            <div className="p-6 space-y-4">
+                            <div className="p-4 space-y-4">
                               {/* Message Content */}
-                              <div className="bg-slate-50 dark:bg-slate-900/50 p-3 border border-slate-200 dark:border-slate-700">
+                              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
                                 <div className="text-sm text-slate-800 dark:text-slate-200">
                                   {ev.content}
                                 </div>
@@ -287,8 +287,8 @@ export default function CasePage() {
                               )}
 
                               {/* Metadata Grid */}
-                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                                <div className="bg-slate-50 dark:bg-slate-900/50 p-3 border border-slate-200 dark:border-slate-700">
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="bg-slate-50 rounded-lg dark:bg-slate-900/50 p-3 border border-slate-200 dark:border-slate-700">
                                   <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
                                     Sender Details
                                   </div>
@@ -314,7 +314,7 @@ export default function CasePage() {
                                   </div>
                                 </div>
 
-                                <div className="bg-slate-50 dark:bg-slate-900/50 p-3 border border-slate-200 dark:border-slate-700">
+                                <div className="bg-slate-50 rounded-lg dark:bg-slate-900/50 p-3 border border-slate-200 dark:border-slate-700">
                                   <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
                                     Forensic Data
                                   </div>
