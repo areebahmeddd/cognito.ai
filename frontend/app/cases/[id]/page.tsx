@@ -65,8 +65,8 @@ export default function CasePage() {
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Query Section */}
-            <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4">
-              <div className="max-w-6xl mx-auto">
+            <div className="bg-white dark:bg-slate-800 border-b h-18 border-slate-200 dark:border-slate-700 p-4">
+              <div className="mx-auto">
                 <div className="flex items-center gap-3">
                   <div className="flex-1 relative">
                     <Input
