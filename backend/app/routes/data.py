@@ -41,8 +41,7 @@ async def upload_zip(
             tsv_files = []
             for file_info in zip_ref.infolist():
                 if not file_info.is_dir() and file_info.filename.endswith(".tsv"):
-                    clean_name = os.path.basename(file_info.filename)
-                    tsv_files.append(clean_name)
+                    tsv_files.append(file_info.filename)
 
         if not tsv_files:
             raise HTTPException(
@@ -115,14 +114,13 @@ async def export_report(api_response: Dict[str, Any]):
 
         pdf_path = generate_report(api_response)
         results = api_response.get("results", [])
-        case_id = "unknown"
-        if results and results[0].get("case_id"):
-            case_id = results[0]["case_id"]
-
+        artifact_id = results[0]["artifact_id"]
+        filename = f"{artifact_id}.pdf"
+        
         return FileResponse(
             path=pdf_path,
             media_type="application/pdf",
-            filename=f"{case_id}.pdf",
+            filename=filename,
             background=None,
         )
     except Exception as e:

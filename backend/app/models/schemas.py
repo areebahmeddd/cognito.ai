@@ -6,8 +6,6 @@ from datetime import datetime
 class UFDRDocument(BaseModel):
     # Core forensic identification fields
     artifact_id: str
-    case_id: str
-    device_id: str
     type: str
     data_type: str
     source_path: str

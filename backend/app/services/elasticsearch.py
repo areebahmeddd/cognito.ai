@@ -107,8 +107,6 @@ def create_index() -> None:
             "dynamic": True,
             "properties": {
                 "artifact_id": {"type": "keyword"},
-                "case_id": {"type": "keyword"},
-                "device_id": {"type": "keyword"},
                 "timestamp": {
                     "type": "date",
                     "format": "strict_date_optional_time||yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis||yyyy-MM-dd HH:mm:ssXXX",
