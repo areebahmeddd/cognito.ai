@@ -211,7 +211,7 @@ export default function CasePage() {
                             key={ev.id}
                             className="border-b border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                           >
-                            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+                            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2">
                                   <div className="w-6 h-6 bg-slate-200 dark:bg-slate-600 rounded-sm flex items-center justify-center">
