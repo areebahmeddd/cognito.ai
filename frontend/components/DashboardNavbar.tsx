@@ -41,7 +41,7 @@ export default function DashboardNavbar() {
 
   const navItems = [
     { name: "Home", href: "/", icon: Home },
-    { name: "Cases", href: "/", icon: FolderOpen },
+    { name: "Cases", href: "/cases", icon: FolderOpen },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
   ];
 

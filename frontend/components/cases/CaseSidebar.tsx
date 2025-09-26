@@ -2,7 +2,7 @@
 
 import CreateCaseModal from "@/components/cases/CreateCaseModal";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, FileText, Plus, Upload } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Plus, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface CaseSidebarProps {
@@ -107,25 +107,30 @@ export default function CaseSidebar({ caseId }: CaseSidebarProps) {
       <aside className="w-80 h-full flex flex-col border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
         <div
           ref={dropdownRef}
-          className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 relative"
+          className="px-2 h-18 flex items-center border-b border-slate-200 dark:border-slate-700 relative"
         >
           <Button
             variant="ghost"
-            className="w-full justify-between p-2 h-auto hover:bg-slate-50 dark:hover:bg-slate-700"
+            className="w-full justify-between p-1 px-2 h-auto hover:bg-slate-50 dark:hover:bg-slate-700"
             onClick={() => {
               console.log("Dropdown trigger clicked, cases:", allCases);
               setIsDropdownOpen(!isDropdownOpen);
             }}
           >
             <div className="text-left flex-1">
-              <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <div className="text-base font-semibold text-slate-900 dark:text-slate-100">
                 {title}
               </div>
-              <div className="text-sm text-slate-500">Case ID: {caseId}</div>
+              <div className="text-xs text-slate-500">Case ID: {caseId}</div>
             </div>
-            <ChevronDown
-              className={`h-4 w-4 text-slate-500 flex-shrink-0 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
-            />
+            <div className="flex flex-col items-center">
+              <ChevronUp
+                className={`h-4 w-4 text-slate-500 flex-shrink-0 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+              />
+              <ChevronDown
+                className={`h-4 w-4 text-slate-500 flex-shrink-0 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+              />
+            </div>
           </Button>
 
           {isDropdownOpen && (
