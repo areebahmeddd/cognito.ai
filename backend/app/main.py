@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from .core.config import settings
 from .routes.data import router as data_router
 from .routes.search import router as search_router
+from .routes.cases import router as cases_router
 from .services.elasticsearch import wait_es, create_index
 
 app = FastAPI(
@@ -23,6 +24,7 @@ app.add_middleware(
 
 app.include_router(data_router, prefix="/api/v1/data", tags=["data"])
 app.include_router(search_router, prefix="/api/v1/search", tags=["search"])
+app.include_router(cases_router, prefix="/api/v1", tags=["cases"])
 
 
 @app.on_event("startup")
