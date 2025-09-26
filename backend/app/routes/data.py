@@ -39,9 +39,13 @@ async def upload_zip(
 
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
             tsv_files = []
+            tsv_files_for_response = []
             for file_info in zip_ref.infolist():
                 if not file_info.is_dir() and file_info.filename.endswith(".tsv"):
-                    tsv_files.append(file_info.filename)
+                    tsv_files.append(file_info.filename)  # Full path for processing
+                    tsv_files_for_response.append(
+                        os.path.basename(file_info.filename)
+                    )  # Clean name for response
 
         if not tsv_files:
             raise HTTPException(
@@ -60,7 +64,7 @@ async def upload_zip(
             "upload_time": datetime.now().isoformat(),
             "file_name": file.filename,
             "files_count": len(tsv_files),
-            "files_list": tsv_files,
+            "files_list": tsv_files_for_response,
         }
 
         metadata_path = os.path.join(temp_dir, "metadata.json")
@@ -116,7 +120,7 @@ async def export_report(api_response: Dict[str, Any]):
         results = api_response.get("results", [])
         artifact_id = results[0]["artifact_id"]
         filename = f"{artifact_id}.pdf"
-        
+
         return FileResponse(
             path=pdf_path,
             media_type="application/pdf",
