@@ -121,7 +121,7 @@ export default function CaseSidebar({ caseId }: CaseSidebarProps) {
               <div className="text-base font-semibold text-slate-900 dark:text-slate-100">
                 {title}
               </div>
-              <div className="text-xs text-slate-500">Case ID: {caseId}</div>
+              <div className="text-xs text-slate-500">{caseId}</div>
             </div>
             <div className="flex flex-col items-center">
               <ChevronUp
