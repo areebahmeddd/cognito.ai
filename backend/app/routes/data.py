@@ -3,10 +3,12 @@ import json
 import tempfile
 import zipfile
 import shutil
+import uuid
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, File, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse
 from typing import Dict, Any
+from pydantic import BaseModel
 from ..services.elasticsearch import (
     get_total,
     get_name,
@@ -21,6 +23,39 @@ from ..services.pdf import generate_report
 router = APIRouter()
 
 
+class CreateCaseRequest(BaseModel):
+    title: str
+    description: str = ""
+
+
+@router.post("/cases")
+async def create_case(request: CreateCaseRequest):
+    """Create a new case and return the case ID"""
+    try:
+        case_id = str(uuid.uuid4())
+        
+        # Store case metadata (in a real app, this would go to a database)
+        case_data = {
+            "id": case_id,
+            "title": request.title,
+            "description": request.description,
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat(),
+        }
+        
+        return JSONResponse(
+            content={
+                "message": "Case created successfully",
+                "case_id": case_id,
+                "case_data": case_data,
+            }
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Case creation failed: {str(e)}"
+        )
+
+
 @router.post("/upload")
 async def upload_zip(
     file: UploadFile = File(...), case_id: str = Form(None), device_id: str = Form(None)
@@ -29,6 +64,10 @@ async def upload_zip(
     try:
         if not file.filename.endswith(".zip"):
             raise HTTPException(status_code=400, detail="Only ZIP files are supported")
+        
+        # Generate device_id if not provided (each file represents a device)
+        if not device_id:
+            device_id = str(uuid.uuid4())
 
         temp_dir = tempfile.mkdtemp(prefix="tsv_upload_")
         zip_path = os.path.join(temp_dir, file.filename)
