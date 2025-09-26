@@ -142,7 +142,7 @@ export default function CasePage() {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-0 w-full min-w-0">
+                {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-0 w-full min-w-0">
                   <div className="bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 p-6 md:col-span-2 min-w-0">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
@@ -230,11 +230,11 @@ export default function CasePage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Tab Content */}
                 {activeTab === "search" && (
-                  <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+                  <div className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                     {/* Search Results Header */}
                     <div className="px-4 py-4 border-b border-r border-slate-200 dark:border-slate-700">
                       <div className="flex items-center justify-between mb-4">
@@ -258,8 +258,20 @@ export default function CasePage() {
                             Search Results
                           </h2>
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {searchData.totalResults} matches found
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            Took {searchData.processingTime} ms
+                          </div>
+                          <svg
+                            className="w-2 h-2 text-slate-400 dark:text-slate-400"
+                            fill="currentColor"
+                            viewBox="0 0 8 8"
+                          >
+                            <circle cx="4" cy="4" r="3" />
+                          </svg>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {searchData.totalResults} matches found
+                          </div>
                         </div>
                       </div>
 
