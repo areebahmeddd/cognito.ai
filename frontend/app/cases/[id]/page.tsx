@@ -100,11 +100,11 @@ export default function CasePage() {
               </div>
             </div>
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="space-y-0 w-full">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              <div className="space-y-0 w-full min-w-0">
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-0">
-                  <div className="bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 p-6 md:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-0 w-full min-w-0">
+                  <div className="bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 p-6 md:col-span-2 min-w-0">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                         <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,14 +113,14 @@ export default function CasePage() {
                       </div>
                       <div className="flex-1 flex flex-col gap-2">
                         <div className="text-sm font-medium text-slate-600 dark:text-slate-400">AI Intent</div>
-                        <div className="text-sm font-semibold text-green-700 dark:text-green-300">
+                        <div className="text-sm font-semibold text-green-700 dark:text-green-300 truncate">
                           {searchData.intent}
                         </div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 p-6">
+                  <div className="bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 p-6 min-w-0">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
                         <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +137,7 @@ export default function CasePage() {
                     </div>
                   </div>
                   
-                  <div className="bg-white dark:bg-slate-800 p-6">
+                  <div className="bg-white dark:bg-slate-800 p-6 min-w-0">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
                         <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
