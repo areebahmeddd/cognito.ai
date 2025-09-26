@@ -42,7 +42,7 @@ function StatCard({
           <div
             className={`flex items-center gap-1 text-sm font-medium ${
               trend.isPositive
-                ? "text-green-600 dark:text-green-400"
+                ? "text-slate-600 dark:text-slate-400"
                 : "text-red-600 dark:text-red-400"
             }`}
           >
@@ -115,7 +115,7 @@ export default function StatsGrid() {
       subtitle: "vs manual analysis",
       icon: (
         <svg
-          className="w-6 h-6 text-green-600 dark:text-green-400"
+          className="w-6 h-6 text-slate-600 dark:text-slate-400"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -128,7 +128,7 @@ export default function StatsGrid() {
           />
         </svg>
       ),
-      color: "bg-green-100 dark:bg-green-900/30",
+      color: "bg-slate-100 dark:bg-slate-900/30",
       trend: { value: 15, isPositive: true },
     },
     {

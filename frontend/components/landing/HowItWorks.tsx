@@ -25,7 +25,7 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="py-20 lg:py-32 bg-slate-50 dark:bg-slate-800">
+    <section className="py-20 lg:py-32 bg-white dark:bg-slate-900">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
@@ -36,15 +36,33 @@ export default function HowItWorks() {
           </p>
         </div>
         <div className="mt-16">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {steps.map((step, index) => (
-              <div key={step.step} className="relative">
-                <div className="flex flex-col items-center text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-white">
+          <div className="relative">
+            {/* Connecting lines - only visible on large screens */}
+            <div className="absolute top-8 left-1/2 hidden lg:block w-full -translate-x-1/2">
+              <div className="flex justify-between items-center px-8">
+                <div className="flex-1 h-0.5 bg-slate-300 dark:bg-slate-600"></div>
+                <div className="w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500"></div>
+                </div>
+                <div className="flex-1 h-0.5 bg-slate-300 dark:bg-slate-600"></div>
+                <div className="w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500"></div>
+                </div>
+                <div className="flex-1 h-0.5 bg-slate-300 dark:bg-slate-600"></div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 relative z-10">
+              {steps.map((step) => (
+                <div
+                  key={step.step}
+                  className="flex flex-col items-center text-center"
+                >
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-lg">
                     <step.icon className="h-8 w-8" />
                   </div>
                   <div className="mt-4">
-                    <div className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                    <div className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                       Step {step.step}
                     </div>
                     <h3 className="mt-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -55,11 +73,8 @@ export default function HowItWorks() {
                     </p>
                   </div>
                 </div>
-                {index < steps.length - 1 && (
-                  <div className="absolute top-8 left-1/2 hidden h-0.5 w-full -translate-x-1/2 bg-slate-300 dark:bg-slate-600 lg:block" />
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>

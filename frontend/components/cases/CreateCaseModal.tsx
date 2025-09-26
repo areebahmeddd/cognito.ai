@@ -168,7 +168,7 @@ export default function CreateCaseModal({
         description,
         updatedAt: new Date().toISOString(),
         sourcesCount: uploadFiles.length,
-        color: ["#60a5fa", "#f472b6", "#34d399", "#f59e0b", "#a78bfa"][
+        color: ["#60a5fa", "#f472b6", "#64748b", "#f59e0b", "#a78bfa"][
           Math.floor(Math.random() * 5)
         ],
         files: uploadFiles.map((f) => ({
@@ -301,7 +301,7 @@ export default function CreateCaseModal({
                     </div>
                     <div className="flex items-center space-x-2">
                       {file.status === "completed" && (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <CheckCircle className="h-4 w-4 text-slate-500" />
                       )}
                       {file.status === "error" && (
                         <AlertCircle className="h-4 w-4 text-red-500" />

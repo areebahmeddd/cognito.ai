@@ -3,6 +3,14 @@
 import CaseCard, { CaseItem } from "@/components/cases/CaseCard";
 import CreateCaseModal from "@/components/cases/CreateCaseModal";
 import NewCaseCard from "@/components/cases/NewCaseCard";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Archive, Edit, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "cognito-cases";
@@ -46,7 +54,7 @@ function seedIfEmpty() {
       title: "Fraud device triage",
       updatedAt: new Date(Date.now() - 86400000 * 7).toISOString(),
       sourcesCount: 2,
-      color: "#34d399",
+      color: "#64748b",
     },
   ];
   saveCases(seed);
@@ -76,16 +84,84 @@ export default function CasesHome() {
     window.location.href = `/cases/${id}`;
   };
 
+  const handleMenuAction = (id: string, action: string) => {
+    switch (action) {
+      case "edit":
+        // TODO: Implement edit functionality
+        console.log("Edit case:", id);
+        break;
+      case "delete":
+        if (confirm("Are you sure you want to delete this case?")) {
+          const updated = items.filter((item) => item.id !== id);
+          setItems(updated);
+          saveCases(updated);
+        }
+        break;
+      case "archive":
+        // TODO: Implement archive functionality
+        console.log("Archive case:", id);
+        break;
+    }
+  };
+
   return (
     <>
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-semibold text-slate-100">
-          Recent cases
-        </h1>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+            Recent cases
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400">
+            Manage and analyze your forensic cases
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <NewCaseCard onCreate={handleCreate} />
           {items.map((item) => (
-            <CaseCard key={item.id} item={item} onOpen={handleOpen} />
+            <div key={item.id} className="relative">
+              <CaseCard item={item} onOpen={handleOpen} />
+              <div className="absolute top-4 right-4 z-10">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      onClick={() => handleMenuAction(item.id, "edit")}
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit name
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleMenuAction(item.id, "archive")}
+                    >
+                      <Archive className="mr-2 h-4 w-4" />
+                      Archive
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleMenuAction(item.id, "delete")}
+                      className="text-red-600 dark:text-red-400"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           ))}
         </div>
       </div>

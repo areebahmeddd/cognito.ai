@@ -86,7 +86,7 @@ export default function RecentActivity() {
       case "search_performed":
         return (
           <svg
-            className="w-5 h-5 text-green-600 dark:text-green-400"
+            className="w-5 h-5 text-slate-600 dark:text-slate-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -139,7 +139,7 @@ export default function RecentActivity() {
       case "case_created":
         return "bg-blue-100 dark:bg-blue-900/30";
       case "search_performed":
-        return "bg-green-100 dark:bg-green-900/30";
+        return "bg-slate-100 dark:bg-slate-900/30";
       case "file_uploaded":
         return "bg-orange-100 dark:bg-orange-900/30";
       case "analysis_completed":

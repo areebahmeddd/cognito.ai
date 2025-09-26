@@ -70,8 +70,8 @@ export default function QuickActions() {
           />
         </svg>
       ),
-      onClick: () => router.push("/dashboard?q="),
-      color: "bg-green-500 hover:bg-green-600",
+      onClick: () => router.push("/?q="),
+      color: "bg-slate-500 hover:bg-slate-600",
     },
     {
       title: "Upload Files",
