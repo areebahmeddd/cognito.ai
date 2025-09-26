@@ -235,8 +235,9 @@ export default function CasePage() {
                 {/* Tab Content */}
                 {activeTab === "search" && (
                   <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+                    {/* Search Results Header */}
                     <div className="px-4 py-4 border-b border-r border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 bg-slate-200 dark:bg-slate-600 rounded-sm flex items-center justify-center">
                             <svg
@@ -254,11 +255,69 @@ export default function CasePage() {
                             </svg>
                           </div>
                           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                            Evidence Timeline
+                            Search Results
                           </h2>
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          Oldest first
+                          {searchData.totalResults} matches found
+                        </div>
+                      </div>
+
+                      {/* Query Intent Display */}
+                      <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-4 h-4 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                            <svg
+                              className="w-2 h-2 text-green-600 dark:text-green-400"
+                              fill="currentColor"
+                              viewBox="0 0 8 8"
+                            >
+                              <circle cx="4" cy="4" r="3" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Query Intent:
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 ml-6">
+                          {searchData.intent}
+                        </p>
+                      </div>
+
+                      {/* Filters and Sorting */}
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-slate-600 dark:text-slate-400">
+                            Filters:
+                          </span>
+                          <select className="text-sm border border-slate-200 dark:border-slate-700 rounded px-2 py-1 bg-white dark:bg-slate-800">
+                            <option>All Types</option>
+                            <option>Messages</option>
+                            <option>Calls</option>
+                            <option>Web History</option>
+                            <option>Files</option>
+                          </select>
+                          <select className="text-sm border border-slate-200 dark:border-slate-700 rounded px-2 py-1 bg-white dark:bg-slate-800">
+                            <option>Last 30 Days</option>
+                            <option>Last 7 Days</option>
+                            <option>Last 24 Hours</option>
+                            <option>All Time</option>
+                          </select>
+                          <button className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                            Reset
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-2 ml-auto">
+                          <span className="text-sm text-slate-600 dark:text-slate-400">
+                            Sort:
+                          </span>
+                          <select className="text-sm border border-slate-200 dark:border-slate-700 rounded px-2 py-1 bg-white dark:bg-slate-800">
+                            <option>Relevance</option>
+                            <option>Newest First</option>
+                            <option>Oldest First</option>
+                            <option>Alphabetical</option>
+                          </select>
                         </div>
                       </div>
                     </div>
@@ -303,18 +362,19 @@ export default function CasePage() {
                           )}
                         </div>
                       ) : (
-                        <div className="">
+                        <div className="space-y-4 p-4">
                           {results.map((ev, index) => (
                             <div
                               key={ev.id}
-                              className="border-b border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden"
                             >
-                              <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 px-4 py-4">
+                              {/* Result Header */}
+                              <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
                                 <div className="flex items-center gap-3">
                                   <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 bg-slate-200 dark:bg-slate-600 rounded-sm flex items-center justify-center">
+                                    <div className="w-8 h-8 bg-slate-200 dark:bg-slate-600 rounded-lg flex items-center justify-center">
                                       <svg
-                                        className="w-3 h-3 text-slate-600 dark:text-slate-400"
+                                        className="w-4 h-4 text-slate-600 dark:text-slate-400"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -328,11 +388,12 @@ export default function CasePage() {
                                       </svg>
                                     </div>
                                     <div>
-                                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                        {ev.app}
+                                      <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                        {ev.app} Message
                                       </div>
                                       <div className="text-xs text-slate-500">
-                                        #{String(index + 1).padStart(3, "0")}
+                                        Result #
+                                        {String(index + 1).padStart(3, "0")}
                                       </div>
                                     </div>
                                   </div>
@@ -352,38 +413,136 @@ export default function CasePage() {
                                   </div>
                                 </div>
                                 <div className="text-xs text-slate-500">
-                                  {ev.timestamp}
+                                  📅 {ev.timestamp}
                                 </div>
                               </div>
-                              <div className="p-4 space-y-4">
-                                {/* Message Content */}
-                                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-                                  <div className="text-sm text-slate-800 dark:text-slate-200">
-                                    {ev.content}
+
+                              {/* Message Content */}
+                              <div className="p-4">
+                                <div className="mb-4">
+                                  <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                                    👥 {ev.sender} →{" "}
+                                    {ev.direction === "Incoming"
+                                      ? "Suspect"
+                                      : "Contact"}
+                                  </div>
+                                  <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                                    <div className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
+                                      {ev.content}
+                                    </div>
                                   </div>
                                 </div>
 
-                                {/* Sender Info */}
-                                <div className="flex items-center gap-3 text-sm">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 bg-slate-200 dark:bg-slate-700 rounded-sm flex items-center justify-center">
-                                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                        {ev.sender.charAt(0).toUpperCase()}
-                                      </span>
+                                {/* Forensic Metadata */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                  {/* <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+                                      📱 Device Info
                                     </div>
-                                    <span className="font-medium text-slate-700 dark:text-slate-300">
-                                      {ev.sender}
-                                    </span>
+                                    <div className="space-y-1 text-xs">
+                                      <div className="flex justify-between">
+                                        <span className="text-slate-500">
+                                          App:
+                                        </span>
+                                        <span className="text-slate-700 dark:text-slate-300">
+                                          {ev.app}
+                                        </span>
+                                      </div>
+                                      {ev.device_info && (
+                                        <div className="flex justify-between">
+                                          <span className="text-slate-500">
+                                            Device:
+                                          </span>
+                                          <span className="text-slate-700 dark:text-slate-300">
+                                            {ev.device_info}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {ev.phone_number && (
+                                        <div className="flex justify-between">
+                                          <span className="text-slate-500">
+                                            Phone:
+                                          </span>
+                                          <span className="text-slate-700 dark:text-slate-300 font-mono text-xs">
+                                            {ev.phone_number}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div> */}
+
+                                  <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+                                      📁 Source Data
+                                    </div>
+                                    <div className="space-y-1 text-xs">
+                                      <div className="flex justify-between">
+                                        <span className="text-slate-500">
+                                          Source:
+                                        </span>
+                                        <span className="text-slate-700 dark:text-slate-300 font-mono text-xs">
+                                          {ev.source}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-slate-500">
+                                          Type:
+                                        </span>
+                                        <span className="text-slate-700 dark:text-slate-300">
+                                          {ev.message_type ||
+                                            ev.type ||
+                                            "Unknown"}
+                                        </span>
+                                      </div>
+                                      {ev.jid && (
+                                        <div className="flex justify-between">
+                                          <span className="text-slate-500">
+                                            JID:
+                                          </span>
+                                          <span className="text-slate-700 dark:text-slate-300 font-mono text-xs">
+                                            {ev.jid}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="text-slate-400">•</div>
-                                  <div className="text-slate-500">
-                                    Group: Crypto market9
+
+                                  <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+                                      🗑️ Status
+                                    </div>
+                                    <div className="space-y-1 text-xs">
+                                      <div className="flex justify-between">
+                                        <span className="text-slate-500">
+                                          Status:
+                                        </span>
+                                        <span
+                                          className={`font-medium ${
+                                            ev.status === "Deleted"
+                                              ? "text-red-600 dark:text-red-400"
+                                              : "text-green-600 dark:text-green-400"
+                                          }`}
+                                        >
+                                          {ev.status === "Deleted"
+                                            ? "Deleted"
+                                            : "Active"}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-slate-500">
+                                          Recovery:
+                                        </span>
+                                        <span className="text-slate-700 dark:text-slate-300">
+                                          {ev.recovery_status || "Original"}
+                                        </span>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
 
                                 {/* Tags */}
                                 {ev.tagBadges.length > 0 && (
-                                  <div>
+                                  <div className="mb-4">
                                     <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
                                       Tags
                                     </div>
@@ -400,77 +559,17 @@ export default function CasePage() {
                                   </div>
                                 )}
 
-                                {/* Metadata Grid */}
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                  <div className="bg-slate-50 rounded-lg dark:bg-slate-900/50 p-3 border border-slate-200 dark:border-slate-700">
-                                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                      Sender Details
-                                    </div>
-                                    <div className="space-y-1 text-xs">
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-500">
-                                          Name:
-                                        </span>
-                                        <span className="text-slate-700 dark:text-slate-300">
-                                          {ev.sender}
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-500">
-                                          JID:
-                                        </span>
-                                        <span className="text-slate-700 dark:text-slate-300 font-mono">
-                                          573176481676@s.whatsapp.net
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-500">
-                                          Direction:
-                                        </span>
-                                        <span
-                                          className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                            ev.direction === "Incoming"
-                                              ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                                              : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                                          }`}
-                                        >
-                                          {ev.direction}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="bg-slate-50 rounded-lg dark:bg-slate-900/50 p-3 border border-slate-200 dark:border-slate-700">
-                                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                      Forensic Data
-                                    </div>
-                                    <div className="space-y-1 text-xs">
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-500">
-                                          Source:
-                                        </span>
-                                        <span className="text-slate-700 dark:text-slate-300 font-mono">
-                                          {ev.source}
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-500">
-                                          Timestamp:
-                                        </span>
-                                        <span className="text-slate-700 dark:text-slate-300">
-                                          {ev.timestamp}
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span className="text-slate-500">
-                                          Type:
-                                        </span>
-                                        <span className="text-slate-700 dark:text-slate-300">
-                                          Text Message
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
+                                    📋 Add to Report
+                                  </button>
+                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
+                                    🔗 View Thread
+                                  </button>
+                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
+                                    📍 Timeline
+                                  </button>
                                 </div>
                               </div>
                             </div>

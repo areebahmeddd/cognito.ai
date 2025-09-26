@@ -169,6 +169,17 @@ export interface EvidenceItem {
   artifact_id: string;
   case_id: string;
   device_id: string;
+  // Additional fields for better display (only if available from backend)
+  device_info?: string | null;
+  message_type?: string;
+  conversation_name?: string;
+  phone_number?: string | null;
+  email?: string | null;
+  jid?: string | null;
+  status?: string;
+  recovery_status?: string;
+  // Raw data for advanced display
+  raw_data?: SearchResult;
 }
 
 export async function searchQuery(query: string): Promise<{
@@ -208,7 +219,7 @@ export async function searchQuery(query: string): Promise<{
       // Format timestamp
       const timestamp = new Date(result.timestamp).toLocaleString();
 
-      // Extract sender information
+      // Extract sender information with fallbacks
       const sender =
         result.sender ||
         result.display_from ||
@@ -229,11 +240,14 @@ export async function searchQuery(query: string): Promise<{
         result.transcription ||
         "";
 
+      // Enhanced content analysis
       if (
         content.toLowerCase().includes("crypto") ||
-        content.toLowerCase().includes("bitcoin")
+        content.toLowerCase().includes("bitcoin") ||
+        content.toLowerCase().includes("ethereum") ||
+        content.toLowerCase().includes("wallet")
       ) {
-        tagBadges.push("Cryptocurrency mention");
+        tagBadges.push("Cryptocurrency");
       }
       if (content.includes("http") || content.includes("www.")) {
         tagBadges.push("External link");
@@ -241,7 +255,8 @@ export async function searchQuery(query: string): Promise<{
       if (
         content.toLowerCase().includes("money") ||
         content.toLowerCase().includes("payment") ||
-        content.toLowerCase().includes("$")
+        content.toLowerCase().includes("$") ||
+        content.toLowerCase().includes("transaction")
       ) {
         tagBadges.push("Financial content");
       }
@@ -260,6 +275,12 @@ export async function searchQuery(query: string): Promise<{
       if (content.includes("wa.me") || content.includes("whatsapp.com")) {
         tagBadges.push("WhatsApp link");
       }
+      if (result.deleted) {
+        tagBadges.push("Deleted content");
+      }
+      if (result.message_type === "image" || result.media_type === "image") {
+        tagBadges.push("Image attachment");
+      }
 
       // Determine direction
       const direction: "Incoming" | "Outgoing" =
@@ -269,8 +290,26 @@ export async function searchQuery(query: string): Promise<{
           ? "Outgoing"
           : "Incoming";
 
+      // Extract device info (only if available)
+      const deviceInfo = result.device_type || null;
+
+      // Determine message type
+      const messageType = result.message_type || result.data_type || "Unknown";
+
+      // Extract conversation name
+      const conversationName = result.conversation_name || result.title || "";
+
+      // Extract contact info (only if available)
+      const phoneNumber = result.phone_number || null;
+      const email = result.email || null;
+      const jid = result.sending_party_jid || result.from || null;
+
+      // Determine status
+      const status = result.deleted ? "Deleted" : "Active";
+      const recoveryStatus = result.deleted ? "Recovered" : "Original";
+
       return {
-        id: `RECORD-${String(index + 1).padStart(3, "0")}`,
+        id: result.artifact_id,
         app: appName,
         timestamp,
         sender,
@@ -286,6 +325,16 @@ export async function searchQuery(query: string): Promise<{
         artifact_id: result.artifact_id,
         case_id: result.case_id,
         device_id: result.device_id,
+        // Enhanced fields (only if available)
+        device_info: deviceInfo,
+        message_type: messageType,
+        conversation_name: conversationName,
+        phone_number: phoneNumber,
+        email: email,
+        jid: jid,
+        status: status,
+        recovery_status: recoveryStatus,
+        raw_data: result,
       };
     });
 
