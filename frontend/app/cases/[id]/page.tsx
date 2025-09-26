@@ -117,7 +117,7 @@ export default function CasePage() {
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
               <div className="space-y-0 w-full min-w-0">
                 {/* Tab Navigation */}
-                <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                <div className="bg-white dark:bg-slate-800 border-b border-r border-slate-200 dark:border-slate-700">
                   <div className="flex">
                     {[
                       { id: "search", label: "Search Results", icon: "🔍" },
@@ -333,7 +333,7 @@ export default function CasePage() {
                         </div>
                       </div>
                     </div>
-                    <div className="">
+                    <div className="border-b border-r border-slate-200 dark:border-slate-700">
                       {results.length === 0 ? (
                         <div className="text-center py-12">
                           <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center mx-auto mb-3">
