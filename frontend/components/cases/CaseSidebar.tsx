@@ -124,12 +124,12 @@ export default function CaseSidebar({ caseId }: CaseSidebarProps) {
               <div className="text-xs text-slate-500">Case ID: {caseId}</div>
             </div>
             <div className="flex flex-col items-center">
-            <ChevronUp
-              className={`h-4 w-4 text-slate-500 flex-shrink-0 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
-            />
-            <ChevronDown
-              className={`h-4 w-4 text-slate-500 flex-shrink-0 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
-            />
+              <ChevronUp
+                className={`h-4 w-4 text-slate-500 flex-shrink-0 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+              />
+              <ChevronDown
+                className={`h-4 w-4 text-slate-500 flex-shrink-0 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+              />
             </div>
           </Button>
 

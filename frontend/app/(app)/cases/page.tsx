@@ -2,7 +2,6 @@
 
 import CasesHome from "@/components/cases/CasesHome";
 import DashboardNavbar from "@/components/DashboardNavbar";
-import Footer from "@/components/Footer";
 
 export default function CasesPage() {
   return (

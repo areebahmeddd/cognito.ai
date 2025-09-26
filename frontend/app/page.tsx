@@ -1,5 +1,9 @@
 "use client";
 
+import QuickActions from "@/components/dashboard/QuickActions";
+import RecentActivity from "@/components/dashboard/RecentActivity";
+import StatsGrid from "@/components/dashboard/StatsGrid";
+import WelcomeSection from "@/components/dashboard/WelcomeSection";
 import DashboardNavbar from "@/components/DashboardNavbar";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/landing/CTASection";
@@ -9,10 +13,6 @@ import Hero from "@/components/landing/Hero";
 import HowItWorks from "@/components/landing/HowItWorks";
 import Testimonials from "@/components/landing/Testimonials";
 import Navbar from "@/components/Navbar";
-import WelcomeSection from "@/components/dashboard/WelcomeSection";
-import StatsGrid from "@/components/dashboard/StatsGrid";
-import QuickActions from "@/components/dashboard/QuickActions";
-import RecentActivity from "@/components/dashboard/RecentActivity";
 import { useEffect, useState } from "react";
 
 export default function HomePage() {
