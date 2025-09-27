@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EvidenceItem, searchQuery } from "@/lib/search";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Network } from "vis-network";
 
 declare global {
   interface Window {
@@ -47,6 +48,18 @@ export default function CasePage() {
   const [selectedTimelineTime, setSelectedTimelineTime] = useState("All Time");
   const [hasSearched, setHasSearched] = useState(false);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+  const [selectedNetworkFilter, setSelectedNetworkFilter] =
+    useState("All Contacts");
+  const [selectedNetworkVolume, setSelectedNetworkVolume] =
+    useState("All Volumes");
+  const [selectedNetworkTime, setSelectedNetworkTime] = useState("All Time");
+  const [selectedNetworkSuspicious, setSelectedNetworkSuspicious] =
+    useState("All");
+  const [expandedContacts, setExpandedContacts] = useState<Set<string>>(
+    new Set(),
+  );
+  const networkRef = useRef<HTMLDivElement>(null);
+  const networkInstance = useRef<Network | null>(null);
 
   const toggleDateExpansion = (date: string) => {
     setExpandedDates((prev) => {
@@ -384,15 +397,362 @@ export default function CasePage() {
       .filter((day) => day.sessions.length > 0);
   };
 
+  const extractContactsFromResults = (results: EvidenceItem[]) => {
+    const contactMap = new Map<string, any>();
+
+    results.forEach((result) => {
+      // Extract sender contacts
+      const senderFields = [
+        result.sender,
+        result.raw_data?.sender,
+        result.raw_data?.from,
+        result.raw_data?.display_from,
+        result.raw_data?.caller,
+        result.raw_data?.sending_party,
+        result.raw_data?.phone_number,
+        result.raw_data?.email,
+        result.raw_data?.username,
+        result.raw_data?.display_name,
+        result.raw_data?.contact_name,
+      ].filter(Boolean);
+
+      // Extract recipient contacts
+      const recipientFields = [
+        result.raw_data?.recipient,
+        result.raw_data?.to,
+        result.raw_data?.display_to,
+        result.raw_data?.callee,
+        result.raw_data?.phone_number,
+        result.raw_data?.email,
+        result.raw_data?.username,
+        result.raw_data?.display_name,
+        result.raw_data?.contact_name,
+      ].filter(Boolean);
+
+      // Process all contact fields
+      [...senderFields, ...recipientFields].forEach((contact) => {
+        if (!contact || contact === "Unknown") return;
+
+        const contactKey = contact.toString().toLowerCase();
+        if (!contactMap.has(contactKey)) {
+          contactMap.set(contactKey, {
+            id: contactKey,
+            name: contact.toString(),
+            type: getContactType(contact.toString()),
+            communicationCount: 0,
+            lastCommunication: result.timestamp,
+            communicationTypes: new Set(),
+            suspicious: false,
+            evidenceItems: [],
+          });
+        }
+
+        const contactData = contactMap.get(contactKey);
+        contactData.communicationCount++;
+        contactData.communicationTypes.add(result.app);
+        contactData.evidenceItems.push(result);
+
+        if (
+          new Date(result.timestamp) > new Date(contactData.lastCommunication)
+        ) {
+          contactData.lastCommunication = result.timestamp;
+        }
+      });
+    });
+
+    return Array.from(contactMap.values());
+  };
+
+  const getContactType = (contact: string) => {
+    if (contact.includes("@")) return "email";
+    if (/^\+?[\d\s\-\(\)]+$/.test(contact.replace(/\s/g, ""))) return "phone";
+    return "username";
+  };
+
+  const analyzeSuspiciousContacts = (contacts: any[]) => {
+    return contacts.map((contact) => {
+      let suspicious = false;
+      const flags: string[] = [];
+
+      // International phone number
+      if (contact.type === "phone" && contact.name.startsWith("+")) {
+        suspicious = true;
+        flags.push("International");
+      }
+
+      // Very high communication volume
+      if (contact.communicationCount > 100) {
+        suspicious = true;
+        flags.push("High Volume");
+      }
+
+      // No display name (just phone/email)
+      if (
+        contact.name === contact.id &&
+        (contact.type === "phone" || contact.type === "email")
+      ) {
+        suspicious = true;
+        flags.push("No Name");
+      }
+
+      // Multiple communication types (suspicious pattern)
+      if (contact.communicationTypes.size > 3) {
+        suspicious = true;
+        flags.push("Multiple Types");
+      }
+
+      return {
+        ...contact,
+        suspicious,
+        flags,
+      };
+    });
+  };
+
+  const filterNetworkContacts = (contacts: any[]) => {
+    let filtered = [...contacts];
+
+    // Filter by contact type
+    if (selectedNetworkFilter !== "All Contacts") {
+      filtered = filtered.filter((contact) => {
+        switch (selectedNetworkFilter) {
+          case "Phone":
+            return contact.type === "phone";
+          case "Email":
+            return contact.type === "email";
+          case "Username":
+            return contact.type === "username";
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Filter by communication volume
+    if (selectedNetworkVolume !== "All Volumes") {
+      filtered = filtered.filter((contact) => {
+        switch (selectedNetworkVolume) {
+          case "High (50+)":
+            return contact.communicationCount >= 50;
+          case "Medium (10-49)":
+            return (
+              contact.communicationCount >= 10 &&
+              contact.communicationCount < 50
+            );
+          case "Low (<10)":
+            return contact.communicationCount < 10;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Filter by time
+    if (selectedNetworkTime !== "All Time") {
+      const now = new Date();
+      const cutoffDate = new Date();
+
+      switch (selectedNetworkTime) {
+        case "Last 24 Hours":
+          cutoffDate.setHours(now.getHours() - 24);
+          break;
+        case "Last 7 Days":
+          cutoffDate.setDate(now.getDate() - 7);
+          break;
+        case "Last 30 Days":
+          cutoffDate.setDate(now.getDate() - 30);
+          break;
+      }
+
+      filtered = filtered.filter((contact) => {
+        return new Date(contact.lastCommunication) >= cutoffDate;
+      });
+    }
+
+    // Filter by suspicious level
+    if (selectedNetworkSuspicious !== "All") {
+      filtered = filtered.filter((contact) => {
+        switch (selectedNetworkSuspicious) {
+          case "Flagged":
+            return contact.suspicious;
+          case "Normal":
+            return !contact.suspicious;
+          default:
+            return true;
+        }
+      });
+    }
+
+    return filtered;
+  };
+
+  const toggleContactExpansion = (contactId: string) => {
+    setExpandedContacts((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(contactId)) {
+        newSet.delete(contactId);
+      } else {
+        newSet.add(contactId);
+      }
+      return newSet;
+    });
+  };
+
+  const createNetworkVisualization = (contacts: any[]) => {
+    if (!networkRef.current || contacts.length === 0) return;
+
+    // Create nodes
+    const nodes = [
+      {
+        id: "subject",
+        label: "Subject",
+        color: {
+          background: "#374151",
+          border: "#1f2937",
+          highlight: {
+            background: "#1f2937",
+            border: "#374151",
+          },
+        },
+        font: { color: "white", size: 14, face: "Arial" },
+        size: 30,
+        shape: "circle",
+      },
+      ...contacts.map((contact) => ({
+        id: contact.id,
+        label:
+          contact.name.length > 15
+            ? contact.name.substring(0, 15) + "..."
+            : contact.name,
+        color: {
+          background: contact.suspicious
+            ? "#ef4444"
+            : contact.type === "phone"
+              ? "#6b7280"
+              : contact.type === "email"
+                ? "#9ca3af"
+                : "#d1d5db",
+          border: contact.suspicious
+            ? "#dc2626"
+            : contact.type === "phone"
+              ? "#4b5563"
+              : contact.type === "email"
+                ? "#6b7280"
+                : "#9ca3af",
+          highlight: {
+            background: contact.suspicious
+              ? "#dc2626"
+              : contact.type === "phone"
+                ? "#4b5563"
+                : contact.type === "email"
+                  ? "#6b7280"
+                  : "#9ca3af",
+            border: contact.suspicious
+              ? "#b91c1c"
+              : contact.type === "phone"
+                ? "#374151"
+                : contact.type === "email"
+                  ? "#4b5563"
+                  : "#6b7280",
+          },
+        },
+        font: { color: "white", size: 12, face: "Arial" },
+        size: Math.min(Math.max(contact.communicationCount / 5, 15), 40),
+        shape: "circle",
+        title: `${contact.name}\nType: ${contact.type}\nCommunications: ${contact.communicationCount}\nLast: ${new Date(contact.lastCommunication).toLocaleDateString()}`,
+        chosen: false,
+      })),
+    ];
+
+    // Create edges (connections)
+    const edges = contacts.map((contact) => ({
+      from: "subject",
+      to: contact.id,
+      width: Math.min(Math.max(contact.communicationCount / 10, 1), 5),
+      color: {
+        color: contact.suspicious ? "#ef4444" : "#9ca3af",
+        highlight: contact.suspicious ? "#dc2626" : "#6b7280",
+      },
+      smooth: { enabled: true, type: "continuous", roundness: 0.2 },
+    }));
+
+    const data = { nodes, edges };
+
+    const options = {
+      physics: {
+        enabled: true,
+        stabilization: { iterations: 100 },
+        barnesHut: {
+          gravitationalConstant: -2000,
+          centralGravity: 0.3,
+          springLength: 95,
+          springConstant: 0.04,
+          damping: 0.09,
+        },
+      },
+      interaction: {
+        hover: true,
+        tooltipDelay: 200,
+        hideEdgesOnDrag: true,
+        hoverConnectedEdges: false,
+        selectConnectedEdges: false,
+      },
+      nodes: {
+        borderWidth: 2,
+        shadow: true,
+        chosen: false,
+      },
+      edges: {
+        shadow: true,
+        smooth: {
+          enabled: true,
+          type: "continuous",
+          roundness: 0.2,
+        },
+      },
+      layout: {
+        improvedLayout: true,
+      },
+      configure: {
+        enabled: false,
+      },
+    };
+
+    // Destroy existing network if it exists
+    if (networkInstance.current) {
+      networkInstance.current.destroy();
+    }
+
+    // Create new network
+    networkInstance.current = new Network(networkRef.current, data, options);
+  };
+
   const filteredResults = filterResults(results);
   const timelineSessions = groupEventsIntoSessions(results);
   const allDailySummaries = getDailySummaries(timelineSessions);
   const filteredDailySummaries = filterDailySummaries(allDailySummaries);
 
+  const allNetworkContacts = analyzeSuspiciousContacts(
+    extractContactsFromResults(filteredResults),
+  );
+  const filteredNetworkContacts = filterNetworkContacts(allNetworkContacts);
+
   useEffect(() => {
     const q = searchParams.get("q") || "";
     setQuery(q);
   }, [searchParams]);
+
+  useEffect(() => {
+    if (filteredNetworkContacts.length > 0) {
+      createNetworkVisualization(filteredNetworkContacts);
+    }
+  }, [filteredNetworkContacts]);
+
+  // Prevent network re-rendering when contact details are expanded/collapsed
+  useEffect(() => {
+    // This effect only runs when expandedContacts changes, but we don't want to re-render the network
+    // The network should remain stable when contact details are toggled
+  }, [expandedContacts]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
@@ -1074,32 +1434,32 @@ export default function CasePage() {
                       </div>
 
                       {allDailySummaries.length > 0 && (
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-slate-600 dark:text-slate-400">
-                            Filter:
-                          </span>
-                          <CustomDropdown
-                            value={selectedTimelineFilter}
-                            onChange={setSelectedTimelineFilter}
-                            options={[
-                              "All Events",
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-slate-600 dark:text-slate-400">
+                              Filter:
+                            </span>
+                            <CustomDropdown
+                              value={selectedTimelineFilter}
+                              onChange={setSelectedTimelineFilter}
+                              options={[
+                                "All Events",
                                 "Messages",
                                 "Calls",
                                 "Web History",
-                              "Files",
-                            ]}
-                            placeholder="All Events"
-                          />
-                          <CustomDropdown
-                            value={selectedTimelineTime}
-                            onChange={setSelectedTimelineTime}
-                            options={[
-                              "Last 24 Hours",
-                              "Last 7 Days",
-                              "Last 30 Days",
-                              "All Time",
-                            ]}
+                                "Files",
+                              ]}
+                              placeholder="All Events"
+                            />
+                            <CustomDropdown
+                              value={selectedTimelineTime}
+                              onChange={setSelectedTimelineTime}
+                              options={[
+                                "Last 24 Hours",
+                                "Last 7 Days",
+                                "Last 30 Days",
+                                "All Time",
+                              ]}
                               placeholder="All Time"
                             />
                             <button
@@ -1111,40 +1471,40 @@ export default function CasePage() {
                             >
                               Reset
                             </button>
-                        </div>
+                          </div>
 
                           <div className="flex items-center gap-3 ml-auto">
-                          <span className="text-sm text-slate-600 dark:text-slate-400">
-                            View:
-                          </span>
+                            <span className="text-sm text-slate-600 dark:text-slate-400">
+                              View:
+                            </span>
                             <div className="relative">
                               <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
-                          <button
+                                <button
                                   onClick={() =>
                                     handleTimelineViewChange("compact")
                                   }
                                   className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
-                              timelineView === "compact"
+                                    timelineView === "compact"
                                       ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm"
                                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                            }`}
-                          >
-                            Compact
-                          </button>
-                          <button
+                                  }`}
+                                >
+                                  Compact
+                                </button>
+                                <button
                                   onClick={() =>
                                     handleTimelineViewChange("detailed")
                                   }
                                   className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
-                              timelineView === "detailed"
+                                    timelineView === "detailed"
                                       ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm"
                                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                            }`}
-                          >
-                            Detailed
-                          </button>
-                        </div>
-                      </div>
+                                  }`}
+                                >
+                                  Detailed
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -1169,10 +1529,10 @@ export default function CasePage() {
                           </div>
                           {allDailySummaries.length === 0 ? (
                             <>
-                          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                            Timeline Analysis
-                          </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
+                              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                                Timeline Analysis
+                              </h3>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
                                 View evidence in chronological order to
                                 understand the sequence of events.
                               </p>
@@ -1241,7 +1601,7 @@ export default function CasePage() {
                                       <div>
                                         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                                           {day.date}
-                                      </h3>
+                                        </h3>
                                         <p className="text-sm text-slate-600 dark:text-slate-400">
                                           {day.startTime} - {day.endTime}
                                         </p>
@@ -1342,66 +1702,66 @@ export default function CasePage() {
                                                 <div
                                                   className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                                                     session.app
-                                                  .toLowerCase()
-                                                  .includes("whatsapp")
+                                                      .toLowerCase()
+                                                      .includes("whatsapp")
                                                       ? "bg-green-100 dark:bg-green-900/30"
                                                       : session.app
-                                                        .toLowerCase()
-                                                        .includes("sms")
+                                                            .toLowerCase()
+                                                            .includes("sms")
                                                         ? "bg-blue-100 dark:bg-blue-900/30"
                                                         : "bg-blue-100 dark:bg-blue-900/30"
-                                              }`}
-                                            >
-                                              <svg
+                                                  }`}
+                                                >
+                                                  <svg
                                                     className={`w-4 h-4 ${
                                                       session.app
-                                                    .toLowerCase()
-                                                    .includes("whatsapp")
+                                                        .toLowerCase()
+                                                        .includes("whatsapp")
                                                         ? "text-green-600 dark:text-green-400"
                                                         : session.app
-                                                          .toLowerCase()
-                                                          .includes("sms")
+                                                              .toLowerCase()
+                                                              .includes("sms")
                                                           ? "text-blue-600 dark:text-blue-400"
                                                           : "text-blue-600 dark:text-blue-400"
-                                                }`}
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                              >
-                                                <path
-                                                  strokeLinecap="round"
-                                                  strokeLinejoin="round"
-                                                  strokeWidth={2}
-                                                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                                                />
-                                              </svg>
-                                            </div>
-                                            <div>
+                                                    }`}
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                  >
+                                                    <path
+                                                      strokeLinecap="round"
+                                                      strokeLinejoin="round"
+                                                      strokeWidth={2}
+                                                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                                    />
+                                                  </svg>
+                                                </div>
+                                                <div>
                                                   <div className="font-medium text-slate-900 dark:text-slate-100">
                                                     {session.app} Session
-                                              </div>
+                                                  </div>
                                                   <div className="text-sm text-slate-500 dark:text-slate-400">
                                                     {session.conversation_name ||
                                                       "Unknown Conversation"}
+                                                  </div>
+                                                </div>
                                               </div>
-                                            </div>
-                                          </div>
                                               <div className="text-right">
                                                 <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                            {new Date(
+                                                  {new Date(
                                                     session.startTime,
                                                   ).toLocaleTimeString()}{" "}
                                                   -{" "}
                                                   {new Date(
                                                     session.endTime,
-                                            ).toLocaleTimeString()}
-                                          </div>
+                                                  ).toLocaleTimeString()}
+                                                </div>
                                                 <div className="text-xs text-slate-500 dark:text-slate-400">
                                                   {session.messageCount}{" "}
                                                   messages
-                                        </div>
-                                          </div>
-                                        </div>
+                                                </div>
+                                              </div>
+                                            </div>
 
                                             <div className="mb-2">
                                               <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">
@@ -1413,9 +1773,9 @@ export default function CasePage() {
                                               <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-3">
                                                 <div className="text-sm text-slate-800 dark:text-slate-200">
                                                   {session.preview}...
+                                                </div>
+                                              </div>
                                             </div>
-                                                </div>
-                                                </div>
 
                                             {session.hasSuspiciousContent && (
                                               <div className="flex items-center gap-2 mb-2">
@@ -1438,21 +1798,21 @@ export default function CasePage() {
                                                     ", ",
                                                   )}
                                                 </span>
-                                          </div>
+                                              </div>
                                             )}
 
                                             <div className="flex items-center justify-end gap-2">
                                               <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] rounded transition-colors">
-                                              <svg
+                                                <svg
                                                   className="w-3 h-3"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                              >
-                                                <path
-                                                  strokeLinecap="round"
-                                                  strokeLinejoin="round"
-                                                  strokeWidth={2}
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
                                                     d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
                                                   />
                                                 </svg>
@@ -1465,39 +1825,39 @@ export default function CasePage() {
                                                   stroke="currentColor"
                                                   viewBox="0 0 24 24"
                                                 >
-                                                <path
-                                                  strokeLinecap="round"
-                                                  strokeLinejoin="round"
-                                                  strokeWidth={2}
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
                                                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                                />
-                                              </svg>
+                                                  />
+                                                </svg>
                                                 Mark Evidence
-                                            </button>
+                                              </button>
                                               <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] rounded transition-colors">
-                                              <svg
+                                                <svg
                                                   className="w-3 h-3"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                              >
-                                                <path
-                                                  strokeLinecap="round"
-                                                  strokeLinejoin="round"
-                                                  strokeWidth={2}
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
                                                     d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                                />
-                                              </svg>
+                                                  />
+                                                </svg>
                                                 Export
-                                            </button>
+                                              </button>
+                                            </div>
                                           </div>
-                                        </div>
                                         ),
-                                        )}
-                                      </div>
+                                      )}
                                     </div>
+                                  </div>
                                 )}
-                                </div>
+                              </div>
                             );
                           })}
                         </div>
@@ -1509,7 +1869,7 @@ export default function CasePage() {
                 {activeTab === "network" && (
                   <div className="bg-[#F8F8F8] dark:bg-[#0F0F0F]">
                     <div className="px-4 py-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-full flex items-center justify-center">
                             <svg
@@ -1530,13 +1890,89 @@ export default function CasePage() {
                             Communication Network
                           </h2>
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          Relationship mapping
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {filteredNetworkContacts.length} contacts
+                          </div>
+                          <svg
+                            className="w-2 h-2 text-green-500"
+                            fill="currentColor"
+                            viewBox="0 0 8 8"
+                          >
+                            <circle cx="4" cy="4" r="3" />
+                          </svg>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {
+                              allNetworkContacts.filter((c) => c.suspicious)
+                                .length
+                            }{" "}
+                            flagged
+                          </div>
                         </div>
                       </div>
+
+                      {allNetworkContacts.length > 0 && (
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-slate-600 dark:text-slate-400">
+                              Filter:
+                            </span>
+                            <CustomDropdown
+                              value={selectedNetworkFilter}
+                              onChange={setSelectedNetworkFilter}
+                              options={[
+                                "All Contacts",
+                                "Phone",
+                                "Email",
+                                "Username",
+                              ]}
+                              placeholder="All Contacts"
+                            />
+                            <CustomDropdown
+                              value={selectedNetworkVolume}
+                              onChange={setSelectedNetworkVolume}
+                              options={[
+                                "All Volumes",
+                                "High (50+)",
+                                "Medium (10-49)",
+                                "Low (<10)",
+                              ]}
+                              placeholder="All Volumes"
+                            />
+                            <CustomDropdown
+                              value={selectedNetworkTime}
+                              onChange={setSelectedNetworkTime}
+                              options={[
+                                "All Time",
+                                "Last 24 Hours",
+                                "Last 7 Days",
+                                "Last 30 Days",
+                              ]}
+                              placeholder="All Time"
+                            />
+                            <CustomDropdown
+                              value={selectedNetworkSuspicious}
+                              onChange={setSelectedNetworkSuspicious}
+                              options={["All", "Flagged", "Normal"]}
+                              placeholder="All"
+                            />
+                            <button
+                              onClick={() => {
+                                setSelectedNetworkFilter("All Contacts");
+                                setSelectedNetworkVolume("All Volumes");
+                                setSelectedNetworkTime("All Time");
+                                setSelectedNetworkSuspicious("All");
+                              }}
+                              className="text-sm text-slate-500 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
+                            >
+                              Reset
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="p-6">
-                      {filteredResults.length === 0 ? (
+                    <div>
+                      {filteredNetworkContacts.length === 0 ? (
                         <div className="text-center py-12">
                           <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
                             <svg
@@ -1553,148 +1989,327 @@ export default function CasePage() {
                               />
                             </svg>
                           </div>
-                          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                            Network Analysis
-                          </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
-                            Visualize communication patterns and relationships
-                            between contacts.
-                          </p>
+                          {allNetworkContacts.length === 0 ? (
+                            <>
+                              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                                Communication Network
+                              </h3>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
+                                Analyze communication patterns and relationships
+                                between contacts to understand the network
+                                structure.
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                                No Contacts Found
+                              </h3>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
+                                No contacts match your current filter criteria.
+                                Try adjusting your filters to see more contacts.
+                              </p>
+                            </>
+                          )}
                         </div>
                       ) : (
-                        <div className="space-y-6">
-                          <div className="relative bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-8 border border-[#FF7F50] dark:border-[#FF7F50]">
-                            <div className="flex items-center justify-center h-64">
-                              <div className="relative">
-                                <div className="w-16 h-16 bg-slate-300 dark:bg-slate-600 rounded-full flex items-center justify-center text-sm font-medium text-slate-700 dark:text-slate-300 border-2 border-white dark:border-slate-800 shadow-sm">
-                                  User
-                                </div>
+                        <div className="space-y-4 p-4">
+                          <div className="space-y-6">
+                            {/* Interactive Network Visualization */}
+                            <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-4 border border-[#FF7F50] dark:border-[#FF7F50] relative">
+                              <div className="mb-3">
+                                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                  Communication Network
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                  Interactive visualization of contact
+                                  relationships. Drag nodes to explore, hover
+                                  for details.
+                                </p>
+                              </div>
 
-                                <div className="absolute -top-8 -left-8 w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-full flex items-center justify-center text-xs font-medium text-[#FF7F50] border-2 border-white dark:border-slate-800 shadow-sm">
-                                  Contact
-                                </div>
+                              <div
+                                ref={networkRef}
+                                className="w-full h-96 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 relative overflow-hidden"
+                                style={{
+                                  backgroundImage: `radial-gradient(circle, #e5e7eb 1px, transparent 1px)`,
+                                  backgroundSize: "20px 20px",
+                                  backgroundPosition: "0 0, 10px 10px",
+                                }}
+                              />
+                            </div>
 
-                                <div className="absolute -top-8 -right-8 w-12 h-12 bg-[#F0F0F0] dark:bg-[#2A2A2A] rounded-full flex items-center justify-center text-xs font-medium text-[#4A4A4A] dark:text-[#B0B0B0] border-2 border-white dark:border-slate-800 shadow-sm">
-                                  +1234567890
+                            {/* Network Statistics */}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                              <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-4 border border-[#FF7F50] dark:border-[#FF7F50]">
+                                <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                  Total Contacts
                                 </div>
-
-                                <div className="absolute -bottom-8 -left-4 w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300 border-2 border-white dark:border-slate-800 shadow-sm">
-                                  contact@example.com
+                                <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                                  {filteredNetworkContacts.length}
                                 </div>
-
-                                <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                                  <line
-                                    x1="50%"
-                                    y1="50%"
-                                    x2="25%"
-                                    y2="25%"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    className="text-slate-300 dark:text-slate-600"
-                                  />
-                                  <line
-                                    x1="50%"
-                                    y1="50%"
-                                    x2="75%"
-                                    y2="25%"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    className="text-slate-300 dark:text-slate-600"
-                                  />
-                                  <line
-                                    x1="50%"
-                                    y1="50%"
-                                    x2="25%"
-                                    y2="75%"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    className="text-slate-300 dark:text-slate-600"
-                                  />
-                                </svg>
+                              </div>
+                              <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-4 border border-[#FF7F50] dark:border-[#FF7F50]">
+                                <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                  Flagged Contacts
+                                </div>
+                                <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                                  {
+                                    filteredNetworkContacts.filter(
+                                      (c) => c.suspicious,
+                                    ).length
+                                  }
+                                </div>
+                              </div>
+                              <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-4 border border-[#FF7F50] dark:border-[#FF7F50]">
+                                <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                  Phone Contacts
+                                </div>
+                                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                  {
+                                    filteredNetworkContacts.filter(
+                                      (c) => c.type === "phone",
+                                    ).length
+                                  }
+                                </div>
+                              </div>
+                              <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-4 border border-[#FF7F50] dark:border-[#FF7F50]">
+                                <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                  Email Contacts
+                                </div>
+                                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                  {
+                                    filteredNetworkContacts.filter(
+                                      (c) => c.type === "email",
+                                    ).length
+                                  }
+                                </div>
                               </div>
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-4 border border-[#FF7F50] dark:border-[#FF7F50]">
-                              <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                Total Contacts
-                              </div>
-                              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                                3
-                              </div>
-                            </div>
-
-                            <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-4 border border-[#FF7F50] dark:border-[#FF7F50]">
-                              <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                Communication Types
-                              </div>
-                              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                                2
-                              </div>
-                            </div>
-
-                            <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-4 border border-[#FF7F50] dark:border-[#FF7F50]">
-                              <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                International Contacts
-                              </div>
-                              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                                1
-                              </div>
-                            </div>
-                          </div>
-
+                          {/* Contact List */}
                           <div className="space-y-3">
                             <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
                               Contact Details
                             </h3>
-                            {[
-                              {
-                                name: "Contact 1",
-                                type: "WhatsApp",
-                                status: "Active",
-                                messages: 15,
-                              },
-                              {
-                                name: "+1234567890",
-                                type: "SMS",
-                                status: "International",
-                                messages: 6,
-                              },
-                              {
-                                name: "contact@example.com",
-                                type: "Email",
-                                status: "External",
-                                messages: 2,
-                              },
-                            ].map((contact, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between p-3 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg border border-[#FF7F50] dark:border-[#FF7F50]"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center">
-                                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                      {contact.name &&
-                                      typeof contact.name === "string"
-                                        ? contact.name.charAt(0).toUpperCase()
-                                        : "?"}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                      {contact.name}
+                            {filteredNetworkContacts
+                              .sort(
+                                (a, b) =>
+                                  b.communicationCount - a.communicationCount,
+                              )
+                              .map((contact) => {
+                                const isExpanded = expandedContacts.has(
+                                  contact.id,
+                                );
+                                return (
+                                  <div
+                                    key={contact.id}
+                                    className={`bg-[#F8F8F8] dark:bg-[#0F0F0F] border rounded-lg overflow-hidden ${
+                                      contact.suspicious
+                                        ? "border-red-300 dark:border-red-700"
+                                        : "border-[#FF7F50] dark:border-[#FF7F50]"
+                                    }`}
+                                  >
+                                    <div
+                                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] transition-colors"
+                                      onClick={() =>
+                                        toggleContactExpansion(contact.id)
+                                      }
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2">
+                                          <div
+                                            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                              contact.type === "phone"
+                                                ? "bg-blue-100 dark:bg-blue-900/30"
+                                                : contact.type === "email"
+                                                  ? "bg-green-100 dark:bg-green-900/30"
+                                                  : "bg-purple-100 dark:bg-purple-900/30"
+                                            }`}
+                                          >
+                                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                                              {contact.name
+                                                .charAt(0)
+                                                .toUpperCase()}
+                                            </span>
+                                          </div>
+                                          <div>
+                                            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                              {contact.name}
+                                            </div>
+                                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                                              {contact.type} •{" "}
+                                              {contact.communicationCount}{" "}
+                                              communications
+                                            </div>
+                                          </div>
+                                        </div>
+                                        {contact.suspicious && (
+                                          <div className="flex items-center gap-1">
+                                            <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                              <svg
+                                                className="w-2 h-2 text-white"
+                                                fill="currentColor"
+                                                viewBox="0 0 8 8"
+                                              >
+                                                <circle cx="4" cy="4" r="3" />
+                                              </svg>
+                                            </div>
+                                            <span className="text-xs text-red-600 dark:text-red-400 font-medium">
+                                              Flagged
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <div className="text-xs text-slate-500">
+                                          {new Date(
+                                            contact.lastCommunication,
+                                          ).toLocaleDateString()}
+                                        </div>
+                                        <svg
+                                          className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M19 9l-7 7-7-7"
+                                          />
+                                        </svg>
+                                      </div>
                                     </div>
-                                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                                      {contact.type} • {contact.status}
-                                    </div>
+
+                                    {isExpanded && (
+                                      <div className="px-4 pb-4 border-t border-slate-200 dark:border-slate-700">
+                                        <div className="pt-4 space-y-3">
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-3 border border-[#FF7F50] dark:border-[#FF7F50]">
+                                              <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+                                                Communication Summary
+                                              </div>
+                                              <div className="space-y-1 text-xs">
+                                                <div className="flex justify-between">
+                                                  <span className="text-slate-500">
+                                                    Total:
+                                                  </span>
+                                                  <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                                    {contact.communicationCount}
+                                                  </span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                  <span className="text-slate-500">
+                                                    Types:
+                                                  </span>
+                                                  <span className="text-slate-700 dark:text-slate-300">
+                                                    {Array.from(
+                                                      contact.communicationTypes,
+                                                    ).join(", ")}
+                                                  </span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                  <span className="text-slate-500">
+                                                    Last Contact:
+                                                  </span>
+                                                  <span className="text-slate-700 dark:text-slate-300">
+                                                    {new Date(
+                                                      contact.lastCommunication,
+                                                    ).toLocaleString()}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-3 border border-[#FF7F50] dark:border-[#FF7F50]">
+                                              <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+                                                Analysis
+                                              </div>
+                                              <div className="space-y-1 text-xs">
+                                                <div className="flex justify-between">
+                                                  <span className="text-slate-500">
+                                                    Type:
+                                                  </span>
+                                                  <span className="text-slate-700 dark:text-slate-300 capitalize">
+                                                    {contact.type}
+                                                  </span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                  <span className="text-slate-500">
+                                                    Status:
+                                                  </span>
+                                                  <span
+                                                    className={`font-medium ${
+                                                      contact.suspicious
+                                                        ? "text-red-600 dark:text-red-400"
+                                                        : "text-green-600 dark:text-green-400"
+                                                    }`}
+                                                  >
+                                                    {contact.suspicious
+                                                      ? "Suspicious"
+                                                      : "Normal"}
+                                                  </span>
+                                                </div>
+                                                {contact.flags &&
+                                                  contact.flags.length > 0 && (
+                                                    <div className="flex justify-between">
+                                                      <span className="text-slate-500">
+                                                        Flags:
+                                                      </span>
+                                                      <span className="text-slate-700 dark:text-slate-300">
+                                                        {contact.flags.join(
+                                                          ", ",
+                                                        )}
+                                                      </span>
+                                                    </div>
+                                                  )}
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                                            <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] rounded transition-colors">
+                                              <svg
+                                                className="w-3 h-3"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                                />
+                                              </svg>
+                                              View Evidence
+                                            </button>
+                                            <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] rounded transition-colors">
+                                              <svg
+                                                className="w-3 h-3"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                                />
+                                              </svg>
+                                              Export Contact
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
-                                </div>
-                                <div className="text-sm text-slate-600 dark:text-slate-400">
-                                  {contact.messages} messages
-                                </div>
-                              </div>
-                            ))}
+                                );
+                              })}
                           </div>
                         </div>
                       )}
