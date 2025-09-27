@@ -25,7 +25,7 @@ export default function CasePage() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("search");
   const [timelineView, setTimelineView] = useState<"compact" | "detailed">(
-    "detailed",
+    "compact",
   );
   const [results, setResults] = useState<EvidenceItem[]>([]);
   const [searchData, setSearchData] = useState<{
@@ -40,13 +40,354 @@ export default function CasePage() {
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
   const [selectedType, setSelectedType] = useState("All Types");
-  const [selectedTime, setSelectedTime] = useState("Last 30 Days");
+  const [selectedTime, setSelectedTime] = useState("All Time");
   const [selectedSort, setSelectedSort] = useState("Relevance");
   const [selectedTimelineFilter, setSelectedTimelineFilter] =
     useState("All Events");
-  const [selectedTimelineTime, setSelectedTimelineTime] =
-    useState("Last 24 Hours");
+  const [selectedTimelineTime, setSelectedTimelineTime] = useState("All Time");
   const [hasSearched, setHasSearched] = useState(false);
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+
+  const toggleDateExpansion = (date: string) => {
+    setExpandedDates((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(date)) {
+        newSet.delete(date);
+      } else {
+        newSet.add(date);
+      }
+      return newSet;
+    });
+  };
+
+  const handleTimelineViewChange = (mode: "compact" | "detailed") => {
+    setTimelineView(mode);
+    if (mode === "detailed") {
+      // Auto-expand all dates when detailed view is selected
+      const allDates = new Set(filteredDailySummaries.map((day) => day.date));
+      setExpandedDates(allDates);
+    } else {
+      // Collapse all dates when compact view is selected
+      setExpandedDates(new Set());
+    }
+  };
+
+  const filterResults = (results: EvidenceItem[]) => {
+    let filtered = [...results];
+
+    // Filter by type
+    if (selectedType !== "All Types") {
+      filtered = filtered.filter((ev) => {
+        const category = ev.raw_data?.category?.toLowerCase() || "";
+        const fileType = ev.file_type?.toLowerCase() || "";
+        const app = ev.app?.toLowerCase() || "";
+
+        switch (selectedType) {
+          case "Messages":
+            return (
+              category.includes("message") ||
+              fileType.includes("message") ||
+              app.includes("message") ||
+              app.includes("whatsapp") ||
+              app.includes("telegram") ||
+              app.includes("discord")
+            );
+          case "Calls":
+            return (
+              category.includes("call") ||
+              fileType.includes("call") ||
+              app.includes("call")
+            );
+          case "Web History":
+            return (
+              category.includes("browsing") ||
+              category.includes("web") ||
+              fileType.includes("browser") ||
+              app.includes("chrome") ||
+              app.includes("firefox") ||
+              app.includes("safari")
+            );
+          case "Files":
+            return (
+              category.includes("file") ||
+              fileType.includes("file") ||
+              app.includes("file")
+            );
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Filter by time
+    if (selectedTime !== "All Time") {
+      const now = new Date();
+      const cutoffDate = new Date();
+
+      switch (selectedTime) {
+        case "Last 24 Hours":
+          cutoffDate.setHours(now.getHours() - 24);
+          break;
+        case "Last 7 Days":
+          cutoffDate.setDate(now.getDate() - 7);
+          break;
+        case "Last 30 Days":
+          cutoffDate.setDate(now.getDate() - 30);
+          break;
+      }
+
+      filtered = filtered.filter((ev) => {
+        const timestamp = new Date(ev.timestamp);
+        return timestamp >= cutoffDate;
+      });
+    }
+
+    // Sort results
+    switch (selectedSort) {
+      case "Newest First":
+        filtered.sort(
+          (a, b) =>
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+        );
+        break;
+      case "Oldest First":
+        filtered.sort(
+          (a, b) =>
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+        );
+        break;
+      case "Relevance":
+      default:
+        // Keep original order (already sorted by relevance from API)
+        break;
+    }
+
+    return filtered;
+  };
+
+  const groupEventsIntoSessions = (results: EvidenceItem[]) => {
+    const sessions: any[] = [];
+    const sortedResults = [...results].sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
+
+    let currentSession: any = null;
+    const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+    for (const event of sortedResults) {
+      const eventTime = new Date(event.timestamp).getTime();
+
+      // Check if this event belongs to current session
+      if (
+        currentSession &&
+        currentSession.app === event.app &&
+        currentSession.conversation_name === event.conversation_name &&
+        eventTime - currentSession.endTime <= SESSION_TIMEOUT
+      ) {
+        // Add to current session
+        currentSession.events.push(event);
+        currentSession.endTime = eventTime;
+        currentSession.messageCount++;
+
+        // Update suspicious content detection
+        if (event.content) {
+          const content = event.content.toLowerCase();
+          if (
+            content.includes("crypto") ||
+            content.includes("bitcoin") ||
+            content.includes("ethereum")
+          ) {
+            currentSession.hasSuspiciousContent = true;
+            currentSession.suspiciousKeywords.push("cryptocurrency");
+          }
+          if (
+            content.includes("money") ||
+            content.includes("payment") ||
+            content.includes("$")
+          ) {
+            currentSession.hasSuspiciousContent = true;
+            currentSession.suspiciousKeywords.push("financial");
+          }
+        }
+      } else {
+        // Start new session
+        if (currentSession) {
+          sessions.push(currentSession);
+        }
+
+        currentSession = {
+          id: `session-${sessions.length + 1}`,
+          app: event.app,
+          conversation_name: event.conversation_name,
+          startTime: eventTime,
+          endTime: eventTime,
+          events: [event],
+          messageCount: 1,
+          hasSuspiciousContent: false,
+          suspiciousKeywords: [],
+          participants: new Set([event.sender]),
+          preview: event.content?.substring(0, 100) || "",
+          priority: "normal",
+        };
+
+        // Check for suspicious content in first event
+        if (event.content) {
+          const content = event.content.toLowerCase();
+          if (
+            content.includes("crypto") ||
+            content.includes("bitcoin") ||
+            content.includes("ethereum")
+          ) {
+            currentSession.hasSuspiciousContent = true;
+            currentSession.suspiciousKeywords.push("cryptocurrency");
+            currentSession.priority = "high";
+          }
+          if (
+            content.includes("money") ||
+            content.includes("payment") ||
+            content.includes("$")
+          ) {
+            currentSession.hasSuspiciousContent = true;
+            currentSession.suspiciousKeywords.push("financial");
+            currentSession.priority = "high";
+          }
+        }
+      }
+
+      // Add participant
+      if (event.sender) {
+        currentSession.participants.add(event.sender);
+      }
+    }
+
+    // Add last session
+    if (currentSession) {
+      sessions.push(currentSession);
+    }
+
+    return sessions;
+  };
+
+  const getDailySummaries = (sessions: any[]) => {
+    const dailyGroups: { [key: string]: any[] } = {};
+
+    sessions.forEach((session) => {
+      const date = new Date(session.startTime).toDateString();
+      if (!dailyGroups[date]) {
+        dailyGroups[date] = [];
+      }
+      dailyGroups[date].push(session);
+    });
+
+    return Object.entries(dailyGroups)
+      .map(([date, daySessions]) => {
+        const totalEvents = daySessions.reduce(
+          (sum, s) => sum + s.messageCount,
+          0,
+        );
+        const suspiciousCount = daySessions.filter(
+          (s) => s.hasSuspiciousContent,
+        ).length;
+        const appStats = daySessions.reduce((stats: any, session) => {
+          stats[session.app] = (stats[session.app] || 0) + session.messageCount;
+          return stats;
+        }, {});
+
+        const startTime = new Date(
+          Math.min(...daySessions.map((s) => s.startTime)),
+        );
+        const endTime = new Date(
+          Math.max(...daySessions.map((s) => s.endTime)),
+        );
+
+        return {
+          date,
+          sessions: daySessions,
+          totalEvents,
+          suspiciousCount,
+          appStats,
+          startTime: startTime.toLocaleTimeString(),
+          endTime: endTime.toLocaleTimeString(),
+        };
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
+
+  const filterTimelineSessions = (sessions: any[]) => {
+    let filtered = [...sessions];
+
+    // Filter by timeline event type
+    if (selectedTimelineFilter !== "All Events") {
+      filtered = filtered.filter((session) => {
+        const app = session.app?.toLowerCase() || "";
+
+        switch (selectedTimelineFilter) {
+          case "Messages":
+            return (
+              app.includes("message") ||
+              app.includes("whatsapp") ||
+              app.includes("telegram") ||
+              app.includes("discord") ||
+              app.includes("sms")
+            );
+          case "Calls":
+            return app.includes("call") || app.includes("phone");
+          case "Web History":
+            return (
+              app.includes("browser") ||
+              app.includes("chrome") ||
+              app.includes("firefox") ||
+              app.includes("safari") ||
+              app.includes("web")
+            );
+          case "Files":
+            return app.includes("file") || app.includes("download");
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Filter by timeline time
+    if (selectedTimelineTime !== "All Time") {
+      const now = new Date();
+      const cutoffDate = new Date();
+
+      switch (selectedTimelineTime) {
+        case "Last 24 Hours":
+          cutoffDate.setHours(now.getHours() - 24);
+          break;
+        case "Last 7 Days":
+          cutoffDate.setDate(now.getDate() - 7);
+          break;
+        case "Last 30 Days":
+          cutoffDate.setDate(now.getDate() - 30);
+          break;
+      }
+
+      filtered = filtered.filter((session) => {
+        const timestamp = new Date(session.startTime);
+        return timestamp >= cutoffDate;
+      });
+    }
+
+    return filtered;
+  };
+
+  const filterDailySummaries = (summaries: any[]) => {
+    return summaries
+      .map((day) => ({
+        ...day,
+        sessions: filterTimelineSessions(day.sessions),
+      }))
+      .filter((day) => day.sessions.length > 0);
+  };
+
+  const filteredResults = filterResults(results);
+  const timelineSessions = groupEventsIntoSessions(results);
+  const allDailySummaries = getDailySummaries(timelineSessions);
+  const filteredDailySummaries = filterDailySummaries(allDailySummaries);
 
   useEffect(() => {
     const q = searchParams.get("q") || "";
@@ -103,8 +444,25 @@ export default function CasePage() {
   }) => {
     const [isOpen, setIsOpen] = useState(false);
 
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        const target = event.target as Element;
+        if (!target.closest(".custom-dropdown")) {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener("click", handleClickOutside);
+      }
+
+      return () => {
+        document.removeEventListener("click", handleClickOutside);
+      };
+    }, [isOpen]);
+
     return (
-      <div className="relative">
+      <div className="relative custom-dropdown">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="text-sm border border-[#FF7F50] dark:border-[#FF7F50] rounded-lg px-3 py-2 bg-[#F8F8F8] dark:bg-[#0F0F0F] text-[#2A2A2A] dark:text-[#E0E0E0] flex items-center gap-2 min-w-[120px]"
@@ -126,7 +484,7 @@ export default function CasePage() {
         </button>
 
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-[#F8F8F8] dark:bg-[#0F0F0F] border border-[#FF7F50] dark:border-[#FF7F50] rounded-lg shadow-lg z-10">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-[#F8F8F8] dark:bg-[#0F0F0F] border border-[#FF7F50] dark:border-[#FF7F50] rounded-lg shadow-lg z-50">
             {options.map((option) => (
               <button
                 key={option}
@@ -327,6 +685,36 @@ export default function CasePage() {
                           <div className="text-xs text-slate-500 dark:text-slate-400">
                             {searchData.totalResults} matches found
                           </div>
+                          {hasSearched && (
+                            <button
+                              onClick={() => {
+                                setResults([]);
+                                setSearchData({
+                                  intent: "",
+                                  totalResults: 0,
+                                  processingTime: 0,
+                                });
+                                setHasSearched(false);
+                                setQuery("");
+                              }}
+                              className="ml-3 text-xs text-slate-400 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors flex items-center gap-1"
+                            >
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                              Clear Results
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -380,9 +768,16 @@ export default function CasePage() {
                                 "Last 24 Hours",
                                 "All Time",
                               ]}
-                              placeholder="Last 30 Days"
+                              placeholder="All Time"
                             />
-                            <button className="text-sm text-slate-500 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors">
+                            <button
+                              onClick={() => {
+                                setSelectedType("All Types");
+                                setSelectedTime("All Time");
+                                setSelectedSort("Relevance");
+                              }}
+                              className="text-sm text-slate-500 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
+                            >
                               Reset
                             </button>
                           </div>
@@ -407,7 +802,7 @@ export default function CasePage() {
                       )}
                     </div>
                     <div>
-                      {results.length === 0 ? (
+                      {filteredResults.length === 0 ? (
                         <div className="text-center py-12">
                           <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
                             {loading ? (
@@ -445,7 +840,7 @@ export default function CasePage() {
                         </div>
                       ) : (
                         <div className="space-y-4 p-4">
-                          {results.map((ev, index) => (
+                          {filteredResults.map((ev, index) => (
                             <div
                               key={ev.id}
                               className="bg-[#F8F8F8] dark:bg-[#0F0F0F] border border-[#FF7F50] dark:border-[#FF7F50] rounded-lg overflow-hidden"
@@ -470,25 +865,17 @@ export default function CasePage() {
                                     </div>
                                     <div>
                                       <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                        {ev.app} Message
+                                        {ev.app}
                                       </div>
                                       <div className="text-xs text-slate-500">
                                         Result #
-                                        {String(index + 1).padStart(3, "0")}
+                                        {String(index + 1).padStart(3, "0")} •
+                                        Artifact ID: {ev.artifact_id}
                                       </div>
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <div className="text-xs text-slate-500 bg-slate-200 dark:bg-slate-700 px-2 py-1 font-mono rounded-full">
-                                      {ev.id}
-                                    </div>
-                                    <div
-                                      className={`text-xs px-2 py-1 font-medium rounded-full ${
-                                        ev.direction === "Incoming"
-                                          ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]"
-                                          : "bg-[#F0F0F0] dark:bg-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0]"
-                                      }`}
-                                    >
+                                    <div className="text-xs text-slate-500 bg-slate-200 dark:bg-slate-700 px-2 py-1 font-medium rounded-full">
                                       {ev.direction}
                                     </div>
                                   </div>
@@ -502,9 +889,10 @@ export default function CasePage() {
                                 <div className="mb-4">
                                   <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">
                                     {ev.sender} →{" "}
-                                    {ev.direction === "Incoming"
-                                      ? "Recipient"
-                                      : "Sender"}
+                                    {ev.raw_data?.recipient ||
+                                      ev.raw_data?.to ||
+                                      ev.raw_data?.display_to ||
+                                      "Unknown"}
                                   </div>
                                   <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-4 border border-[#FF7F50] dark:border-[#FF7F50]">
                                     <div className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
@@ -523,7 +911,7 @@ export default function CasePage() {
                                         <span className="text-slate-500">
                                           Source:
                                         </span>
-                                        <span className="text-slate-700 dark:text-slate-300 font-mono text-xs">
+                                        <span className="text-slate-700 dark:text-slate-300 font-mono text-xs break-all">
                                           {ev.source}
                                         </span>
                                       </div>
@@ -532,9 +920,7 @@ export default function CasePage() {
                                           Type:
                                         </span>
                                         <span className="text-slate-700 dark:text-slate-300">
-                                          {ev.message_type ||
-                                            ev.type ||
-                                            "Unknown"}
+                                          {ev.app}
                                         </span>
                                       </div>
                                       {ev.jid && (
@@ -542,7 +928,7 @@ export default function CasePage() {
                                           <span className="text-slate-500">
                                             JID:
                                           </span>
-                                          <span className="text-slate-700 dark:text-slate-300 font-mono text-xs">
+                                          <span className="text-slate-700 dark:text-slate-300 font-mono text-xs break-all">
                                             {ev.jid}
                                           </span>
                                         </div>
@@ -582,24 +968,6 @@ export default function CasePage() {
                                     </div>
                                   </div>
                                 </div>
-
-                                {ev.tagBadges.length > 0 && (
-                                  <div className="mb-4">
-                                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                      Tags
-                                    </div>
-                                    <div className="flex flex-wrap gap-1">
-                                      {ev.tagBadges.map((tag) => (
-                                        <span
-                                          key={tag}
-                                          className="inline-flex items-center bg-amber-100 dark:bg-amber-900/30 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-300 rounded-full"
-                                        >
-                                          {tag}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
 
                                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
                                   <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
@@ -686,7 +1054,11 @@ export default function CasePage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-xs text-slate-500 dark:text-slate-400">
-                            {results.length} events
+                            {filteredDailySummaries.reduce(
+                              (total, day) => total + day.sessions.length,
+                              0,
+                            )}{" "}
+                            sessions
                           </div>
                           <svg
                             className="w-2 h-2 text-green-500"
@@ -701,6 +1073,7 @@ export default function CasePage() {
                         </div>
                       </div>
 
+                      {allDailySummaries.length > 0 && (
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-slate-600 dark:text-slate-400">
@@ -711,9 +1084,9 @@ export default function CasePage() {
                             onChange={setSelectedTimelineFilter}
                             options={[
                               "All Events",
-                              "Messages Only",
-                              "Calls Only",
-                              "Web Activity",
+                                "Messages",
+                                "Calls",
+                                "Web History",
                               "Files",
                             ]}
                             placeholder="All Events"
@@ -727,39 +1100,57 @@ export default function CasePage() {
                               "Last 30 Days",
                               "All Time",
                             ]}
-                            placeholder="Last 24 Hours"
-                          />
+                              placeholder="All Time"
+                            />
+                            <button
+                              onClick={() => {
+                                setSelectedTimelineFilter("All Events");
+                                setSelectedTimelineTime("All Time");
+                              }}
+                              className="text-sm text-slate-500 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
+                            >
+                              Reset
+                            </button>
                         </div>
 
-                        <div className="flex items-center gap-2 ml-auto">
+                          <div className="flex items-center gap-3 ml-auto">
                           <span className="text-sm text-slate-600 dark:text-slate-400">
                             View:
                           </span>
+                            <div className="relative">
+                              <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
                           <button
-                            onClick={() => setTimelineView("compact")}
-                            className={`px-2 py-1 text-xs font-medium rounded ${
+                                  onClick={() =>
+                                    handleTimelineViewChange("compact")
+                                  }
+                                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
                               timelineView === "compact"
-                                ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]"
-                                : "text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F]"
+                                      ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm"
+                                      : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                             }`}
                           >
                             Compact
                           </button>
                           <button
-                            onClick={() => setTimelineView("detailed")}
-                            className={`px-2 py-1 text-xs font-medium rounded ${
+                                  onClick={() =>
+                                    handleTimelineViewChange("detailed")
+                                  }
+                                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
                               timelineView === "detailed"
-                                ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]"
-                                : "text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F]"
+                                      ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm"
+                                      : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                             }`}
                           >
                             Detailed
                           </button>
                         </div>
                       </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div>
-                      {results.length === 0 ? (
+                      {filteredDailySummaries.length === 0 ? (
                         <div className="text-center py-12">
                           <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
                             <svg
@@ -776,96 +1167,202 @@ export default function CasePage() {
                               />
                             </svg>
                           </div>
+                          {allDailySummaries.length === 0 ? (
+                            <>
                           <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
                             Timeline Analysis
                           </h3>
                           <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
-                            View evidence in chronological order to understand
-                            the sequence of events.
-                          </p>
+                                View evidence in chronological order to
+                                understand the sequence of events.
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                                No Timeline Data Found
+                              </h3>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
+                                No events match your current filter criteria.
+                                Try adjusting your filters or search for
+                                different evidence.
+                              </p>
+                            </>
+                          )}
                         </div>
                       ) : (
-                        <div className="relative">
-                          <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700"></div>
-
-                          {(() => {
-                            const groupedResults = results.reduce(
-                              (groups, ev) => {
-                                const date = new Date(
-                                  ev.timestamp,
-                                ).toDateString();
-                                if (!groups[date]) {
-                                  groups[date] = [];
-                                }
-                                groups[date].push(ev);
-                                return groups;
-                              },
-                              {} as Record<string, typeof results>,
-                            );
-
-                            return Object.entries(groupedResults).map(
-                              ([date, events], groupIndex) => (
-                                <div key={date} className="relative">
-                                  <div className="sticky top-0 z-20 bg-[#FFF5F0] dark:bg-[#2A1A0F] border-b border-[#FF7F50] dark:border-[#FF7F50] px-6 py-3">
+                        <div className="space-y-4 p-4">
+                          {filteredDailySummaries.map((day, dayIndex) => {
+                            const isExpanded = expandedDates.has(day.date);
+                            return (
+                              <div
+                                key={day.date}
+                                className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden"
+                              >
+                                {/* Collapsible Date Header */}
+                                <div
+                                  className="bg-gradient-to-r from-[#FFF5F0] to-[#FFF8F5] dark:from-[#2A1A0F] dark:to-[#2A1F15] border-b border-[#FF7F50] dark:border-[#FF7F50] p-4 cursor-pointer hover:from-[#FFF0E6] hover:to-[#FFF5F0] dark:hover:from-[#2A1F15] dark:hover:to-[#2A1A0F] transition-all"
+                                  onClick={() => toggleDateExpansion(day.date)}
+                                >
+                                  <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-3 h-3 bg-[#FF7F50] rounded-full"></div>
-                                      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                        {date}
+                                      <div
+                                        className={`w-6 h-6 flex items-center justify-center transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+                                      >
+                                        <svg
+                                          className="w-4 h-4 text-[#FF7F50]"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M9 5l7 7-7 7"
+                                          />
+                                        </svg>
+                                      </div>
+                                      <div className="w-8 h-8 bg-[#FF7F50] rounded-full flex items-center justify-center">
+                                        <svg
+                                          className="w-4 h-4 text-white"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                          />
+                                        </svg>
+                                      </div>
+                                      <div>
+                                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                                          {day.date}
                                       </h3>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                                          {day.startTime} - {day.endTime}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="text-2xl font-bold text-[#FF7F50]">
+                                        {day.totalEvents}
+                                      </div>
                                       <div className="text-xs text-slate-500 dark:text-slate-400">
-                                        {events.length} events
+                                        total events
                                       </div>
                                     </div>
                                   </div>
 
-                                  {events.map((ev, index) => (
-                                    <div
-                                      key={ev.id}
-                                      className="relative flex items-start gap-4 p-6 border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors"
-                                    >
-                                      <div
-                                        className={`relative z-10 flex-shrink-0 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${
-                                          ev.direction === "Incoming"
-                                            ? "bg-[#FF7F50]"
-                                            : "bg-[#4A4A4A]"
-                                        }`}
-                                      ></div>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                                    {Object.entries(day.appStats).map(
+                                      ([app, count]) => (
+                                        <div key={app} className="text-center">
+                                          <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                                            {count as number}
+                                          </div>
+                                          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                            {app}
+                                          </div>
+                                        </div>
+                                      ),
+                                    )}
+                                  </div>
 
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-3 mb-3">
-                                          <div className="flex items-center gap-2">
-                                            <div
-                                              className={`w-6 h-6 rounded-sm flex items-center justify-center ${
-                                                ev.app
+                                  {day.suspiciousCount > 0 && (
+                                    <div className="flex items-center gap-2 p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                                      <svg
+                                        className="w-4 h-4 text-red-600"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                                        />
+                                      </svg>
+                                      <span className="text-sm font-medium text-red-700 dark:text-red-300">
+                                        {day.suspiciousCount} suspicious
+                                        activities detected
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Collapsible Content */}
+                                {isExpanded && (
+                                  <div className="relative p-4 bg-slate-50/50 dark:bg-slate-800/50">
+                                    {/* Timeline Line */}
+                                    <div className="absolute left-8 top-4 bottom-4 w-0.5 bg-slate-300 dark:bg-slate-600"></div>
+
+                                    <div className="space-y-3">
+                                      {day.sessions.map(
+                                        (
+                                          session: any,
+                                          sessionIndex: number,
+                                        ) => (
+                                          <div
+                                            key={session.id}
+                                            className={`relative border rounded-lg p-3 ml-16 ${
+                                              session.priority === "high"
+                                                ? "border-red-300 dark:border-red-700 bg-red-50/50 dark:bg-red-900/20"
+                                                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                                            }`}
+                                          >
+                                            {/* Date Marker */}
+                                            <div className="absolute -left-12 top-2 text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap bg-white dark:bg-slate-800 px-1 py-0.5 rounded shadow-sm border border-slate-200 dark:border-slate-600">
+                                              {new Date(
+                                                session.startTime,
+                                              ).toLocaleTimeString([], {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                                hour12: true,
+                                              })}
+                                            </div>
+                                            {session.priority === "high" && (
+                                              <div className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                                <svg
+                                                  className="w-2 h-2 text-white"
+                                                  fill="currentColor"
+                                                  viewBox="0 0 8 8"
+                                                >
+                                                  <circle cx="4" cy="4" r="3" />
+                                                </svg>
+                                              </div>
+                                            )}
+
+                                            <div className="flex items-start justify-between mb-2">
+                                              <div className="flex items-center gap-3">
+                                                <div
+                                                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                                    session.app
                                                   .toLowerCase()
                                                   .includes("whatsapp")
-                                                  ? "bg-[#FFF5F0] dark:bg-[#2A1A0F]"
-                                                  : ev.app
+                                                      ? "bg-green-100 dark:bg-green-900/30"
+                                                      : session.app
                                                         .toLowerCase()
                                                         .includes("sms")
-                                                    ? "bg-[#F0F0F0] dark:bg-[#2A2A2A]"
-                                                    : ev.app
-                                                          .toLowerCase()
-                                                          .includes("call")
-                                                      ? "bg-purple-100 dark:bg-purple-900/30"
-                                                      : "bg-slate-200 dark:bg-slate-600"
+                                                        ? "bg-blue-100 dark:bg-blue-900/30"
+                                                        : "bg-blue-100 dark:bg-blue-900/30"
                                               }`}
                                             >
                                               <svg
-                                                className={`w-3 h-3 ${
-                                                  ev.app
+                                                    className={`w-4 h-4 ${
+                                                      session.app
                                                     .toLowerCase()
                                                     .includes("whatsapp")
-                                                    ? "text-[#FF7F50]"
-                                                    : ev.app
+                                                        ? "text-green-600 dark:text-green-400"
+                                                        : session.app
                                                           .toLowerCase()
                                                           .includes("sms")
-                                                      ? "text-[#4A4A4A] dark:text-[#B0B0B0]"
-                                                      : ev.app
-                                                            .toLowerCase()
-                                                            .includes("call")
-                                                        ? "text-purple-600 dark:text-purple-400"
-                                                        : "text-slate-600 dark:text-slate-400"
+                                                          ? "text-blue-600 dark:text-blue-400"
+                                                          : "text-blue-600 dark:text-blue-400"
                                                 }`}
                                                 fill="none"
                                                 stroke="currentColor"
@@ -880,80 +1377,74 @@ export default function CasePage() {
                                               </svg>
                                             </div>
                                             <div>
-                                              <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                                {ev.app}
+                                                  <div className="font-medium text-slate-900 dark:text-slate-100">
+                                                    {session.app} Session
                                               </div>
-                                              <div className="text-xs text-slate-500">
-                                                {ev.message_type ||
-                                                  ev.type ||
-                                                  "Message"}
+                                                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                                                    {session.conversation_name ||
+                                                      "Unknown Conversation"}
                                               </div>
                                             </div>
                                           </div>
-
-                                          <div className="flex items-center gap-2">
-                                            <div
-                                              className={`text-xs px-2 py-1 font-medium rounded-full ${
-                                                ev.direction === "Incoming"
-                                                  ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]"
-                                                  : "bg-[#F0F0F0] dark:bg-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0]"
-                                              }`}
-                                            >
-                                              {ev.direction}
-                                            </div>
-                                            {ev.status === "Deleted" && (
-                                              <div className="text-xs px-2 py-1 font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-                                                Deleted
-                                              </div>
-                                            )}
-                                          </div>
-
-                                          <div className="text-xs text-slate-500 ml-auto">
+                                              <div className="text-right">
+                                                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
                                             {new Date(
-                                              ev.timestamp,
+                                                    session.startTime,
+                                                  ).toLocaleTimeString()}{" "}
+                                                  -{" "}
+                                                  {new Date(
+                                                    session.endTime,
                                             ).toLocaleTimeString()}
                                           </div>
+                                                <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                  {session.messageCount}{" "}
+                                                  messages
                                         </div>
-
-                                        <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-3 border border-[#FF7F50] dark:border-[#FF7F50] mb-3">
-                                          <div className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
-                                            {ev.content}
                                           </div>
                                         </div>
 
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-3 text-sm">
-                                            <div className="flex items-center gap-2">
-                                              <div className="w-5 h-5 bg-slate-200 dark:bg-slate-700 rounded-sm flex items-center justify-center">
-                                                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                                  {ev.sender &&
-                                                  typeof ev.sender === "string"
-                                                    ? ev.sender
-                                                        .charAt(0)
-                                                        .toUpperCase()
-                                                    : "?"}
-                                                </span>
+                                            <div className="mb-2">
+                                              <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">
+                                                Participants:{" "}
+                                                {Array.from(
+                                                  session.participants,
+                                                ).join(", ")}
                                               </div>
-                                              <span className="font-medium text-slate-700 dark:text-slate-300">
-                                                {ev.sender}
-                                              </span>
+                                              <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-3">
+                                                <div className="text-sm text-slate-800 dark:text-slate-200">
+                                                  {session.preview}...
                                             </div>
-                                            {ev.phone_number && (
-                                              <>
-                                                <div className="text-slate-400">
-                                                  •
                                                 </div>
-                                                <div className="text-slate-500 font-mono text-xs">
-                                                  {ev.phone_number}
                                                 </div>
-                                              </>
-                                            )}
-                                          </div>
 
-                                          <div className="flex items-center gap-1">
-                                            <button className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                            {session.hasSuspiciousContent && (
+                                              <div className="flex items-center gap-2 mb-2">
+                                                <svg
+                                                  className="w-4 h-4 text-red-500"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                                                  />
+                                                </svg>
+                                                <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                                                  Suspicious content:{" "}
+                                                  {session.suspiciousKeywords.join(
+                                                    ", ",
+                                                  )}
+                                                </span>
+                                          </div>
+                                            )}
+
+                                            <div className="flex items-center justify-end gap-2">
+                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] rounded transition-colors">
                                               <svg
-                                                className="w-4 h-4"
+                                                  className="w-3 h-3"
                                                 fill="none"
                                                 stroke="currentColor"
                                                 viewBox="0 0 24 24"
@@ -962,19 +1453,30 @@ export default function CasePage() {
                                                   strokeLinecap="round"
                                                   strokeLinejoin="round"
                                                   strokeWidth={2}
-                                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                                />
+                                                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                                                  />
+                                                </svg>
+                                                Expand Session
+                                              </button>
+                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] rounded transition-colors">
+                                                <svg
+                                                  className="w-3 h-3"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
                                                 <path
                                                   strokeLinecap="round"
                                                   strokeLinejoin="round"
                                                   strokeWidth={2}
-                                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                                                 />
                                               </svg>
+                                                Mark Evidence
                                             </button>
-                                            <button className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] rounded transition-colors">
                                               <svg
-                                                className="w-4 h-4"
+                                                  className="w-3 h-3"
                                                 fill="none"
                                                 stroke="currentColor"
                                                 viewBox="0 0 24 24"
@@ -983,32 +1485,21 @@ export default function CasePage() {
                                                   strokeLinecap="round"
                                                   strokeLinejoin="round"
                                                   strokeWidth={2}
-                                                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+                                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                                                 />
                                               </svg>
+                                                Export
                                             </button>
                                           </div>
                                         </div>
-
-                                        {ev.tagBadges.length > 0 && (
-                                          <div className="flex flex-wrap gap-1 mt-3">
-                                            {ev.tagBadges.map((tag) => (
-                                              <span
-                                                key={tag}
-                                                className="inline-flex items-center bg-amber-100 dark:bg-amber-900/30 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-300 rounded-full"
-                                              >
-                                                {tag}
-                                              </span>
-                                            ))}
-                                          </div>
+                                        ),
                                         )}
                                       </div>
                                     </div>
-                                  ))}
+                                )}
                                 </div>
-                              ),
                             );
-                          })()}
+                          })}
                         </div>
                       )}
                     </div>
@@ -1045,7 +1536,7 @@ export default function CasePage() {
                       </div>
                     </div>
                     <div className="p-6">
-                      {results.length === 0 ? (
+                      {filteredResults.length === 0 ? (
                         <div className="text-center py-12">
                           <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
                             <svg
@@ -1336,7 +1827,7 @@ export default function CasePage() {
                                 <span className="text-sm text-slate-500 dark:text-slate-400">
                                   Case ID
                                 </span>
-                                <span className="text-sm font-mono text-slate-900 dark:text-slate-100">
+                                <span className="text-sm font-mono text-slate-900 dark:text-slate-100 break-all">
                                   {caseId}
                                 </span>
                               </div>

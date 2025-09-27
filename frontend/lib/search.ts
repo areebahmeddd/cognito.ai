@@ -14,7 +14,8 @@ interface SearchResult {
   artifact_id: string;
   case_id: string;
   device_id: string;
-  type: string;
+  file_type: string;
+  app: string;
   data_type: string;
   source_path: string;
   timestamp: string;
@@ -48,7 +49,7 @@ interface SearchResult {
   username?: string;
   display_name?: string;
   contact_name?: string;
-  participants?: string;
+  participants?: string[];
   account_name?: string;
   account_type?: string;
   url?: string;
@@ -81,7 +82,7 @@ interface SearchResult {
   app_package_name?: string;
   package_id?: string;
   version?: string;
-  status?: string;
+  status?: string | number;
   category?: string;
   notification_type?: string;
   event_type?: string;
@@ -165,7 +166,7 @@ export interface EvidenceItem {
   content: string;
   source: string;
   direction: "Incoming" | "Outgoing";
-  type: string;
+  file_type: string;
   artifact_id: string;
   case_id: string;
   device_id: string;
@@ -208,8 +209,9 @@ export async function searchQuery(query: string): Promise<{
     const evidenceItems: EvidenceItem[] = data.results.map((result, index) => {
       const appName =
         result.app_name ||
+        result.app ||
         result.package_name?.split(".").pop()?.replace(/_/g, " ") ||
-        result.type ||
+        result.file_type ||
         "Unknown App";
 
       const timestamp = new Date(result.timestamp).toLocaleString();
@@ -302,12 +304,9 @@ export async function searchQuery(query: string): Promise<{
         tagBadges: tagBadges.length > 0 ? tagBadges : ["General message"],
         content:
           content.substring(0, 500) + (content.length > 500 ? "..." : ""),
-        source:
-          result.source_path?.split("\\").pop() ||
-          result.source ||
-          "Unknown source",
+        source: result.source_path || result.source || "Unknown source",
         direction,
-        type: result.type,
+        file_type: result.file_type,
         artifact_id: result.artifact_id,
         case_id: result.case_id,
         device_id: result.device_id,
