@@ -25,7 +25,7 @@ export function MobileNav() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         aria-label="Open menu"
-        className="rounded-sm p-2 text-slate-500 transition-colors duration-200 hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-gray-700 dark:hover:text-slate-100"
+        className="rounded-sm p-2 text-[#666] dark:text-[#999] transition-colors duration-200 hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A]"
       >
         <Menu className="h-5 w-5" />
       </SheetTrigger>
@@ -34,7 +34,7 @@ export function MobileNav() {
           <SheetClose asChild>
             <Link
               href="/how-it-works"
-              className="rounded-sm px-3 py-2 text-slate-700 transition-colors duration-200 hover:bg-gray-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-slate-100"
+              className="rounded-sm px-3 py-2 text-[#2A2A2A] dark:text-[#E0E0E0] transition-colors duration-200 hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A]"
             >
               How it works
             </Link>
@@ -42,7 +42,7 @@ export function MobileNav() {
           <SheetClose asChild>
             <Link
               href="/how-to-use"
-              className="rounded-sm px-3 py-2 text-slate-700 transition-colors duration-200 hover:bg-gray-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-slate-100"
+              className="rounded-sm px-3 py-2 text-[#2A2A2A] dark:text-[#E0E0E0] transition-colors duration-200 hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A]"
             >
               How to use
             </Link>

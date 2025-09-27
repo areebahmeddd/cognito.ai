@@ -18,7 +18,7 @@ export function ThemeToggle() {
       <Button
         size="lg"
         variant="ghost"
-        className="h-8 w-8 rounded-sm p-0 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900"
+        className="h-8 w-8 rounded-sm p-0 hover:bg-transparent hover:text-current"
         aria-label="Toggle theme"
       >
         <Sun className="h-8 w-8 text-slate-500" />
@@ -30,7 +30,7 @@ export function ThemeToggle() {
     <Button
       size="lg"
       variant="ghost"
-      className="h-8 w-8 rounded-sm p-0 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900 dark:hover:bg-gray-700 dark:hover:text-slate-100"
+      className="h-8 w-8 rounded-sm p-0 hover:bg-transparent hover:text-current"
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
       aria-label="Toggle theme"
     >

@@ -1,6 +1,5 @@
 "use client";
 
-import { ThemeLogo } from "@/components/ThemeLogo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   DropdownMenu,
@@ -10,13 +9,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  BarChart3,
-  FolderOpen,
+  FileSpreadsheet,
+  Github,
   HelpCircle,
-  Home,
   LogOut,
   Settings,
   User,
+  Youtube,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -27,8 +26,8 @@ export default function DashboardNavbar() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const mockAuth = localStorage.getItem("cognito-auth");
-    setIsAuthenticated(mockAuth === "true");
+    const authStatus = localStorage.getItem("cognito-auth");
+    setIsAuthenticated(authStatus === "true");
   }, []);
 
   const handleSignOut = () => {
@@ -36,96 +35,96 @@ export default function DashboardNavbar() {
     window.location.href = "/";
   };
 
-  const navItems = [
-    { name: "Home", href: "/", icon: Home },
-    { name: "Cases", href: "/cases", icon: FolderOpen },
-    { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  ];
-
   return (
-    <nav className="h-16 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-      <div className="flex h-full items-center justify-between px-6">
-        {/* Logo and Brand */}
+    <nav className="relative z-30 bg-[#F8F8F8] dark:bg-[#0F0F0F]">
+      <div className="flex items-center justify-between p-6">
         <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2">
-            <ThemeLogo />
-            <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              cognito.ai
-            </span>
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-sm p-2 text-[#2A2A2A] dark:text-[#E0E0E0] transition-colors duration-200 hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A]"
+          >
+            <span className="text-lg font-medium">cognito.ai</span>
           </Link>
         </div>
 
-        {/* Centered Navigation Items */}
-        <div className="hidden md:flex items-center gap-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              pathname === item.href ||
-              (item.name === "Cases" && pathname.startsWith("/cases"));
+        <div className="flex items-center gap-2">
+          <a
+            href="https://docs.google.com/presentation/d/1n7_xvl8xx3r6QOR7TCP-oiH9NknoiszoKVyfP6TVlBM/edit?usp=sharing"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-sm p-2 text-[#4A4A4A] dark:text-[#B0B0B0] hover:text-[#FF7F50] transition-colors"
+            title="Project Presentation"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+          </a>
 
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? "bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {item.name}
-              </Link>
-            );
-          })}
-        </div>
+          <a
+            href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-sm p-2 text-[#4A4A4A] dark:text-[#B0B0B0] hover:text-[#FF7F50] transition-colors"
+            title="YouTube Channel"
+          >
+            <Youtube className="h-4 w-4" />
+          </a>
 
-        {/* Right Side Actions */}
-        <div className="flex items-center gap-3">
-          {/* Theme Toggle */}
+          <a
+            href="https://github.com/areebahmeddd/cognito.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-sm p-2 text-[#4A4A4A] dark:text-[#B0B0B0] hover:text-[#FF7F50] transition-colors"
+          >
+            <Github className="h-4 w-4" />
+          </a>
+
           <ThemeToggle />
 
-          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600">
-                <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                  <User className="h-4 w-4 text-slate-700 dark:text-slate-300" />
+              <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-[#2A2A2A] dark:text-[#E0E0E0] focus:outline-none">
+                <div className="h-8 w-8 rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] flex items-center justify-center border border-[#FF7F50]/20 dark:border-[#FF7F50]/30">
+                  <User className="h-4 w-4 text-[#FF7F50]" />
                 </div>
                 <span className="hidden md:inline text-sm font-medium">
-                  Shivansh
+                  Areeb
                 </span>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg z-50"
+              className="w-56 bg-white dark:bg-[#1A1A1A] border border-[#E0E0E0] dark:border-[#2A2A2A] shadow-lg z-50"
             >
               <div className="px-3 py-2">
-                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                  Shivansh
+                <p className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
+                  Areeb
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  shivansh@example.com
+                <p className="text-xs text-[#4A4A4A] dark:text-[#B0B0B0]">
+                  testing@areeb.dev
                 </p>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="hover:bg-slate-100 dark:hover:bg-slate-600 cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => (window.location.href = "/profile")}
+              >
                 <User className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem className="hover:bg-slate-100 dark:hover:bg-slate-600 cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => (window.location.href = "/settings")}
+              >
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuItem className="hover:bg-slate-100 dark:hover:bg-slate-600 cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => (window.location.href = "/help")}
+              >
                 <HelpCircle className="mr-2 h-4 w-4" />
                 Help & Support
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleSignOut}
-                className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 cursor-pointer"
+                className="text-red-600 dark:text-red-400"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign Out

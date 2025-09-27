@@ -56,6 +56,14 @@ export default function RecentActivity() {
           timestamp: "2 days ago",
           caseId: "2",
         },
+        {
+          id: "5",
+          type: "case_created",
+          title: "Created new case",
+          description: "Financial fraud investigation - Bank records analysis",
+          timestamp: "3 days ago",
+          caseId: "3",
+        },
       ];
       setActivities(mockActivities);
       localStorage.setItem(
@@ -70,7 +78,7 @@ export default function RecentActivity() {
       case "case_created":
         return (
           <svg
-            className="w-5 h-5 text-blue-600 dark:text-blue-400"
+            className="w-4 h-4 text-white"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -86,7 +94,7 @@ export default function RecentActivity() {
       case "search_performed":
         return (
           <svg
-            className="w-5 h-5 text-slate-600 dark:text-slate-400"
+            className="w-4 h-4 text-white"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -102,7 +110,7 @@ export default function RecentActivity() {
       case "file_uploaded":
         return (
           <svg
-            className="w-5 h-5 text-orange-600 dark:text-orange-400"
+            className="w-4 h-4 text-white"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -118,7 +126,7 @@ export default function RecentActivity() {
       case "analysis_completed":
         return (
           <svg
-            className="w-5 h-5 text-purple-600 dark:text-purple-400"
+            className="w-4 h-4 text-white"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -137,27 +145,32 @@ export default function RecentActivity() {
   const getActivityColor = (type: ActivityItem["type"]) => {
     switch (type) {
       case "case_created":
-        return "bg-blue-100 dark:bg-blue-900/30";
+        return "bg-[#FF7F50]";
       case "search_performed":
-        return "bg-slate-100 dark:bg-slate-900/30";
+        return "bg-[#FF7F50]";
       case "file_uploaded":
-        return "bg-orange-100 dark:bg-orange-900/30";
+        return "bg-[#FF7F50]";
       case "analysis_completed":
-        return "bg-purple-100 dark:bg-purple-900/30";
+        return "bg-[#FF7F50]";
     }
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
-      <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-4">
-        Recent Activity
-      </h2>
-      <div className="space-y-4">
+    <div className="bg-white dark:bg-[#1A1A1A] rounded-xl p-6 border border-[#E0E0E0] dark:border-[#2A2A2A] h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-light text-[#2A2A2A] dark:text-[#E0E0E0]">
+          Recent <span className="text-[#FF7F50]">Activity</span>
+        </h2>
+        <button className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0] font-medium">
+          View All
+        </button>
+      </div>
+      <div className="space-y-2 flex-1 overflow-y-auto">
         {activities.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center mx-auto mb-3">
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-4 border border-[#FF7F50]/20 dark:border-[#FF7F50]/30">
               <svg
-                className="w-6 h-6 text-slate-400"
+                className="w-8 h-8 text-[#FF7F50]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -170,30 +183,38 @@ export default function RecentActivity() {
                 />
               </svg>
             </div>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-[#4A4A4A] dark:text-[#B0B0B0] font-medium">
               No recent activity
+            </p>
+            <p className="text-xs text-[#4A4A4A] dark:text-[#B0B0B0] mt-1">
+              Your activity will appear here
             </p>
           </div>
         ) : (
           activities.map((activity) => (
-            <div key={activity.id} className="flex items-start gap-3">
-              <div
-                className={`w-10 h-10 ${getActivityColor(activity.type)} rounded-xl flex items-center justify-center flex-shrink-0`}
-              >
-                {getActivityIcon(activity.type)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                    {activity.title}
-                  </h3>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {activity.timestamp}
-                  </span>
+            <div
+              key={activity.id}
+              className="bg-[#F8F8F8] dark:bg-[#2A2A2A] rounded-lg p-4"
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-8 h-8 ${getActivityColor(activity.type)} rounded-full flex items-center justify-center flex-shrink-0`}
+                >
+                  {getActivityIcon(activity.type)}
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  {activity.description}
-                </p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
+                      {activity.title}
+                    </h3>
+                    <span className="text-xs text-[#4A4A4A] dark:text-[#B0B0B0] bg-[#E0E0E0] dark:bg-[#4A4A4A] px-2 py-1 rounded-full">
+                      {activity.timestamp}
+                    </span>
+                  </div>
+                  <p className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0] leading-relaxed">
+                    {activity.description}
+                  </p>
+                </div>
               </div>
             </div>
           ))

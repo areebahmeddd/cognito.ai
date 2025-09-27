@@ -13,69 +13,26 @@ interface UserStats {
 interface StatCardProps {
   title: string;
   value: string | number;
-  subtitle: string;
   icon: React.ReactNode;
   color: string;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
 }
 
-function StatCard({
-  title,
-  value,
-  subtitle,
-  icon,
-  color,
-  trend,
-}: StatCardProps) {
+function StatCard({ title, value, icon, color }: StatCardProps) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white dark:bg-[#1A1A1A] rounded-xl p-6 border border-[#E0E0E0] dark:border-[#2A2A2A]">
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <div className="text-2xl font-light text-[#2A2A2A] dark:text-[#E0E0E0] mb-1">
+            {value}
+          </div>
+          <div className="text-sm font-medium text-[#4A4A4A] dark:text-[#B0B0B0]">
+            {title}
+          </div>
+        </div>
         <div
-          className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center`}
+          className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center flex-shrink-0`}
         >
           {icon}
-        </div>
-        {trend && (
-          <div
-            className={`flex items-center gap-1 text-sm font-medium ${
-              trend.isPositive
-                ? "text-slate-600 dark:text-slate-400"
-                : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d={
-                  trend.isPositive
-                    ? "M7 17l9.2-9.2M17 17V7H7"
-                    : "M17 7l-9.2 9.2M7 7v10h10"
-                }
-              />
-            </svg>
-            {trend.value}%
-          </div>
-        )}
-      </div>
-      <div>
-        <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">
-          {value}
-        </div>
-        <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-          {title}
-        </div>
-        <div className="text-xs text-slate-500 dark:text-slate-500">
-          {subtitle}
         </div>
       </div>
     </div>
@@ -97,7 +54,7 @@ export default function StatsGrid() {
       setStats(JSON.parse(savedStats));
     } else {
       const mockStats: UserStats = {
-        name: "Shivansh",
+        name: "Areeb",
         timeSaved: 24.5,
         filesAnalyzed: 156,
         casesCreated: 8,
@@ -112,10 +69,9 @@ export default function StatsGrid() {
     {
       title: "Time Saved",
       value: `${stats.timeSaved}h`,
-      subtitle: "vs manual analysis",
       icon: (
         <svg
-          className="w-6 h-6 text-slate-600 dark:text-slate-400"
+          className="w-6 h-6 text-[#FF7F50]"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -128,16 +84,15 @@ export default function StatsGrid() {
           />
         </svg>
       ),
-      color: "bg-slate-100 dark:bg-slate-900/30",
-      trend: { value: 15, isPositive: true },
+      color:
+        "bg-[#FFF5F0] dark:bg-[#2A1A0F] border border-[#FF7F50]/20 dark:border-[#FF7F50]/30",
     },
     {
       title: "Files Analyzed",
       value: stats.filesAnalyzed,
-      subtitle: "documents processed",
       icon: (
         <svg
-          className="w-6 h-6 text-blue-600 dark:text-blue-400"
+          className="w-6 h-6 text-[#FF7F50]"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -150,16 +105,15 @@ export default function StatsGrid() {
           />
         </svg>
       ),
-      color: "bg-blue-100 dark:bg-blue-900/30",
-      trend: { value: 8, isPositive: true },
+      color:
+        "bg-[#FFF5F0] dark:bg-[#2A1A0F] border border-[#FF7F50]/20 dark:border-[#FF7F50]/30",
     },
     {
       title: "Cases Created",
       value: stats.casesCreated,
-      subtitle: "active investigations",
       icon: (
         <svg
-          className="w-6 h-6 text-purple-600 dark:text-purple-400"
+          className="w-6 h-6 text-[#FF7F50]"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -172,16 +126,15 @@ export default function StatsGrid() {
           />
         </svg>
       ),
-      color: "bg-purple-100 dark:bg-purple-900/30",
-      trend: { value: 3, isPositive: true },
+      color:
+        "bg-[#FFF5F0] dark:bg-[#2A1A0F] border border-[#FF7F50]/20 dark:border-[#FF7F50]/30",
     },
     {
       title: "Searches Performed",
       value: stats.searchesPerformed,
-      subtitle: "AI-powered queries",
       icon: (
         <svg
-          className="w-6 h-6 text-orange-600 dark:text-orange-400"
+          className="w-6 h-6 text-[#FF7F50]"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -194,8 +147,8 @@ export default function StatsGrid() {
           />
         </svg>
       ),
-      color: "bg-orange-100 dark:bg-orange-900/30",
-      trend: { value: 12, isPositive: true },
+      color:
+        "bg-[#FFF5F0] dark:bg-[#2A1A0F] border border-[#FF7F50]/20 dark:border-[#FF7F50]/30",
     },
   ];
 
