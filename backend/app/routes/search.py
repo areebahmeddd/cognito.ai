@@ -8,25 +8,32 @@ router = APIRouter()
 
 
 @router.post("/query", response_model=Dict[str, Any])
-async def search_query(request: QueryRequest):
+async def search_query(request: QueryRequest) -> Dict[str, Any]:
     try:
-        plan = analyze_intent(request.query)
-        dsl = build_query(plan)
-        resp = es_client.search(index=index_name, body=dsl)
-        docs = [h.get("_source", {}) for h in resp.get("hits", {}).get("hits", [])]
-        hits: list[UFDRDocument] = []
-        for doc in docs[:50]:
+        intent_plan = analyze_intent(request.query)
+        elasticsearch_dsl = build_query(intent_plan)
+
+        search_response = es_client.search(index=index_name, body=elasticsearch_dsl)
+        raw_documents = [
+            hit.get("_source", {})
+            for hit in search_response.get("hits", {}).get("hits", [])
+        ]
+
+        validated_documents: list[UFDRDocument] = []
+        for document in raw_documents[:50]:
             try:
-                hits.append(UFDRDocument(**doc))
+                validated_documents.append(UFDRDocument(**document))
             except Exception:
                 continue
 
         return {
             "query": request.query,
-            "query_intent": plan.get("query_intent", "forensic_analysis"),
-            "total_results": len(hits),
-            "results": hits,
-            "took": resp.get("took", 0),
+            "query_intent": intent_plan.get("query_intent", "forensic_analysis"),
+            "total_results": len(validated_documents),
+            "results": validated_documents,
+            "took": search_response.get("took", 0),
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
+    except Exception as error:
+        raise HTTPException(
+            status_code=500, detail=f"Search query failed: {str(error)}"
+        )

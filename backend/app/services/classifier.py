@@ -1,62 +1,38 @@
-import json
 import re
-from typing import Dict, Any, Optional
+import json
 import google.generativeai as genai
+from typing import Dict
 from ..core.config import settings
 
-# Configure Gemini
 genai.configure(api_key=settings.gemini_api_key)
 gemini_model = genai.GenerativeModel(model_name="gemini-2.5-flash")
 
 
-def classify_file_type(filename: str) -> Dict[str, str]:
-    """
-    Classify file type using AI to determine both specific type and general category.
-    
-    Args:
-        filename: The filename to classify
-        
-    Returns:
-        Dict with 'type' and 'category' keys
-    """
+def classify_file(filename: str) -> Dict[str, str]:
     try:
-        # Clean filename for better classification
-        clean_filename = clean_filename_for_ai(filename)
-        
-        # Generate AI classification
-        result = classify_with_ai(clean_filename)
-        
-        # Validate and clean the result
-        return validate_classification(result)
-        
-    except Exception as e:
-        print(f"AI classification failed for {filename}: {e}")
-        # Fallback to rule-based classification
-        return fallback_classification(filename)
+        clean_name = clean_filename(filename)
+        result = classify_ai(clean_name)
+        return validate_result(result)
+    except Exception:
+        raise Exception("Classification failed")
 
 
-def clean_filename_for_ai(filename: str) -> str:
-    """Clean filename to make it more suitable for AI classification"""
-    # Remove common file extensions
-    clean = filename.lower()
-    clean = re.sub(r'\.(json|tsv|txt|csv)$', '', clean)
-    
-    # Remove common prefixes/suffixes that don't add meaning
-    clean = re.sub(r'^(exported_|extracted_|parsed_)', '', clean)
-    clean = re.sub(r'(_exported|_extracted|_parsed)$', '', clean)
-    
-    # Replace underscores and hyphens with spaces for better readability
-    clean = re.sub(r'[-_]', ' ', clean)
-    
-    # Clean up multiple spaces
-    clean = re.sub(r'\s+', ' ', clean).strip()
-    
-    return clean
+def batch_classify(filenames: list[str]) -> Dict[str, Dict[str, str]]:
+    try:
+        clean_filenames = [clean_filename(f) for f in filenames]
+        result = batch_classify_ai(clean_filenames)
+        classifications = {}
+        for i, filename in enumerate(filenames):
+            if i < len(result):
+                classifications[filename] = validate_result(result[i])
+            else:
+                raise Exception("Missing classification")
+        return classifications
+    except Exception:
+        raise Exception("Batch classification failed")
 
 
-def classify_with_ai(filename: str) -> Dict[str, str]:
-    """Use Gemini 2.5 Flash to classify the file"""
-    
+def classify_ai(filename: str) -> Dict[str, str]:
     prompt = f"""
 You are an expert at classifying digital forensics file types. Analyze the filename and determine:
 
@@ -92,95 +68,21 @@ JSON Response:"""
     try:
         response = gemini_model.generate_content(prompt)
         response_text = response.text.strip()
-        
-        # Extract JSON from response (in case there's extra text)
-        json_match = re.search(r'\{[^}]*\}', response_text)
+        json_match = re.search(r"\{[^}]*\}", response_text)
         if json_match:
             json_str = json_match.group(0)
             return json.loads(json_str)
         else:
             raise ValueError("No JSON found in response")
-            
     except Exception as e:
         raise Exception(f"AI classification failed: {e}")
 
 
-def validate_classification(result: Dict[str, str]) -> Dict[str, str]:
-    """Validate and clean the AI classification result"""
-    
-    # Valid categories
-    valid_categories = {
-        "messages", "browsing history", "calls", "contacts", 
-        "location data", "account data", "file data", 
-        "notifications", "usage data", "general data"
-    }
-    
-    # Extract and clean
-    file_type = result.get("type", "").strip()
-    category = result.get("category", "").strip().lower()
-    
-    # Validate category
-    if category not in valid_categories:
-        # Try to find closest match
-        for valid_cat in valid_categories:
-            if any(word in category for word in valid_cat.split()):
-                category = valid_cat
-                break
-        else:
-            category = "general data"
-    
-    # Clean up type
-    if not file_type:
-        file_type = "Unknown Data"
-    
-    # Ensure type is properly formatted
-    file_type = file_type.title()
-    
-    return {
-        "type": file_type,
-        "category": category
-    }
+def batch_classify_ai(filenames: list[str]) -> list[Dict[str, str]]:
+    filename_list = "\n".join(
+        [f"{i + 1}. {filename}" for i, filename in enumerate(filenames)]
+    )
 
-def batch_classify_files(filenames: list[str]) -> Dict[str, Dict[str, str]]:
-    """
-    Classify multiple files in a single API call to avoid rate limits.
-    
-    Args:
-        filenames: List of filenames to classify
-        
-    Returns:
-        Dict mapping filename -> classification result
-    """
-    try:
-        # Clean all filenames
-        clean_filenames = [clean_filename_for_ai(f) for f in filenames]
-        
-        # Generate batch AI classification
-        result = batch_classify_with_ai(clean_filenames)
-        
-        # Map back to original filenames and validate
-        classifications = {}
-        for i, filename in enumerate(filenames):
-            if i < len(result):
-                classifications[filename] = validate_classification(result[i])
-            else:
-                # Fallback for any missing classifications
-                classifications[filename] = fallback_classification(filename)
-        
-        return classifications
-        
-    except Exception as e:
-        print(f"Batch AI classification failed: {e}")
-        # Fallback to individual rule-based classification
-        return {filename: fallback_classification(filename) for filename in filenames}
-
-
-def batch_classify_with_ai(filenames: list[str]) -> list[Dict[str, str]]:
-    """Use Gemini 2.5 Flash to classify multiple files in one request"""
-    
-    # Create a numbered list for better organization
-    filename_list = "\n".join([f"{i+1}. {filename}" for i, filename in enumerate(filenames)])
-    
     prompt = f"""
 You are an expert at classifying digital forensics file types. Analyze the following filenames and determine for each:
 
@@ -221,61 +123,114 @@ JSON Response:"""
     try:
         response = gemini_model.generate_content(prompt)
         response_text = response.text.strip()
-        
-        # Extract JSON array from response
-        json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+        json_match = re.search(r"\[.*\]", response_text, re.DOTALL)
         if json_match:
             json_str = json_match.group(0)
             return json.loads(json_str)
         else:
             raise ValueError("No JSON array found in response")
-            
     except Exception as e:
         raise Exception(f"Batch AI classification failed: {e}")
 
 
-def fallback_classification(filename: str) -> Dict[str, str]:
-    """Fallback rule-based classification when AI fails"""
-    
-    base_name = filename.lower().replace(".json", "").replace(".tsv", "").replace(".txt", "")
-    
-    # Message patterns
-    if any(keyword in base_name for keyword in ["whatsapp", "sms", "message", "chat", "discord", "teams", "telegram", "viber", "tiktok"]):
-        return {"type": "Message Data", "category": "messages"}
-    
-    # Browsing history patterns
-    if any(keyword in base_name for keyword in ["browser", "webhistory", "chrome", "firefox", "safari", "duckduckgo", "search"]):
-        return {"type": "Browsing History", "category": "browsing history"}
-    
-    # Call patterns
-    if any(keyword in base_name for keyword in ["call", "phone", "duo", "teamscall"]):
-        return {"type": "Call Data", "category": "calls"}
-    
-    # Contact patterns
-    if any(keyword in base_name for keyword in ["contact", "friends", "users", "snapchat"]):
-        return {"type": "Contact Data", "category": "contacts"}
-    
-    # Location patterns
-    if any(keyword in base_name for keyword in ["location", "gps", "maps", "waze", "life360"]):
-        return {"type": "Location Data", "category": "location data"}
-    
-    # Account patterns
-    if any(keyword in base_name for keyword in ["account", "userid", "identity", "login", "user"]):
-        return {"type": "Account Data", "category": "account data"}
-    
-    # File patterns
-    if any(keyword in base_name for keyword in ["file", "download", "media", "image", "video", "audio"]):
-        return {"type": "File Data", "category": "file data"}
-    
-    # Notification patterns
-    if any(keyword in base_name for keyword in ["notification", "alert", "fcm"]):
-        return {"type": "Notification Data", "category": "notifications"}
-    
-    # Usage patterns
-    if any(keyword in base_name for keyword in ["usage", "battery", "turbo", "wellbeing"]):
-        return {"type": "Usage Data", "category": "usage data"}
-    
-    return {"type": "Unknown Data", "category": "general data"}
+def validate_result(result: Dict[str, str]) -> Dict[str, str]:
+    valid_categories = {
+        "messages",
+        "browsing history",
+        "calls",
+        "contacts",
+        "location data",
+        "account data",
+        "file data",
+        "notifications",
+        "usage data",
+        "general data",
+    }
+
+    file_type = result.get("type", "").strip()
+    category = result.get("category", "").strip().lower()
+
+    if category not in valid_categories:
+        for valid_cat in valid_categories:
+            if any(word in category for word in valid_cat.split()):
+                category = valid_cat
+                break
+        else:
+            category = "general data"
+
+    if not file_type:
+        file_type = "Unknown Data"
+
+    file_type = file_type.title()
+
+    return {"type": file_type, "category": category}
 
 
+def clean_filename(filename: str) -> str:
+    clean = filename.lower()
+    clean = re.sub(r"\.(json|tsv|txt|csv)$", "", clean)
+    clean = re.sub(r"^(exported_|extracted_|parsed_)", "", clean)
+    clean = re.sub(r"(_exported|_extracted|_parsed)$", "", clean)
+    clean = re.sub(r"[-_]", " ", clean)
+    clean = re.sub(r"\s+", " ", clean).strip()
+    return clean
 
+
+# def fallback_classification(filename: str) -> Dict[str, str]:
+#     category_map: Dict[str, Dict[str, List[str]]] = {
+#         "messages": {
+#             "type": "Message Data",
+#             "keywords": [
+#                 "whatsapp", "sms", "message", "chat",
+#                 "discord", "teams", "telegram", "viber", "tiktok"
+#             ],
+#         },
+#         "browsing history": {
+#             "type": "Browsing History",
+#             "keywords": [
+#                 "browser", "webhistory", "chrome", "firefox",
+#                 "safari", "duckduckgo", "search"
+#             ],
+#         },
+#         "calls": {
+#             "type": "Call Data",
+#             "keywords": ["call", "phone", "duo", "teamscall"],
+#         },
+#         "contacts": {
+#             "type": "Contact Data",
+#             "keywords": ["contact", "friends", "users", "snapchat"],
+#         },
+#         "location data": {
+#             "type": "Location Data",
+#             "keywords": ["location", "gps", "maps", "waze", "life360"],
+#         },
+#         "account data": {
+#             "type": "Account Data",
+#             "keywords": ["account", "userid", "identity", "login", "user"],
+#         },
+#         "file data": {
+#             "type": "File Data",
+#             "keywords": ["file", "download", "media", "image", "video", "audio"],
+#         },
+#         "notifications": {
+#             "type": "Notification Data",
+#             "keywords": ["notification", "alert", "fcm"],
+#         },
+#         "usage data": {
+#             "type": "Usage Data",
+#             "keywords": ["usage", "battery", "turbo", "wellbeing"],
+#         },
+#     }
+
+#     base_name = (
+#         filename.lower()
+#         .replace(".json", "")
+#         .replace(".tsv", "")
+#         .replace(".txt", "")
+#     )
+
+#     for category, info in category_map.items():
+#         if any(keyword in base_name for keyword in info["keywords"]):
+#             return {"type": info["type"], "category": category}
+
+#     return {"type": "Unknown Data", "category": "general data"}

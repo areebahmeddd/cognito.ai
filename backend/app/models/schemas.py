@@ -6,10 +6,11 @@ from datetime import datetime
 class UFDRDocument(BaseModel):
     # Core forensic identification fields
     artifact_id: str
-    category: str
+    category: Optional[str] = None
     file_type: Optional[str] = None
-    data_type: str
-    source_path: str
+    app: Optional[str] = None
+    data_type: Optional[str] = None
+    source_path: Optional[str] = None
     timestamp: Optional[Union[str, datetime]] = None
     conversion_timestamp: Optional[Union[str, datetime]] = None
 
@@ -91,7 +92,6 @@ class UFDRDocument(BaseModel):
     package_id: Optional[str] = None
     version: Optional[str] = None
     status: Optional[Union[str, int]] = None
-    category: Optional[str] = None
     notification_type: Optional[str] = None
     event_type: Optional[str] = None
     usage_type: Optional[str] = None
@@ -187,10 +187,6 @@ class QueryRequest(BaseModel):
     query: str
 
 
-class QueryResponse(BaseModel):
-    query: str
-    query_intent: str
-    total_results: int
-    results: List[UFDRDocument]
-    tools_used: List[str] = Field(default_factory=list)
-    took: int = Field(0)
+class CreateCaseRequest(BaseModel):
+    title: str
+    description: str = ""

@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -12,10 +11,9 @@ class Settings(BaseSettings):
     cors_headers: list[str] = ["*"]
     cors_credentials: bool = True
 
-    elasticsearch_url: str = "http://localhost:9200"
-    elasticsearch_index: str = "ufdr"
-
-    gemini_api_key: Optional[str] = None
+    elasticsearch_url: str
+    elasticsearch_index: str
+    gemini_api_key: str
 
     class Config:
         env_file = ".env"

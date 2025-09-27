@@ -114,7 +114,6 @@ def create_index() -> None:
                 "source_path": {"type": "keyword"},
                 "category": {"type": "keyword"},
                 "file_type": {"type": "keyword"},
-                "type": {"type": "keyword"},
                 "app": {"type": "keyword"},
                 "data_type": {"type": "keyword"},
                 "conversion_timestamp": {
@@ -228,7 +227,6 @@ def create_index() -> None:
                 "package_id": {"type": "keyword"},
                 "version": {"type": "keyword"},
                 "status": {"type": "keyword"},
-                "category": {"type": "keyword"},
                 "notification_type": {"type": "keyword"},
                 "event_type": {"type": "keyword"},
                 "usage_type": {"type": "keyword"},

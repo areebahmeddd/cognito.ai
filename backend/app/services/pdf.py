@@ -76,7 +76,7 @@ def generate_report(api_response: Dict[str, Any]) -> str:
     report_data = [["Field", "Value"]]
 
     report_data.append(
-        ["Report Generated:", datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
+        ["Report Generated", datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
     )
     if api_response.get("query"):
         report_data.append(["Search Query:", api_response["query"]])

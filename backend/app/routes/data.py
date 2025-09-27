@@ -5,7 +5,7 @@ import zipfile
 import shutil
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, File, UploadFile, Form
+from fastapi import APIRouter, HTTPException, File, UploadFile
 from fastapi.responses import JSONResponse, FileResponse
 from typing import Dict, Any
 from ..services.elasticsearch import (
@@ -16,24 +16,21 @@ from ..services.elasticsearch import (
     bulk_index,
     ensure_map,
 )
-from ..services.parser import convert_files
+from ..services.parser import process_files
 from ..services.pdf import generate_report
 
 router = APIRouter()
 
 
 @router.post("/upload")
-async def upload_zip(
-    file: UploadFile = File(...), case_id: str = Form(None), device_id: str = Form(None)
-):
+async def upload_zip(file: UploadFile = File(...)):
     temp_dir = None
     try:
         if not file.filename.endswith(".zip"):
             raise HTTPException(status_code=400, detail="Only ZIP files are supported")
-        
-        # Generate device_id if not provided (each file represents a device)
-        if not device_id:
-            device_id = str(uuid.uuid4())
+
+        case_id = f"CASE-{uuid.uuid4().hex[:8].upper()}"
+        device_id = f"DEV-{uuid.uuid4().hex[:8].upper()}"
 
         temp_dir = tempfile.mkdtemp(prefix="tsv_upload_")
         zip_path = os.path.join(temp_dir, file.filename)
@@ -47,10 +44,8 @@ async def upload_zip(
             tsv_files_for_response = []
             for file_info in zip_ref.infolist():
                 if not file_info.is_dir() and file_info.filename.endswith(".tsv"):
-                    tsv_files.append(file_info.filename)  # Full path for processing
-                    tsv_files_for_response.append(
-                        os.path.basename(file_info.filename)
-                    )  # Clean name for response
+                    tsv_files.append(file_info.filename)
+                    tsv_files_for_response.append(os.path.basename(file_info.filename))
 
         if not tsv_files:
             raise HTTPException(
@@ -60,7 +55,7 @@ async def upload_zip(
         create_index()
         ensure_map()
 
-        conversion_result = convert_files(zip_path, tsv_files, temp_dir)
+        conversion_result = process_files(zip_path, tsv_files, temp_dir)
         temp_dir = conversion_result.get("temp_dir")
 
         metadata = {
