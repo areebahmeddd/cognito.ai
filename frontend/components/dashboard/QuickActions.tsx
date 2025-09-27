@@ -99,7 +99,6 @@ export default function QuickActions({ onCreateCase }: QuickActionsProps) {
       ),
       onClick: () => {
         // Placeholder for file upload functionality
-        console.log("Upload files clicked");
       },
       color: "bg-[#FF7F50]",
     },

@@ -35,7 +35,6 @@ export default function ProfilePage() {
 
   const handleSave = () => {
     setIsEditing(false);
-    console.log("Saving profile data:", formData);
   };
 
   const handleCancel = () => {

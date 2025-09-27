@@ -162,7 +162,6 @@ export default function CasePage() {
         totalResults: searchResult.totalResults,
         processingTime: searchResult.processingTime,
       });
-      console.log(searchResult);
     } catch (error) {
       console.error("Search failed:", error);
       setHasSearched(true);

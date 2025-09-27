@@ -218,16 +218,9 @@ export default function CaseSidebar({
   useEffect(() => {
     const loadCaseData = async () => {
       const c = getCase(caseId);
-      console.log(
-        "Loading case data for:",
-        caseId,
-        "Found in localStorage:",
-        c,
-      );
       if (c) {
         setTitle(c.title);
         setFiles(c.files || []);
-        console.log("Set files from localStorage:", c.files);
       } else {
         try {
           const response = await fetch(`http://127.0.0.1:8000/api/v1/cases/`);
@@ -296,7 +289,6 @@ export default function CaseSidebar({
   }, [caseId]);
 
   const handleCaseSwitch = (newCaseId: string) => {
-    console.log("Switching to case:", newCaseId);
     window.location.href = `/cases/${newCaseId}`;
   };
 
@@ -313,7 +305,6 @@ export default function CaseSidebar({
 
   const refreshCaseData = () => {
     const c = getCase(caseId);
-    console.log("Refreshing case data for:", caseId, "Found:", c);
     if (c) {
       setTitle(c.title);
       setFiles(c.files || []);
@@ -328,7 +319,6 @@ export default function CaseSidebar({
             <button
               className="w-full flex items-center justify-between p-3 rounded-lg bg-[#F8F8F8] dark:bg-[#0F0F0F]"
               onClick={() => {
-                console.log("Dropdown trigger clicked, cases:", allCases);
                 setIsDropdownOpen(!isDropdownOpen);
               }}
             >
@@ -635,7 +625,7 @@ export default function CaseSidebar({
                             {file.name}
                           </p>
                           <p className="text-xs text-[#666] dark:text-[#999]">
-                            {(file.size / 1024).toFixed(1)} KB
+                            {(file.size / 1024).toFixed(1)} KB • {file.type}
                           </p>
                         </div>
                       </div>

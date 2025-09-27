@@ -37,7 +37,6 @@ export default function SettingsPage() {
     if (theme === undefined) {
       setTheme("dark");
     }
-    console.log("Current theme:", theme);
   }, [theme, setTheme]);
 
   const handlePasswordChange = (field: string, value: string) => {
@@ -56,7 +55,6 @@ export default function SettingsPage() {
       alert("Password must be at least 6 characters long!");
       return;
     }
-    console.log("Changing password:", passwordData);
     setShowChangePassword(false);
     setPasswordData({
       currentPassword: "",
@@ -67,7 +65,6 @@ export default function SettingsPage() {
   };
 
   const handleDeleteAccount = () => {
-    console.log("Deleting account...");
     localStorage.removeItem("cognito-auth");
     window.location.href = "/";
   };
@@ -75,7 +72,6 @@ export default function SettingsPage() {
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
-    console.log("Theme changed to:", newTheme);
   };
 
   if (isAuthenticated === null) {

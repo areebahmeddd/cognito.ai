@@ -217,9 +217,7 @@ export default function CreateCaseModal({
       }
 
       const caseData = await caseResponse.json();
-      console.log("Backend case response:", caseData);
       const caseId = caseData.case_id;
-      console.log("Extracted case ID:", caseId);
 
       if (uploadFiles.length > 0) {
         // Simulate progress during upload
@@ -231,14 +229,11 @@ export default function CreateCaseModal({
         }, 200);
 
         // Upload files one by one with the case_id
-        console.log("Uploading files:", uploadFiles.length, "files");
         for (let i = 0; i < uploadFiles.length; i++) {
           const file = uploadFiles[i];
           if (file.status === "pending") {
-            console.log("Uploading file:", file.file.name);
             try {
               await uploadFile(file, caseId);
-              console.log("File uploaded successfully:", file.file.name);
             } catch (error) {
               console.error("Failed to upload file:", file.file.name, error);
               throw error;
@@ -280,8 +275,6 @@ export default function CreateCaseModal({
       );
       const updatedCases = [...existingCases, frontendCaseData];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCases));
-      console.log("Stored case data:", frontendCaseData);
-      console.log("All cases in localStorage:", updatedCases);
 
       onSuccess(frontendCaseData);
       onClose();
