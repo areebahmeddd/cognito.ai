@@ -18,6 +18,7 @@ from ..services.elasticsearch import (
 )
 from ..services.parser import process_files
 from ..services.pdf import generate_report
+from ..services.mongodb import mongodb_service
 
 router = APIRouter()
 
@@ -58,6 +59,43 @@ async def upload_zip(file: UploadFile = File(...)):
         conversion_result = process_files(zip_path, tsv_files, temp_dir)
         temp_dir = conversion_result.get("temp_dir")
 
+        # Connect to MongoDB
+        await mongodb_service.connect()
+
+        # Create case in MongoDB
+        case_data = {
+            "case_id": case_id or f"CASE-{device_id[:8]}",
+            "device_id": device_id,
+            "case_name": f"Case {case_id or device_id[:8]}",
+            "description": f"Forensic analysis case for device {device_id}",
+            "metadata": {
+                "file_name": file.filename,
+                "files_count": len(tsv_files),
+                "files_list": tsv_files_for_response,
+            }
+        }
+        
+        try:
+            case_id = await mongodb_service.create_case(case_data)
+            print(f"Created case in MongoDB: {case_id}")
+        except Exception as e:
+            print(f"Error creating case in MongoDB: {e}")
+            # Continue with processing even if MongoDB fails
+
+        # Store JSON files in MongoDB
+        mongodb_result = {"stored_files": 0, "total_records": 0, "files": []}
+        if temp_dir and os.path.isdir(temp_dir):
+            try:
+                mongodb_result = await mongodb_service.store_json_files(
+                    case_id or f"CASE-{device_id[:8]}", 
+                    device_id, 
+                    temp_dir
+                )
+                print(f"MongoDB storage result: {mongodb_result}")
+            except Exception as e:
+                print(f"Error storing JSON files in MongoDB: {e}")
+                # Continue with Elasticsearch indexing even if MongoDB fails
+
         metadata = {
             "case_id": case_id,
             "device_id": device_id,
@@ -65,6 +103,7 @@ async def upload_zip(file: UploadFile = File(...)):
             "file_name": file.filename,
             "files_count": len(tsv_files),
             "files_list": tsv_files_for_response,
+            "mongodb_result": mongodb_result,
         }
 
         metadata_path = os.path.join(temp_dir, "metadata.json")
@@ -91,10 +130,12 @@ async def upload_zip(file: UploadFile = File(...)):
 
         return JSONResponse(
             content={
-                "message": "Data successfully loaded into Elasticsearch",
+                "message": "Data successfully loaded into Elasticsearch and MongoDB",
                 "files_processed": len(tsv_files),
                 "documents_indexed": indexing_result["success_count"],
                 "failed_to_index": indexing_result["error_count"],
+                "mongodb_stored_files": mongodb_result.get("stored_files", 0),
+                "mongodb_total_records": mongodb_result.get("total_records", 0),
                 "status": status,
                 "metadata": metadata,
             }
