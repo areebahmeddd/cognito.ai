@@ -169,7 +169,6 @@ export interface EvidenceItem {
   artifact_id: string;
   case_id: string;
   device_id: string;
-  // Additional fields for better display (only if available from backend)
   device_info?: string | null;
   message_type?: string;
   conversation_name?: string;
@@ -178,7 +177,6 @@ export interface EvidenceItem {
   jid?: string | null;
   status?: string;
   recovery_status?: string;
-  // Raw data for advanced display
   raw_data?: SearchResult;
 }
 
@@ -207,19 +205,15 @@ export async function searchQuery(query: string): Promise<{
 
     const data: SearchResponse = await response.json();
 
-    // Transform API response to UI format
     const evidenceItems: EvidenceItem[] = data.results.map((result, index) => {
-      // Extract app name from package_name or type
       const appName =
         result.app_name ||
         result.package_name?.split(".").pop()?.replace(/_/g, " ") ||
         result.type ||
         "Unknown App";
 
-      // Format timestamp
       const timestamp = new Date(result.timestamp).toLocaleString();
 
-      // Extract sender information with fallbacks
       const sender =
         result.sender ||
         result.display_from ||
@@ -231,7 +225,6 @@ export async function searchQuery(query: string): Promise<{
         result.title ||
         "Unknown";
 
-      // Generate tag badges based on content analysis
       const tagBadges: string[] = [];
       const content =
         result.message ||
@@ -240,7 +233,6 @@ export async function searchQuery(query: string): Promise<{
         result.transcription ||
         "";
 
-      // Enhanced content analysis
       if (
         content.toLowerCase().includes("crypto") ||
         content.toLowerCase().includes("bitcoin") ||
@@ -282,7 +274,6 @@ export async function searchQuery(query: string): Promise<{
         tagBadges.push("Image attachment");
       }
 
-      // Determine direction
       const direction: "Incoming" | "Outgoing" =
         result.direction === "outgoing" ||
         result.message_direction === "outgoing" ||
@@ -290,21 +281,16 @@ export async function searchQuery(query: string): Promise<{
           ? "Outgoing"
           : "Incoming";
 
-      // Extract device info (only if available)
       const deviceInfo = result.device_type || null;
 
-      // Determine message type
       const messageType = result.message_type || result.data_type || "Unknown";
 
-      // Extract conversation name
       const conversationName = result.conversation_name || result.title || "";
 
-      // Extract contact info (only if available)
       const phoneNumber = result.phone_number || null;
       const email = result.email || null;
       const jid = result.sending_party_jid || result.from || null;
 
-      // Determine status
       const status = result.deleted ? "Deleted" : "Active";
       const recoveryStatus = result.deleted ? "Recovered" : "Original";
 
@@ -325,7 +311,6 @@ export async function searchQuery(query: string): Promise<{
         artifact_id: result.artifact_id,
         case_id: result.case_id,
         device_id: result.device_id,
-        // Enhanced fields (only if available)
         device_info: deviceInfo,
         message_type: messageType,
         conversation_name: conversationName,

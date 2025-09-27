@@ -6,10 +6,10 @@ import Footer from "@/components/Footer";
 
 export default function CasesPage() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-[#F8F8F8] dark:bg-[#0F0F0F]">
       <div className="flex min-h-screen flex-col">
         <DashboardNavbar />
-        <main className="flex-1 bg-slate-50 dark:bg-slate-900">
+        <main className="flex-1 bg-[#F8F8F8] dark:bg-[#0F0F0F]">
           <CasesHome />
         </main>
         <Footer />

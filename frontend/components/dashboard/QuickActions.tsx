@@ -1,9 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
-export default function QuickActions() {
+interface QuickActionsProps {
+  onCreateCase?: () => void;
+}
+
+export default function QuickActions({ onCreateCase }: QuickActionsProps) {
   const router = useRouter();
 
   const actions = [
@@ -26,10 +29,13 @@ export default function QuickActions() {
         </svg>
       ),
       onClick: () => {
-        // This will be handled by the cases page modal
-        router.push("/cases");
+        if (onCreateCase) {
+          onCreateCase();
+        } else {
+          router.push("/cases");
+        }
       },
-      color: "bg-blue-500 hover:bg-blue-600",
+      color: "bg-[#FF7F50]",
     },
     {
       title: "View All Cases",
@@ -50,11 +56,11 @@ export default function QuickActions() {
         </svg>
       ),
       onClick: () => router.push("/cases"),
-      color: "bg-purple-500 hover:bg-purple-600",
+      color: "bg-[#FF7F50]",
     },
     {
-      title: "Quick Search",
-      description: "Search across all data",
+      title: "Analytics",
+      description: "View analysis insights",
       icon: (
         <svg
           className="w-6 h-6"
@@ -66,12 +72,12 @@ export default function QuickActions() {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
           />
         </svg>
       ),
-      onClick: () => router.push("/?q="),
-      color: "bg-slate-500 hover:bg-slate-600",
+      onClick: () => router.push("/analytics"),
+      color: "bg-[#FF7F50]",
     },
     {
       title: "Upload Files",
@@ -95,28 +101,30 @@ export default function QuickActions() {
         // Placeholder for file upload functionality
         console.log("Upload files clicked");
       },
-      color: "bg-orange-500 hover:bg-orange-600",
+      color: "bg-[#FF7F50]",
     },
   ];
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
-      <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-4">
-        Quick Actions
+    <div className="bg-white dark:bg-[#1A1A1A] rounded-xl p-6 border border-[#E0E0E0] dark:border-[#2A2A2A] h-full flex flex-col">
+      <h2 className="text-xl font-light text-[#2A2A2A] dark:text-[#E0E0E0] mb-6">
+        Quick <span className="text-[#FF7F50]">Actions</span>
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 justify-items-center">
         {actions.map((action, index) => (
-          <Button
+          <button
             key={index}
             onClick={action.onClick}
-            className={`${action.color} text-white h-auto p-4 flex items-start gap-3 text-left`}
+            className={`${action.color} text-white rounded-lg p-6 flex items-center gap-4 text-left w-full max-w-xs transition-all duration-200 hover:opacity-90 hover:scale-[1.02]`}
           >
-            <div className="flex-shrink-0">{action.icon}</div>
-            <div>
-              <div className="font-medium">{action.title}</div>
+            <div className="flex-shrink-0 w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              {action.icon}
+            </div>
+            <div className="flex-1">
+              <div className="font-medium text-base mb-1">{action.title}</div>
               <div className="text-sm opacity-90">{action.description}</div>
             </div>
-          </Button>
+          </button>
         ))}
       </div>
     </div>

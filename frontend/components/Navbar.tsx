@@ -1,22 +1,22 @@
 "use client";
 
+import AuthModal from "@/components/auth/AuthModal";
 import { MobileNav } from "@/components/MobileNav";
-import { ThemeLogo } from "@/components/ThemeLogo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Github, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
-    // Mock authentication check
     const checkAuth = () => {
-      const mockAuth = localStorage.getItem("cognito-auth");
-      setIsAuthenticated(mockAuth === "true");
+      const authStatus = localStorage.getItem("cognito-auth");
+      setIsAuthenticated(authStatus === "true");
       setIsLoading(false);
     };
 
@@ -24,16 +24,18 @@ export default function Navbar() {
   }, []);
 
   const handleSignIn = () => {
-    // Mock sign in
-    localStorage.setItem("cognito-auth", "true");
+    setIsAuthModalOpen(true);
+  };
+
+  const handleAuthSuccess = (userData: { username: string; email: string }) => {
     setIsAuthenticated(true);
-    // Stay on same page with signed-in state
+    setIsAuthModalOpen(false);
     window.location.reload();
   };
 
   const handleSignOut = () => {
-    // Mock sign out
     localStorage.removeItem("cognito-auth");
+    localStorage.removeItem("cognito-current-user");
     setIsAuthenticated(false);
     window.location.href = "/";
   };
@@ -44,39 +46,29 @@ export default function Navbar() {
         <div className="flex flex-1 items-center justify-start">
           <Link
             href="/"
-            className="flex items-center gap-2 rounded-sm p-2 text-slate-700 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-gray-700 dark:hover:text-slate-100"
+            className="flex items-center gap-2 rounded-sm p-2 text-[#2A2A2A] dark:text-[#E0E0E0] transition-colors duration-200 hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A]"
           >
-            <ThemeLogo />
             <span className="text-md font-medium">cognito.ai</span>
           </Link>
         </div>
-        <div className="h-8 w-8 animate-pulse rounded bg-slate-200 dark:bg-slate-700"></div>
+        <div className="h-8 w-8 animate-pulse rounded bg-[#E0E0E0] dark:bg-[#2A2A2A]"></div>
       </nav>
     );
   }
 
   return (
-    <nav className="relative z-30 flex items-center justify-between p-4">
+    <nav className="relative z-30 flex items-center justify-between p-6 bg-[#FEFEFE] dark:bg-[#1A1A1A]">
       <div className="flex flex-1 items-center justify-start">
         <Link
           href="/"
-          className="flex items-center gap-2 rounded-sm p-2 text-slate-700 transition-colors duration-200 hover:bg-gray-200 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-gray-700 dark:hover:text-slate-100"
+          className="flex items-center gap-2 rounded-sm p-2 text-[#2A2A2A] dark:text-[#E0E0E0]"
         >
-          <ThemeLogo />
-          <span className="text-md font-medium">cognito.ai</span>
+          <span className="text-lg font-medium">cognito.ai</span>
         </Link>
       </div>
 
-      <div className="flex flex-1 justify-end items-center gap-1">
-        <div className="hidden md:flex items-center gap-2">
-          <a
-            href="https://github.com/areebahmeddd/cognito.ai"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-sm p-2 text-slate-500 transition-colors duration-200 hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-gray-700 dark:hover:text-slate-100"
-          >
-            <Github className="h-4 w-4" />
-          </a>
+      <div className="flex flex-1 justify-end items-center gap-2">
+        <div className="hidden md:flex items-center gap-4">
           <ThemeToggle />
 
           {isAuthenticated ? (
@@ -84,7 +76,7 @@ export default function Navbar() {
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              className="flex items-center gap-2 text-[#4A4A4A] dark:text-[#B0B0B0]"
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Sign Out</span>
@@ -93,7 +85,7 @@ export default function Navbar() {
             <Button
               onClick={handleSignIn}
               size="sm"
-              className="bg-slate-900 text-white hover:bg-slate-800 transition-colors duration-200 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+              className="bg-[#2A2A2A] text-white dark:bg-[#E0E0E0] dark:text-[#2A2A2A] hover:bg-[#2A2A2A] hover:text-white dark:hover:bg-[#E0E0E0] dark:hover:text-[#2A2A2A] px-6 py-2 rounded-lg font-medium"
             >
               Sign In
             </Button>
@@ -103,6 +95,12 @@ export default function Navbar() {
           <MobileNav />
         </div>
       </div>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </nav>
   );
 }

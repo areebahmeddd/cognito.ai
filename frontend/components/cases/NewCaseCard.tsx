@@ -2,10 +2,10 @@ export default function NewCaseCard({ onCreate }: { onCreate: () => void }) {
   return (
     <button
       onClick={onCreate}
-      className="group flex w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 p-8 min-h-[200px]"
+      className="group flex w-full items-center justify-center rounded-xl border-2 border-dashed border-[#E0E0E0] dark:border-[#404040] bg-[#F8F8F8] dark:bg-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] p-8 h-[200px] transition-colors duration-200 hover:bg-[#F5F5F5] dark:hover:bg-[#252525]"
     >
       <div className="flex flex-col items-center">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 group-hover:bg-slate-300 dark:group-hover:bg-slate-600 group-hover:scale-105 transition-all duration-200">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50] border border-[#FF7F50]/20 dark:border-[#FF7F50]/30">
           <svg
             className="w-8 h-8"
             fill="none"
@@ -20,10 +20,10 @@ export default function NewCaseCard({ onCreate }: { onCreate: () => void }) {
             />
           </svg>
         </div>
-        <div className="text-lg font-semibold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors duration-200">
+        <div className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
           Create new case
         </div>
-        <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <div className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0] mt-1">
           Start a new forensic analysis
         </div>
       </div>
