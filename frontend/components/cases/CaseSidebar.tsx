@@ -210,13 +210,16 @@ export default function CaseSidebar({
         results: results,
       };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/data/export`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/data/export`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(apiResponse),
         },
-        body: JSON.stringify(apiResponse),
-      });
+      );
 
       if (!response.ok) {
         throw new Error("Export failed");
@@ -250,7 +253,11 @@ export default function CaseSidebar({
         setFiles(c.files || []);
       } else {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cases/`);
+
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/cases/`,
+          );
+
           if (response.ok) {
             const data = await response.json();
             const backendCase = data.cases.find(
