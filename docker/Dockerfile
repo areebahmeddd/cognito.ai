@@ -7,8 +7,7 @@ WORKDIR /app
 
 COPY backend/pyproject.toml backend/uv.lock ./
 RUN pip install --upgrade pip uv && \
-    uv pip compile pyproject.toml -o requirements.txt && \
-    pip install -r requirements.txt
+    uv pip install --system -e .
 
 COPY backend/ ./
 
