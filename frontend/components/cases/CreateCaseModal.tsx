@@ -153,7 +153,7 @@ export default function CreateCaseModal({
         reject(new Error("Network error"));
       });
 
-      xhr.open("POST", "http://127.0.0.1:8000/api/v1/data/upload");
+      xhr.open("POST", `${process.env.NEXT_PUBLIC_API_URL}/data/upload`);
       xhr.send(formData);
     });
   };
@@ -206,7 +206,7 @@ export default function CreateCaseModal({
 
     try {
       const caseResponse = await fetch(
-        "http://127.0.0.1:8000/api/v1/cases/case",
+        `${process.env.NEXT_PUBLIC_API_URL}/cases/case`,
         {
           method: "POST",
           headers: {

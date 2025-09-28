@@ -49,11 +49,8 @@ test:
 
 lint:
 	@echo "Running linting with pre-commit..."
-	cd backend && pre-commit run --all-files
+	cd backend && uv run pre-commit run --all-files
 
-# Full development setup
-dev: up backend-install frontend-install
-	@echo "Development environment ready!"
-	@echo "Backend: http://localhost:8000"
-	@echo "Frontend: http://localhost:3000"
-	@echo "Elasticsearch: http://localhost:9200"
+format:
+	@echo "Formatting frontend code..."
+	cd frontend && npm run format

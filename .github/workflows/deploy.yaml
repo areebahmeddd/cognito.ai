@@ -94,7 +94,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./docker/Dockerfile
+          file: ./docker/Dockerfile.backend
           push: true
           tags: ${{ steps.meta-backend.outputs.tags }}
           labels: ${{ steps.meta-backend.outputs.labels }}
@@ -110,12 +110,12 @@ jobs:
             -H "Content-Type: application/json" \
             "https://api.digitalocean.com/v2/apps/${{ secrets.DO_APP_ID }}/deployments"
 
-  deploy-frontend:
-    runs-on: ubuntu-latest
-    needs: [ frontend-build ]
-    steps:
-      - name: Deploy frontend to Vercel
-        run: |
-          npm i -g vercel@latest
-          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-          vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_SCOPE }}
+  # deploy-frontend:
+  #   runs-on: ubuntu-latest
+  #   needs: [ frontend-build ]
+  #   steps:
+  #     - name: Deploy frontend to Vercel
+  #       run: |
+  #         npm i -g vercel@latest
+  #         vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+  #         vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_SCOPE }}
