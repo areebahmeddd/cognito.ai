@@ -1,0 +1,73 @@
+# Environment files
+.env
+.env.example
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Docker-related files
+.dockerignore
+docker-compose.prod.yaml
+docker-compose.local.yaml
+
+# Kubernetes configs
+k8s/
+
+# Testing and cache
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+tests/
+
+# Development tools
+.pre-commit-config.yaml
+.editorconfig
+.devcontainer/
+scripts/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.egg-info/
+.installed.cfg
+*.egg
+build/
+dist/
+
+# Documentation
+docs/
+README.md
+LICENSE
+
+# Development files
+Makefile
+
+# Frontend (Next.js) build artifacts
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+frontend/.vercel/
+
+# Backend (Python) caches
+backend/.venv/
+backend/__pycache__/
+backend/.pytest_cache/
