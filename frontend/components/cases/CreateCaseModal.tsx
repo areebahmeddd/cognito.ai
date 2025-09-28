@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, File, Loader2, Trash2, Upload, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface CreateCaseModalProps {
   isOpen: boolean;
@@ -55,9 +56,9 @@ export default function CreateCaseModal({
     });
 
     if (invalidFiles.length > 0) {
-      setError(
-        `Invalid file types: ${invalidFiles.join(", ")}. Only ZIP files are allowed.`,
-      );
+      const msg = `Invalid file types: ${invalidFiles.join(", ")}. Only ZIP files are allowed.`;
+      setError(msg);
+      toast.error("Invalid files", { description: msg });
     }
 
     const newFiles: UploadFile[] = validFiles.map((file) => ({
@@ -135,6 +136,7 @@ export default function CreateCaseModal({
                 : f,
             ),
           );
+          toast.error("Upload failed", { description: uploadFile.file.name });
           reject(new Error("Upload failed"));
         }
       });
@@ -147,6 +149,7 @@ export default function CreateCaseModal({
               : f,
           ),
         );
+        toast.error("Network error", { description: uploadFile.file.name });
         reject(new Error("Network error"));
       });
 
@@ -158,11 +161,15 @@ export default function CreateCaseModal({
   const handleSubmit = async () => {
     if (!caseName.trim()) {
       setError("Case name is required");
+      toast.error("Case name is required");
       return;
     }
 
     if (caseName.trim().length < 3) {
       setError("Case name must be at least 3 characters long");
+      toast.error("Case name is too short", {
+        description: "Minimum 3 characters",
+      });
       return;
     }
 
@@ -220,39 +227,35 @@ export default function CreateCaseModal({
       const caseId = caseData.case_id;
 
       if (uploadFiles.length > 0) {
-        // Simulate progress during upload
         const progressInterval = setInterval(() => {
           setUploadProgress((prev) => {
-            if (prev >= 95) return prev; // Don't go to 100% until actually done
-            return Math.round(prev + Math.random() * 3); // Increment by 0-3% randomly, rounded to whole number
+            if (prev >= 95) return prev;
+            return Math.round(prev + Math.random() * 3);
           });
         }, 200);
 
-        // Upload files one by one with the case_id
         for (let i = 0; i < uploadFiles.length; i++) {
           const file = uploadFiles[i];
           if (file.status === "pending") {
             try {
               await uploadFile(file, caseId);
             } catch (error) {
-              console.error("Failed to upload file:", file.file.name, error);
+              toast.error("Failed to upload file", {
+                description: file.file.name,
+              });
               throw error;
             }
           }
-          // Set progress based on file completion
-          const fileProgress = Math.round(((i + 1) / uploadFiles.length) * 90); // Max 90% for file upload
+          const fileProgress = Math.round(((i + 1) / uploadFiles.length) * 90);
           setUploadProgress(fileProgress);
         }
 
-        // Complete the progress
         setUploadProgress(100);
         clearInterval(progressInterval);
       } else {
-        // No files to upload, just complete the progress
         setUploadProgress(100);
       }
 
-      // Create case data for frontend
       const frontendCaseData = {
         id: caseId,
         title: caseName,
@@ -268,7 +271,6 @@ export default function CreateCaseModal({
         })),
       };
 
-      // Store case data in localStorage
       const STORAGE_KEY = "cognito-cases";
       const existingCases = JSON.parse(
         localStorage.getItem(STORAGE_KEY) || "[]",
@@ -279,20 +281,18 @@ export default function CreateCaseModal({
       onSuccess(frontendCaseData);
       onClose();
 
-      // Only navigate to the case page if files were uploaded
       if (uploadFiles.length > 0) {
         window.location.href = `/cases/${caseId}`;
       } else {
-        // If no files uploaded, navigate to the cases page
         window.location.href = `/cases`;
       }
     } catch (error) {
-      console.error("Upload error:", error);
-      setError(
+      const message =
         error instanceof Error
           ? error.message
-          : "Failed to create case. Please try again.",
-      );
+          : "Failed to create case. Please try again.";
+      setError(message);
+      toast.error("Operation failed", { description: message });
     } finally {
       clearInterval(statusInterval);
       setIsUploading(false);
@@ -316,15 +316,12 @@ export default function CreateCaseModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/20 backdrop-blur-sm"
         onClick={handleClose}
       />
 
-      {/* Modal */}
       <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A] max-h-[90vh] overflow-y-auto">
-        {/* Close Button */}
         <button
           onClick={handleClose}
           className="absolute top-3 right-3 p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
@@ -332,7 +329,6 @@ export default function CreateCaseModal({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Header */}
         <div className="text-center mb-6">
           <h2 className="text-xl font-light text-[#2A2A2A] dark:text-[#E0E0E0] mb-1">
             Create New Case
@@ -343,7 +339,6 @@ export default function CreateCaseModal({
         </div>
 
         <div className="space-y-5">
-          {/* Case Details */}
           <div className="space-y-3">
             <div>
               <Label
@@ -380,7 +375,6 @@ export default function CreateCaseModal({
             </div>
           </div>
 
-          {/* File Upload */}
           <div>
             <Label className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
               Upload Files (Optional)
@@ -410,7 +404,7 @@ export default function CreateCaseModal({
                 {isDragOver ? "" : "choose files"}
               </button>
               <p className="text-xs text-[#666] dark:text-[#999] mt-2">
-                Supported file types: .zip (optional)
+                Supported file types: .ufdr, .zip
               </p>
               <input
                 ref={fileInputRef}
@@ -424,7 +418,6 @@ export default function CreateCaseModal({
             </div>
           </div>
 
-          {/* File List */}
           {uploadFiles.length > 0 && (
             <div className="space-y-2">
               <Label className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
@@ -468,19 +461,6 @@ export default function CreateCaseModal({
             </div>
           )}
 
-          {/* Error Display */}
-          {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                <p className="text-sm text-red-600 dark:text-red-400">
-                  {error}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Overall Progress */}
           {isUploading && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
@@ -502,7 +482,6 @@ export default function CreateCaseModal({
           )}
         </div>
 
-        {/* Form Actions */}
         <div className="mt-6 flex justify-end space-x-3">
           <Button
             type="button"

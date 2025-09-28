@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Archive, ArchiveRestore, Edit, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 const STORAGE_KEY = "cognito-cases";
 
@@ -71,8 +72,10 @@ export default function CasesHome() {
         setItems(seedIfEmpty());
       }
     } catch (error) {
-      console.error("Failed to fetch cases:", error);
       setItems(seedIfEmpty());
+      toast.error("Failed to load cases", {
+        description: "Using local data",
+      });
     }
   };
 

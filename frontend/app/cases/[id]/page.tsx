@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { EvidenceItem, searchQuery } from "@/lib/search";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Network } from "vis-network";
 
 declare global {
@@ -76,11 +77,9 @@ export default function CasePage() {
   const handleTimelineViewChange = (mode: "compact" | "detailed") => {
     setTimelineView(mode);
     if (mode === "detailed") {
-      // Auto-expand all dates when detailed view is selected
       const allDates = new Set(filteredDailySummaries.map((day) => day.date));
       setExpandedDates(allDates);
     } else {
-      // Collapse all dates when compact view is selected
       setExpandedDates(new Set());
     }
   };
@@ -88,7 +87,6 @@ export default function CasePage() {
   const filterResults = (results: EvidenceItem[]) => {
     let filtered = [...results];
 
-    // Filter by type
     if (selectedType !== "All Types") {
       filtered = filtered.filter((ev) => {
         const category = ev.raw_data?.category?.toLowerCase() || "";
@@ -132,7 +130,6 @@ export default function CasePage() {
       });
     }
 
-    // Filter by time
     if (selectedTime !== "All Time") {
       const now = new Date();
       const cutoffDate = new Date();
@@ -155,7 +152,6 @@ export default function CasePage() {
       });
     }
 
-    // Sort results
     switch (selectedSort) {
       case "Newest First":
         filtered.sort(
@@ -171,7 +167,6 @@ export default function CasePage() {
         break;
       case "Relevance":
       default:
-        // Keep original order (already sorted by relevance from API)
         break;
     }
 
@@ -186,24 +181,21 @@ export default function CasePage() {
     );
 
     let currentSession: any = null;
-    const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+    const SESSION_TIMEOUT = 30 * 60 * 1000;
 
     for (const event of sortedResults) {
       const eventTime = new Date(event.timestamp).getTime();
 
-      // Check if this event belongs to current session
       if (
         currentSession &&
         currentSession.app === event.app &&
         currentSession.conversation_name === event.conversation_name &&
         eventTime - currentSession.endTime <= SESSION_TIMEOUT
       ) {
-        // Add to current session
         currentSession.events.push(event);
         currentSession.endTime = eventTime;
         currentSession.messageCount++;
 
-        // Update suspicious content detection
         if (event.content) {
           const content = event.content.toLowerCase();
           if (
@@ -224,7 +216,6 @@ export default function CasePage() {
           }
         }
       } else {
-        // Start new session
         if (currentSession) {
           sessions.push(currentSession);
         }
@@ -244,7 +235,6 @@ export default function CasePage() {
           priority: "normal",
         };
 
-        // Check for suspicious content in first event
         if (event.content) {
           const content = event.content.toLowerCase();
           if (
@@ -268,13 +258,11 @@ export default function CasePage() {
         }
       }
 
-      // Add participant
       if (event.sender) {
         currentSession.participants.add(event.sender);
       }
     }
 
-    // Add last session
     if (currentSession) {
       sessions.push(currentSession);
     }
@@ -330,7 +318,6 @@ export default function CasePage() {
   const filterTimelineSessions = (sessions: any[]) => {
     let filtered = [...sessions];
 
-    // Filter by timeline event type
     if (selectedTimelineFilter !== "All Events") {
       filtered = filtered.filter((session) => {
         const app = session.app?.toLowerCase() || "";
@@ -362,7 +349,6 @@ export default function CasePage() {
       });
     }
 
-    // Filter by timeline time
     if (selectedTimelineTime !== "All Time") {
       const now = new Date();
       const cutoffDate = new Date();
@@ -401,7 +387,6 @@ export default function CasePage() {
     const contactMap = new Map<string, any>();
 
     results.forEach((result) => {
-      // Extract sender contacts
       const senderFields = [
         result.sender,
         result.raw_data?.sender,
@@ -416,7 +401,6 @@ export default function CasePage() {
         result.raw_data?.contact_name,
       ].filter(Boolean);
 
-      // Extract recipient contacts
       const recipientFields = [
         result.raw_data?.recipient,
         result.raw_data?.to,
@@ -429,7 +413,6 @@ export default function CasePage() {
         result.raw_data?.contact_name,
       ].filter(Boolean);
 
-      // Process all contact fields
       [...senderFields, ...recipientFields].forEach((contact) => {
         if (!contact || contact === "Unknown") return;
 
@@ -474,19 +457,16 @@ export default function CasePage() {
       let suspicious = false;
       const flags: string[] = [];
 
-      // International phone number
       if (contact.type === "phone" && contact.name.startsWith("+")) {
         suspicious = true;
         flags.push("International");
       }
 
-      // Very high communication volume
       if (contact.communicationCount > 100) {
         suspicious = true;
         flags.push("High Volume");
       }
 
-      // No display name (just phone/email)
       if (
         contact.name === contact.id &&
         (contact.type === "phone" || contact.type === "email")
@@ -495,7 +475,6 @@ export default function CasePage() {
         flags.push("No Name");
       }
 
-      // Multiple communication types (suspicious pattern)
       if (contact.communicationTypes.size > 3) {
         suspicious = true;
         flags.push("Multiple Types");
@@ -512,7 +491,6 @@ export default function CasePage() {
   const filterNetworkContacts = (contacts: any[]) => {
     let filtered = [...contacts];
 
-    // Filter by contact type
     if (selectedNetworkFilter !== "All Contacts") {
       filtered = filtered.filter((contact) => {
         switch (selectedNetworkFilter) {
@@ -528,7 +506,6 @@ export default function CasePage() {
       });
     }
 
-    // Filter by communication volume
     if (selectedNetworkVolume !== "All Volumes") {
       filtered = filtered.filter((contact) => {
         switch (selectedNetworkVolume) {
@@ -547,7 +524,6 @@ export default function CasePage() {
       });
     }
 
-    // Filter by time
     if (selectedNetworkTime !== "All Time") {
       const now = new Date();
       const cutoffDate = new Date();
@@ -569,7 +545,6 @@ export default function CasePage() {
       });
     }
 
-    // Filter by suspicious level
     if (selectedNetworkSuspicious !== "All") {
       filtered = filtered.filter((contact) => {
         switch (selectedNetworkSuspicious) {
@@ -601,7 +576,6 @@ export default function CasePage() {
   const createNetworkVisualization = (contacts: any[]) => {
     if (!networkRef.current || contacts.length === 0) return;
 
-    // Create nodes
     const nodes = [
       {
         id: "subject",
@@ -664,7 +638,6 @@ export default function CasePage() {
       })),
     ];
 
-    // Create edges (connections)
     const edges = contacts.map((contact) => ({
       from: "subject",
       to: contact.id,
@@ -718,12 +691,10 @@ export default function CasePage() {
       },
     };
 
-    // Destroy existing network if it exists
     if (networkInstance.current) {
       networkInstance.current.destroy();
     }
 
-    // Create new network
     networkInstance.current = new Network(networkRef.current, data, options);
   };
 
@@ -748,11 +719,7 @@ export default function CasePage() {
     }
   }, [filteredNetworkContacts]);
 
-  // Prevent network re-rendering when contact details are expanded/collapsed
-  useEffect(() => {
-    // This effect only runs when expandedContacts changes, but we don't want to re-render the network
-    // The network should remain stable when contact details are toggled
-  }, [expandedContacts]);
+  useEffect(() => {}, [expandedContacts]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
@@ -881,7 +848,12 @@ export default function CasePage() {
         processingTime: searchResult.processingTime,
       });
     } catch (error) {
-      console.error("Search failed:", error);
+      toast.error("Search failed", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong during search.",
+      });
       setHasSearched(true);
       setResults([]);
       setSearchData({
@@ -1092,7 +1064,7 @@ export default function CasePage() {
                               </svg>
                             </div>
                             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              Query Intent:
+                              AI Query Intent:
                             </span>
                           </div>
                           <p className="text-sm text-slate-600 dark:text-slate-400 ml-6">
@@ -1238,11 +1210,11 @@ export default function CasePage() {
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <div className="text-xs text-slate-500">
-                                    {ev.timestamp}
-                                  </div>
                                   <div className="text-xs font-medium text-[#FF7F50] bg-[#FFF5F0] dark:bg-[#2A1A0F] border border-[#FF7F50] dark:border-[#FF7F50] px-2 py-1 rounded-full">
                                     {ev.direction}
+                                  </div>
+                                  <div className="text-xs text-slate-500">
+                                    {ev.timestamp}
                                   </div>
                                 </div>
                               </div>
@@ -1331,24 +1303,31 @@ export default function CasePage() {
                                   </div>
                                 </div>
 
-                                {/* Tags Section */}
-                                {ev.tagBadges && ev.tagBadges.length > 0 && (
-                                  <div className="mb-4">
-                                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                      Tags
+                                {(() => {
+                                  const allTags = [
+                                    ...(ev.tagBadges || []),
+                                    ev.raw_data?.data_type,
+                                    ev.raw_data?.category,
+                                  ].filter(Boolean) as string[];
+
+                                  return allTags.length > 0 ? (
+                                    <div className="mb-4">
+                                      <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+                                        Tags
+                                      </div>
+                                      <div className="flex flex-wrap gap-2">
+                                        {allTags.map((tag, tagIndex) => (
+                                          <span
+                                            key={tagIndex}
+                                            className="inline-flex items-center px-2 py-1 text-xs font-medium text-[#FF7F50] bg-[#FFF5F0] dark:bg-[#2A1A0F] border border-[#FF7F50] dark:border-[#FF7F50] rounded-full"
+                                          >
+                                            {tag}
+                                          </span>
+                                        ))}
+                                      </div>
                                     </div>
-                                    <div className="flex flex-wrap gap-2">
-                                      {ev.tagBadges.map((tag, tagIndex) => (
-                                        <span
-                                          key={tagIndex}
-                                          className="inline-flex items-center px-2 py-1 text-xs font-medium text-[#FF7F50] bg-[#FFF5F0] dark:bg-[#2A1A0F] border border-[#FF7F50] dark:border-[#FF7F50] rounded-full"
-                                        >
-                                          {tag}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
+                                  ) : null;
+                                })()}
 
                                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
                                   <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
@@ -1582,7 +1561,6 @@ export default function CasePage() {
                                 key={day.date}
                                 className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden"
                               >
-                                {/* Collapsible Date Header */}
                                 <div
                                   className="bg-gradient-to-r from-[#FFF5F0] to-[#FFF8F5] dark:from-[#2A1A0F] dark:to-[#2A1F15] border-b border-[#FF7F50] dark:border-[#FF7F50] p-4 cursor-pointer hover:from-[#FFF0E6] hover:to-[#FFF5F0] dark:hover:from-[#2A1F15] dark:hover:to-[#2A1A0F] transition-all"
                                   onClick={() => toggleDateExpansion(day.date)}
@@ -1678,10 +1656,8 @@ export default function CasePage() {
                                   )}
                                 </div>
 
-                                {/* Collapsible Content */}
                                 {isExpanded && (
                                   <div className="relative p-4 bg-slate-50/50 dark:bg-slate-800/50">
-                                    {/* Timeline Line */}
                                     <div className="absolute left-8 top-4 bottom-4 w-0.5 bg-slate-300 dark:bg-slate-600"></div>
 
                                     <div className="space-y-3">
@@ -1698,7 +1674,6 @@ export default function CasePage() {
                                                 : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                                             }`}
                                           >
-                                            {/* Date Marker */}
                                             <div className="absolute -left-12 top-2 text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap bg-white dark:bg-slate-800 px-1 py-0.5 rounded shadow-sm border border-slate-200 dark:border-slate-600">
                                               {new Date(
                                                 session.startTime,
@@ -1803,7 +1778,7 @@ export default function CasePage() {
                                             )}
 
                                             <div className="flex items-center justify-end gap-2">
-                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] rounded transition-colors">
+                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
                                                 <svg
                                                   className="w-3 h-3"
                                                   fill="none"
@@ -1819,7 +1794,7 @@ export default function CasePage() {
                                                 </svg>
                                                 Expand Session
                                               </button>
-                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] rounded transition-colors">
+                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
                                                 <svg
                                                   className="w-3 h-3"
                                                   fill="none"
@@ -2019,7 +1994,6 @@ export default function CasePage() {
                       ) : (
                         <div className="space-y-4 p-4">
                           <div className="space-y-6">
-                            {/* Interactive Network Visualization */}
                             <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-4 border border-[#FF7F50] dark:border-[#FF7F50] relative">
                               <div className="mb-3">
                                 <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
@@ -2043,7 +2017,6 @@ export default function CasePage() {
                               />
                             </div>
 
-                            {/* Network Statistics */}
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                               <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-4 border border-[#FF7F50] dark:border-[#FF7F50]">
                                 <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
@@ -2092,7 +2065,6 @@ export default function CasePage() {
                             </div>
                           </div>
 
-                          {/* Contact List */}
                           <div className="space-y-3">
                             <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
                               Contact Details
@@ -2275,7 +2247,7 @@ export default function CasePage() {
                                           </div>
 
                                           <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-                                            <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] rounded transition-colors">
+                                            <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
                                               <svg
                                                 className="w-3 h-3"
                                                 fill="none"
@@ -2291,7 +2263,7 @@ export default function CasePage() {
                                               </svg>
                                               View Evidence
                                             </button>
-                                            <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] rounded transition-colors">
+                                            <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
                                               <svg
                                                 className="w-3 h-3"
                                                 fill="none"
@@ -2392,7 +2364,6 @@ export default function CasePage() {
                         </div>
                       ) : (
                         <div className="space-y-8">
-                          {/* Key Metrics - Clean and Flat */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             <div className="text-center">
                               <div className="text-4xl font-bold text-[#FF7F50] mb-2">
@@ -2431,7 +2402,6 @@ export default function CasePage() {
                             </div>
                           </div>
 
-                          {/* Evidence Types - Simple Grid */}
                           <div>
                             <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6 text-center">
                               Evidence Breakdown
@@ -2488,7 +2458,6 @@ export default function CasePage() {
                             </div>
                           </div>
 
-                          {/* Investigation Timeline - Clean List */}
                           <div>
                             <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6 text-center">
                               Investigation Timeline
@@ -2540,7 +2509,6 @@ export default function CasePage() {
                             </div>
                           </div>
 
-                          {/* Network Overview - Simple Stats */}
                           <div>
                             <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6 text-center">
                               Communication Network
@@ -2602,7 +2570,6 @@ export default function CasePage() {
                             </div>
                           </div>
 
-                          {/* Case Information - Minimal */}
                           <div>
                             <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6 text-center">
                               Case Information
@@ -2624,13 +2591,13 @@ export default function CasePage() {
                                   {query || "No query entered"}
                                 </span>
                               </div>
-                              <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700">
-                                <span className="text-slate-600 dark:text-slate-400">
-                                  AI Analysis
-                                </span>
-                                <span className="font-medium text-slate-900 dark:text-slate-100">
+                              <div className="py-3 border-b border-slate-200 dark:border-slate-700">
+                                <div className="text-slate-600 dark:text-slate-400 mb-2">
+                                  Query Intent
+                                </div>
+                                <div className="font-medium text-slate-900 dark:text-slate-100 text-sm leading-relaxed">
                                   {searchData.intent}
-                                </span>
+                                </div>
                               </div>
                               <div className="flex justify-between items-center py-3">
                                 <span className="text-slate-600 dark:text-slate-400">

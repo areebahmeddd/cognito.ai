@@ -330,7 +330,6 @@ export async function searchQuery(query: string): Promise<{
       processingTime: data.took,
     };
   } catch (error) {
-    console.error("Search error:", error);
     throw error;
   }
 }

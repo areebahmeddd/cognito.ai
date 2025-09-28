@@ -3,6 +3,7 @@
 import DashboardNavbar from "@/components/DashboardNavbar";
 import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -34,7 +35,28 @@ export default function ProfilePage() {
   };
 
   const handleSave = () => {
+    if (!formData.fullName.trim()) {
+      toast.error("Full name is required", {
+        description: "Please enter your full name",
+      });
+      return;
+    }
+    if (!formData.email.trim()) {
+      toast.error("Email is required", {
+        description: "Please enter your email address",
+      });
+      return;
+    }
+    if (!formData.role.trim()) {
+      toast.error("Role is required", {
+        description: "Please enter your role",
+      });
+      return;
+    }
     setIsEditing(false);
+    toast.success("Profile updated successfully", {
+      description: "Your profile information has been saved",
+    });
   };
 
   const handleCancel = () => {
@@ -43,6 +65,9 @@ export default function ProfilePage() {
       fullName: "Areeb",
       email: "testing@areeb.dev",
       role: "Forensic Analyst",
+    });
+    toast.info("Changes cancelled", {
+      description: "Profile information restored to original values",
     });
   };
 

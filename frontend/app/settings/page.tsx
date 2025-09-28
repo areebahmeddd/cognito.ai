@@ -4,6 +4,7 @@ import DashboardNavbar from "@/components/DashboardNavbar";
 import Footer from "@/components/Footer";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -48,11 +49,15 @@ export default function SettingsPage() {
 
   const handleChangePassword = () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("New passwords don't match!");
+      toast.error("Passwords don't match", {
+        description: "Please ensure both passwords are identical",
+      });
       return;
     }
     if (passwordData.newPassword.length < 6) {
-      alert("Password must be at least 6 characters long!");
+      toast.error("Password too short", {
+        description: "Password must be at least 6 characters long",
+      });
       return;
     }
     setShowChangePassword(false);
@@ -61,11 +66,16 @@ export default function SettingsPage() {
       newPassword: "",
       confirmPassword: "",
     });
-    alert("Password changed successfully!");
+    toast.success("Password updated successfully", {
+      description: "Your password has been changed",
+    });
   };
 
   const handleDeleteAccount = () => {
     localStorage.removeItem("cognito-auth");
+    toast.success("Account deleted", {
+      description: "Your account has been permanently deleted",
+    });
     window.location.href = "/";
   };
 

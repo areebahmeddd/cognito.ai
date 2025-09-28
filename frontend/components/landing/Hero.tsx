@@ -70,8 +70,8 @@ export default function Hero() {
       setTimeout(() => {
         setCurrentMessageIndex((prev) => (prev + 1) % messages.length);
         setIsVisible(true);
-      }, 300);
-    }, 5000);
+      }, 200);
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [messages.length, loadingComplete]);
@@ -98,11 +98,13 @@ export default function Hero() {
             ))}
           </h1>
 
-          <div className="mx-auto mt-8 max-w-2xl min-h-[4.5rem] flex items-center justify-center">
+          <div className="mx-auto mt-8 max-w-2xl min-h-[4.5rem] flex items-center justify-center overflow-hidden">
             {loadingComplete && (
               <p
-                className={`text-lg text-[#4A4A4A] dark:text-[#B0B0B0] leading-relaxed font-light transition-opacity duration-1000 ease-in-out ${
-                  isVisible ? "opacity-100" : "opacity-0"
+                className={`text-lg text-[#4A4A4A] dark:text-[#B0B0B0] leading-relaxed font-light transition-all duration-500 ease-out ${
+                  isVisible
+                    ? "opacity-100 transform translate-y-0 scale-100"
+                    : "opacity-0 transform translate-y-2 scale-95"
                 }`}
                 style={{
                   transitionDelay: "300ms",

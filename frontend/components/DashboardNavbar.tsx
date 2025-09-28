@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function DashboardNavbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -32,6 +33,9 @@ export default function DashboardNavbar() {
 
   const handleSignOut = () => {
     localStorage.removeItem("cognito-auth");
+    toast.success("Signed out successfully", {
+      description: "You have been logged out",
+    });
     window.location.href = "/";
   };
 

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { CaseItem } from "./CaseCard";
 
 interface EditCaseModalProps {
@@ -25,7 +26,19 @@ export default function EditCaseModal({
   const [description, setDescription] = useState("");
 
   const handleSave = () => {
-    if (!caseItem || !caseName.trim()) return;
+    if (!caseItem || !caseName.trim()) {
+      toast.error("Case name is required", {
+        description: "Please enter a valid case name",
+      });
+      return;
+    }
+
+    if (caseName.trim().length < 3) {
+      toast.error("Case name too short", {
+        description: "Case name must be at least 3 characters",
+      });
+      return;
+    }
 
     const updatedCase: CaseItem = {
       ...caseItem,
@@ -34,6 +47,9 @@ export default function EditCaseModal({
     };
 
     onSave(updatedCase);
+    toast.success("Case updated successfully", {
+      description: `"${caseName.trim()}" has been saved`,
+    });
     onClose();
   };
 
@@ -47,15 +63,12 @@ export default function EditCaseModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/20 backdrop-blur-sm"
         onClick={handleClose}
       />
 
-      {/* Modal */}
       <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A]">
-        {/* Close Button */}
         <button
           onClick={handleClose}
           className="absolute top-3 right-3 p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
@@ -63,7 +76,6 @@ export default function EditCaseModal({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Header */}
         <div className="text-center mb-6">
           <h2 className="text-xl font-light text-[#2A2A2A] dark:text-[#E0E0E0] mb-1">
             Edit Case
@@ -73,7 +85,6 @@ export default function EditCaseModal({
           </p>
         </div>
 
-        {/* Form */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -114,7 +125,6 @@ export default function EditCaseModal({
             />
           </div>
 
-          {/* Form Actions */}
           <div className="mt-6 flex justify-end space-x-3">
             <Button
               type="button"

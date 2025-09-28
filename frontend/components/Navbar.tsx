@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -37,6 +38,9 @@ export default function Navbar() {
     localStorage.removeItem("cognito-auth");
     localStorage.removeItem("cognito-current-user");
     setIsAuthenticated(false);
+    toast.success("Signed out successfully", {
+      description: "You have been logged out",
+    });
     window.location.href = "/";
   };
 

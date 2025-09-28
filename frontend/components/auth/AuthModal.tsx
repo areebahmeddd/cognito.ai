@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Lock, Mail, User, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -80,7 +81,6 @@ export default function AuthModal({
           throw new Error("Passwords do not match");
         }
 
-        // Create new user
         const newUser = {
           username: formData.username,
           email: formData.email,
@@ -91,7 +91,6 @@ export default function AuthModal({
         users.push(newUser);
         localStorage.setItem("cognito-users", JSON.stringify(users));
 
-        // Auto sign in after signup
         localStorage.setItem("cognito-auth", "true");
         localStorage.setItem(
           "cognito-current-user",
@@ -103,11 +102,12 @@ export default function AuthModal({
 
         onSuccess({ username: newUser.username, email: newUser.email });
       } else if (mode === "forgot") {
-        // Simulate password reset
         throw new Error("Password reset functionality not implemented yet");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      const message = err instanceof Error ? err.message : "An error occurred";
+      setError(message);
+      toast.error("Authentication failed", { description: message });
     } finally {
       setIsLoading(false);
     }
@@ -132,15 +132,12 @@ export default function AuthModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/20 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A]">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
@@ -148,7 +145,6 @@ export default function AuthModal({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Header */}
         <div className="text-center mb-8">
           <h2 className="text-2xl font-light text-[#2A2A2A] dark:text-[#E0E0E0] mb-2">
             {mode === "signin" && "Welcome back"}
@@ -162,9 +158,7 @@ export default function AuthModal({
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Username/Email Field */}
           {(mode === "signin" || mode === "signup") && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
@@ -190,7 +184,6 @@ export default function AuthModal({
             </div>
           )}
 
-          {/* Email Field for Signup */}
           {mode === "signup" && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
@@ -210,7 +203,6 @@ export default function AuthModal({
             </div>
           )}
 
-          {/* Email Field for Forgot Password */}
           {mode === "forgot" && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
@@ -230,7 +222,6 @@ export default function AuthModal({
             </div>
           )}
 
-          {/* Password Field */}
           {(mode === "signin" || mode === "signup") && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
@@ -263,7 +254,6 @@ export default function AuthModal({
             </div>
           )}
 
-          {/* Confirm Password Field for Signup */}
           {mode === "signup" && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
@@ -285,14 +275,6 @@ export default function AuthModal({
             </div>
           )}
 
-          {/* Error Message */}
-          {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-            </div>
-          )}
-
-          {/* Submit Button */}
           <Button
             type="submit"
             disabled={isLoading}
@@ -315,7 +297,6 @@ export default function AuthModal({
           </Button>
         </form>
 
-        {/* Footer Links */}
         <div className="mt-6 text-center space-y-3">
           {mode === "signin" && (
             <>

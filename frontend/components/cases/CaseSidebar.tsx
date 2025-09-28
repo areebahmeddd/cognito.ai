@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface CaseSidebarProps {
   caseId: string;
@@ -92,9 +93,9 @@ export default function CaseSidebar({
     });
 
     if (invalidFiles.length > 0) {
-      setError(
-        `Invalid file types: ${invalidFiles.join(", ")}. Only ZIP files are allowed.`,
-      );
+      const msg = `Invalid file types: ${invalidFiles.join(", ")}. Only ZIP files are allowed.`;
+      setError(msg);
+      toast.error("Invalid files", { description: msg });
     }
 
     setSelectedFiles((prev) => [...prev, ...validFiles]);
@@ -188,8 +189,9 @@ export default function CaseSidebar({
       setError("");
       setIsFileUploadModalOpen(false);
     } catch (error) {
-      console.error("Failed to upload files:", error);
-      setError("Failed to upload files. Please try again.");
+      const message = "Failed to upload files. Please try again.";
+      setError(message);
+      toast.error("Upload failed", { description: message });
     } finally {
       setIsUploading(false);
     }
@@ -197,7 +199,6 @@ export default function CaseSidebar({
 
   const handleExportCourtReport = useCallback(async () => {
     if (!searchData || !results) {
-      console.error("No search data available for export");
       return;
     }
 
@@ -232,7 +233,12 @@ export default function CaseSidebar({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Failed to export court report:", error);
+      toast.error("Export failed", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to export court report",
+      });
     }
   }, [searchData, results, caseId]);
 
@@ -262,9 +268,11 @@ export default function CaseSidebar({
             setFiles([]);
           }
         } catch (error) {
-          console.error("Failed to fetch case from backend:", error);
           setTitle(`Case ${caseId.slice(0, 8)}`);
           setFiles([]);
+          toast.error("Failed to load case", {
+            description: "Using local case data",
+          });
         }
       }
     };
@@ -625,7 +633,7 @@ export default function CaseSidebar({
                   to upload
                 </p>
                 <p className="text-xs text-[#999] dark:text-[#666]">
-                  Supported file types: .zip
+                  Supported file types: .ufdr, .zip
                 </p>
               </div>
               <input
@@ -671,14 +679,6 @@ export default function CaseSidebar({
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {error && (
-              <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm text-red-600 dark:text-red-400">
-                  {error}
-                </p>
               </div>
             )}
 

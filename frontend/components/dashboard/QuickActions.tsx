@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface QuickActionsProps {
   onCreateCase?: () => void;
@@ -98,7 +99,9 @@ export default function QuickActions({ onCreateCase }: QuickActionsProps) {
         </svg>
       ),
       onClick: () => {
-        // Placeholder for file upload functionality
+        toast.info("File upload coming soon", {
+          description: "This feature will be available in a future update",
+        });
       },
       color: "bg-[#FF7F50]",
     },
