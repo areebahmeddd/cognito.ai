@@ -256,6 +256,7 @@ export default function CaseSidebar({
           const response = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/cases/`,
           );
+
           if (response.ok) {
             const data = await response.json();
             const backendCase = data.cases.find(
