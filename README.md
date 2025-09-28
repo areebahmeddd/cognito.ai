@@ -50,6 +50,7 @@ Create a `.env` file in `backend/`:
 ```
 ELASTICSEARCH_URL=http://localhost:9200
 ELASTICSEARCH_INDEX=data
+MONGODB_CONNECTION_STRING=mongodb://localhost:27017/cases
 GEMINI_API_KEY=your_api_key
 ```
 

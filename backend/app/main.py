@@ -7,6 +7,7 @@ from .routes.data import router as data_router
 from .routes.search import router as search_router
 from .routes.case import router as case_router
 from .services.elasticsearch import wait_es, create_index
+from .services.mongodb import connect_database
 
 app = FastAPI(
     title=settings.app_name,
@@ -32,7 +33,11 @@ async def on_startup():
     if not wait_es():
         raise RuntimeError("Could not connect to Elasticsearch")
     create_index()
-    print("Elasticsearch connected")
+
+    try:
+        await connect_database()
+    except Exception:
+        raise RuntimeError("Could not connect to MongoDB")
 
 
 @app.get("/")

@@ -4,6 +4,7 @@ networks:
 
 volumes:
   es-data:
+  mongo-data:
   # kibana-data:
 
 services:
@@ -57,6 +58,20 @@ services:
       - es-data:/usr/share/elasticsearch/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mongodb:
+    image: mongo:noble
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=cases
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -4,6 +4,7 @@ import json
 import shutil
 import zipfile
 import hashlib
+import asyncio
 import tempfile
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, File, UploadFile, Form
@@ -19,7 +20,7 @@ from ..services.elasticsearch import (
 )
 from ..services.parser import process_files
 from ..services.pdf import generate_report
-from ..services.mongodb import mongodb_service
+from ..services.mongodb import create_case, store_files, get_case
 
 router = APIRouter()
 
@@ -72,11 +73,11 @@ async def upload_zip(
 
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
             tsv_files = []
-            tsv_files_for_response = []
+            tsv_files_response = []
             for file_info in zip_ref.infolist():
                 if not file_info.is_dir() and file_info.filename.endswith(".tsv"):
                     tsv_files.append(file_info.filename)
-                    tsv_files_for_response.append(os.path.basename(file_info.filename))
+                    tsv_files_response.append(os.path.basename(file_info.filename))
 
         if not tsv_files:
             raise HTTPException(
@@ -89,10 +90,6 @@ async def upload_zip(
         conversion_result = process_files(zip_path, tsv_files, temp_dir, file_hash)
         temp_dir = conversion_result.get("temp_dir")
 
-        # Connect to MongoDB
-        await mongodb_service.connect()
-
-        # Create case in MongoDB
         case_data = {
             "case_id": case_id or f"CASE-{device_id[:8]}",
             "device_id": device_id,
@@ -101,30 +98,20 @@ async def upload_zip(
             "metadata": {
                 "file_name": file.filename,
                 "files_count": len(tsv_files),
-                "files_list": tsv_files_for_response,
-            }
+                "files_list": tsv_files_response,
+            },
         }
-        
-        try:
-            case_id = await mongodb_service.create_case(case_data)
-            print(f"Created case in MongoDB: {case_id}")
-        except Exception as e:
-            print(f"Error creating case in MongoDB: {e}")
-            # Continue with processing even if MongoDB fails
 
-        # Store JSON files in MongoDB
+        try:
+            await create_case(case_data)
+        except Exception:
+            pass
+
         mongodb_result = {"stored_files": 0, "total_records": 0, "files": []}
         if temp_dir and os.path.isdir(temp_dir):
-            try:
-                mongodb_result = await mongodb_service.store_json_files(
-                    case_id or f"CASE-{device_id[:8]}", 
-                    device_id, 
-                    temp_dir
-                )
-                print(f"MongoDB storage result: {mongodb_result}")
-            except Exception as e:
-                print(f"Error storing JSON files in MongoDB: {e}")
-                # Continue with Elasticsearch indexing even if MongoDB fails
+            mongodb_result = await store_files(
+                case_id or f"CASE-{device_id[:8]}", device_id, temp_dir
+            )
 
         metadata = {
             "case_id": case_id,
@@ -133,8 +120,7 @@ async def upload_zip(
             "file_name": file.filename,
             "file_hash": file_hash,
             "files_count": len(tsv_files),
-            "files_list": tsv_files_for_response,
-            "mongodb_result": mongodb_result,
+            "files_list": tsv_files_response,
         }
 
         metadata_path = os.path.join(temp_dir, "metadata.json")
@@ -238,8 +224,11 @@ def check_duplicate(file_hash: str) -> bool:
 
 def validate_case(case_id: str) -> bool:
     try:
-        from ..routes.case import cases_storage
 
-        return any(case["id"] == case_id for case in cases_storage)
+        async def check_case():
+            case = await get_case(case_id)
+            return case is not None
+
+        return asyncio.run(check_case())
     except Exception:
         return False
