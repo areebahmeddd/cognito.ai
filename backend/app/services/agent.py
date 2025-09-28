@@ -245,26 +245,59 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
             "text^3",
             "title^2",
         ]
-        if exact_match:
-            query_dsl["query"]["bool"]["must"].append(
-                {
-                    "multi_match": {
-                        "query": " ".join([str(k) for k in keywords if k]),
-                        "fields": target_fields,
-                        "type": "phrase",
-                    }
-                }
-            )
+
+        if len(keywords) > 1:
+            for keyword in keywords:
+                if exact_match:
+                    query_dsl["query"]["bool"]["should"].append(
+                        {
+                            "multi_match": {
+                                "query": str(keyword),
+                                "fields": target_fields,
+                                "type": "phrase",
+                                "boost": 2.0
+                                if keyword.lower()
+                                in ["cryptocurrency", "bitcoin", "ethereum", "crypto"]
+                                else 1.0,
+                            }
+                        }
+                    )
+                else:
+                    query_dsl["query"]["bool"]["should"].append(
+                        {
+                            "multi_match": {
+                                "query": str(keyword),
+                                "fields": target_fields,
+                                "fuzziness": "AUTO",
+                                "boost": 2.0
+                                if keyword.lower()
+                                in ["cryptocurrency", "bitcoin", "ethereum", "crypto"]
+                                else 1.0,
+                            }
+                        }
+                    )
+            query_dsl["query"]["bool"]["minimum_should_match"] = 1
         else:
-            query_dsl["query"]["bool"]["must"].append(
-                {
-                    "multi_match": {
-                        "query": " ".join([str(k) for k in keywords if k]),
-                        "fields": target_fields,
-                        "fuzziness": "AUTO",
+            if exact_match:
+                query_dsl["query"]["bool"]["must"].append(
+                    {
+                        "multi_match": {
+                            "query": " ".join([str(k) for k in keywords if k]),
+                            "fields": target_fields,
+                            "type": "phrase",
+                        }
                     }
-                }
-            )
+                )
+            else:
+                query_dsl["query"]["bool"]["must"].append(
+                    {
+                        "multi_match": {
+                            "query": " ".join([str(k) for k in keywords if k]),
+                            "fields": target_fields,
+                            "fuzziness": "AUTO",
+                        }
+                    }
+                )
 
     if time_range:
         try:
@@ -338,7 +371,7 @@ Available fields (non-exhaustive):
 - entities (may contain extracted addresses like crypto, upi, etc.)
 
 Return STRICT JSON with EXACT keys:
-{{"query_intent": "brief description",
+{{"query_intent": "clear, descriptive sentence that explains what the user is searching for with the keywords.",
   "search_types": ["communications" | "calls" | "web" | "location" | "social" | "system" | "contacts" | "cookies" | "notifications" | "general"],
   "time_range": "YYYY-MM-DD to YYYY-MM-DD" (optional),
   "fields": ["field", ...] (optional),
@@ -350,7 +383,20 @@ Guidelines:
 1) Keep it simple. Favor multi_match across relevant text fields.
 2) Choose search_types that fit the intent (messages/codes -> communications; browser/cookies -> web/cookies; etc.).
 3) Include a time_range only if the query clearly specifies one.
-4) Keywords should reflect the intent (e.g., bitcoin, verification code, cookie).
-5) Do NOT include explanations or extra keys.
+4) CRITICAL: Expand keywords semantically. For example:
+   - "cryptocurrency" -> ["cryptocurrency", "bitcoin", "btc", "ethereum", "eth", "crypto", "blockchain", "wallet", "mining", "trading"]
+   - "drugs" -> ["drugs", "cocaine", "marijuana", "heroin", "weed", "cannabis", "narcotics", "substances"]
+   - "money" -> ["money", "cash", "payment", "transaction", "transfer", "funds", "dollar", "euro", "currency"]
+   - "verification" -> ["verification", "code", "otp", "2fa", "authenticate", "confirm", "verify"]
+   - "location" -> ["location", "address", "place", "coordinates", "gps", "latitude", "longitude"]
+   - "call" -> ["call", "phone", "dial", "ring", "conversation", "voice", "audio"]
+   - "message" -> ["message", "text", "sms", "chat", "conversation", "communication"]
+   - "browsing" -> ["browsing", "web", "history", "url", "website", "visited", "domain", "host", "search", "google", "chrome", "safari"]
+   - "logs" -> ["logs", "log", "system log", "event log", "usage", "notifications", "alerts", "crash", "error", "warning", "status"]
+5) Map intents to data areas:
+   - Browsing/search history -> include search_types ["web", "cookies"] and prefer fields ["title", "url", "host", "domain", "search_term"].
+   - Logs/usage/system events -> include search_types ["system", "notifications"] and prefer fields ["package_name", "app", "title", "message", "status", "event_type", "notification_type", "app_package_name"].
+6) Include both the original term AND related terms in keywords array.
+7) Do NOT include explanations or extra keys.
 """
     ).strip()

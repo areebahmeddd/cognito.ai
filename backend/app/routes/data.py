@@ -1,13 +1,14 @@
 import os
-import json
-import tempfile
-import zipfile
-import shutil
 import uuid
+import json
+import shutil
+import zipfile
+import hashlib
+import tempfile
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, File, UploadFile
+from fastapi import APIRouter, HTTPException, File, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from ..services.elasticsearch import (
     get_total,
     get_name,
@@ -23,20 +24,49 @@ router = APIRouter()
 
 
 @router.post("/upload")
-async def upload_zip(file: UploadFile = File(...)):
+async def upload_zip(
+    file: UploadFile = File(...),
+    case_id: Optional[str] = Form(None),
+    device_id: Optional[str] = Form(None),
+):
     temp_dir = None
     try:
         if not file.filename.endswith(".zip"):
             raise HTTPException(status_code=400, detail="Only ZIP files are supported")
 
-        case_id = f"CASE-{uuid.uuid4().hex[:8].upper()}"
-        device_id = f"DEV-{uuid.uuid4().hex[:8].upper()}"
+        content = await file.read()
+        file_hash = calculate_hash(content)
+
+        if check_duplicate(file_hash):
+            duplicate_metadata = {
+                "file_name": file.filename,
+                "file_hash": file_hash,
+                "upload_time": datetime.now().isoformat(),
+            }
+            return JSONResponse(
+                content={
+                    "message": "File already uploaded and indexed",
+                    "status": "duplicate",
+                    "files_processed": 0,
+                    "documents_indexed": 0,
+                    "failed_to_index": 0,
+                    "metadata": duplicate_metadata,
+                }
+            )
+
+        if case_id and not validate_case(case_id):
+            raise HTTPException(status_code=400, detail="Invalid case ID provided")
+
+        if not case_id:
+            case_id = str(uuid.uuid4())
+
+        if not device_id:
+            device_id = str(uuid.uuid4())
 
         temp_dir = tempfile.mkdtemp(prefix="tsv_upload_")
         zip_path = os.path.join(temp_dir, file.filename)
 
         with open(zip_path, "wb") as f:
-            content = await file.read()
             f.write(content)
 
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
@@ -55,7 +85,7 @@ async def upload_zip(file: UploadFile = File(...)):
         create_index()
         ensure_map()
 
-        conversion_result = process_files(zip_path, tsv_files, temp_dir)
+        conversion_result = process_files(zip_path, tsv_files, temp_dir, file_hash)
         temp_dir = conversion_result.get("temp_dir")
 
         metadata = {
@@ -63,6 +93,7 @@ async def upload_zip(file: UploadFile = File(...)):
             "device_id": device_id,
             "upload_time": datetime.now().isoformat(),
             "file_name": file.filename,
+            "file_hash": file_hash,
             "files_count": len(tsv_files),
             "files_list": tsv_files_for_response,
         }
@@ -146,3 +177,28 @@ async def get_stats():
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Stats failed: {str(e)}")
+
+
+def calculate_hash(content: bytes) -> str:
+    return hashlib.sha256(content).hexdigest()
+
+
+def check_duplicate(file_hash: str) -> bool:
+    try:
+        from ..services.elasticsearch import es_client, index_name
+
+        query = {"query": {"term": {"file_hash": file_hash}}, "size": 1}
+
+        response = es_client.search(index=index_name, body=query)
+        return response["hits"]["total"]["value"] > 0
+    except Exception:
+        return False
+
+
+def validate_case(case_id: str) -> bool:
+    try:
+        from ..routes.case import cases_storage
+
+        return any(case["id"] == case_id for case in cases_storage)
+    except Exception:
+        return False

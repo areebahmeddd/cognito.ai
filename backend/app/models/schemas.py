@@ -130,6 +130,7 @@ class UFDRDocument(BaseModel):
     data: Optional[str] = None
     value: Optional[Union[str, float, int, bool]] = None
     key: Optional[str] = None
+    file_hash: Optional[str] = None
 
     # Calendar and scheduling
     calendar_name: Optional[str] = None

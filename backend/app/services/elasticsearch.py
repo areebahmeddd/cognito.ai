@@ -254,6 +254,7 @@ def create_index() -> None:
                 "notes": {"type": "text"},
                 "languages": {"type": "keyword"},
                 "source_file": {"type": "keyword"},
+                "file_hash": {"type": "keyword"},
                 "value": {
                     "type": "text",
                     "fields": {"kw": {"type": "keyword", "ignore_above": 256}},

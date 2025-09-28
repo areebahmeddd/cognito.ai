@@ -8,7 +8,9 @@ from typing import Dict, List, Any, Optional
 from .classifier import classify_file, batch_classify
 
 
-def process_files(zip_path: str, tsv_files: List[str], temp_dir: str) -> Dict[str, Any]:
+def process_files(
+    zip_path: str, tsv_files: List[str], temp_dir: str, file_hash: str = None
+) -> Dict[str, Any]:
     input_dir = os.path.join(temp_dir, "input")
     output_dir = os.path.join(temp_dir, "output")
     os.makedirs(input_dir, exist_ok=True)
@@ -28,7 +30,7 @@ def process_files(zip_path: str, tsv_files: List[str], temp_dir: str) -> Dict[st
         output_path = os.path.join(output_dir, f"{os.path.splitext(filename)[0]}.json")
 
         num_records = process_file(
-            tsv_file, output_path, file_classifications.get(filename)
+            tsv_file, output_path, file_classifications.get(filename), file_hash
         )
         if num_records > 0:
             successful += 1
@@ -42,7 +44,10 @@ def process_files(zip_path: str, tsv_files: List[str], temp_dir: str) -> Dict[st
 
 
 def process_file(
-    tsv_path: str, output_path: str, classification: Optional[Dict[str, str]] = None
+    tsv_path: str,
+    output_path: str,
+    classification: Optional[Dict[str, str]] = None,
+    file_hash: str = None,
 ) -> int:
     try:
         if not os.path.exists(tsv_path) or os.path.getsize(tsv_path) == 0:
@@ -55,7 +60,7 @@ def process_file(
         documents = []
         for i, row in enumerate(rows):
             try:
-                doc = create_doc(row, i, tsv_path, classification)
+                doc = create_doc(row, i, tsv_path, classification, file_hash)
                 documents.append(doc)
             except Exception:
                 continue
@@ -119,6 +124,7 @@ def create_doc(
     index: int,
     source_file: str,
     classification: Optional[Dict[str, str]] = None,
+    file_hash: str = None,
 ) -> Dict[str, Any]:
     filename = os.path.basename(source_file)
     source_path = get_source(row, source_file)
@@ -137,6 +143,9 @@ def create_doc(
         "source_path": source_path,
         "conversion_timestamp": datetime.now().isoformat(),
     }
+
+    if file_hash:
+        doc["file_hash"] = file_hash
 
     for header, value in row.items():
         if value and str(value).strip():

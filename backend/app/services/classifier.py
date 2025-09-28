@@ -5,7 +5,7 @@ from typing import Dict
 from ..core.config import settings
 
 genai.configure(api_key=settings.gemini_api_key)
-gemini_model = genai.GenerativeModel(model_name="gemini-2.5-flash")
+gemini_model = genai.GenerativeModel(model_name="gemini-2.5-flash-lite")
 
 
 def classify_file(filename: str) -> Dict[str, str]:
@@ -13,8 +13,8 @@ def classify_file(filename: str) -> Dict[str, str]:
         clean_name = clean_filename(filename)
         result = classify_ai(clean_name)
         return validate_result(result)
-    except Exception:
-        raise Exception("Classification failed")
+    except Exception as e:
+        raise Exception(f"File classification failed: {str(e)}")
 
 
 def batch_classify(filenames: list[str]) -> Dict[str, Dict[str, str]]:
@@ -26,10 +26,10 @@ def batch_classify(filenames: list[str]) -> Dict[str, Dict[str, str]]:
             if i < len(result):
                 classifications[filename] = validate_result(result[i])
             else:
-                raise Exception("Missing classification")
+                raise Exception("Missing classification result")
         return classifications
-    except Exception:
-        raise Exception("Batch classification failed")
+    except Exception as e:
+        raise Exception(f"Batch classification failed: {str(e)}")
 
 
 def classify_ai(filename: str) -> Dict[str, str]:
@@ -75,7 +75,7 @@ JSON Response:"""
         else:
             raise ValueError("No JSON found in response")
     except Exception as e:
-        raise Exception(f"AI classification failed: {e}")
+        raise Exception(f"AI classification failed: {str(e)}")
 
 
 def batch_classify_ai(filenames: list[str]) -> list[Dict[str, str]]:
@@ -130,7 +130,7 @@ JSON Response:"""
         else:
             raise ValueError("No JSON array found in response")
     except Exception as e:
-        raise Exception(f"Batch AI classification failed: {e}")
+        raise Exception(f"Batch AI classification failed: {str(e)}")
 
 
 def validate_result(result: Dict[str, str]) -> Dict[str, str]:
