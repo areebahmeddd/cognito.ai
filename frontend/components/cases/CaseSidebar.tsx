@@ -69,6 +69,7 @@ export default function CaseSidebar({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -102,6 +103,26 @@ export default function CaseSidebar({
   const removeSelectedFile = useCallback((index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      const files = e.dataTransfer.files;
+      handleFileSelect(files);
+    },
+    [handleFileSelect],
+  );
 
   const uploadFile = async (file: File, caseId: string): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -418,7 +439,7 @@ export default function CaseSidebar({
           </button>
         </div>
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto p-4">
             <div className="space-y-3">
               {files && files.length > 0 ? (
@@ -439,16 +460,18 @@ export default function CaseSidebar({
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <Upload className="w-6 h-6 text-[#FF7F50]" />
+                <div className="flex items-center justify-center h-full min-h-[300px]">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
+                      <Upload className="w-6 h-6 text-[#FF7F50]" />
+                    </div>
+                    <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                      No Files Uploaded
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
+                      Upload evidence files to begin analysis
+                    </p>
                   </div>
-                  <h3 className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0] mb-1">
-                    No Files Uploaded
-                  </h3>
-                  <p className="text-xs text-[#666] dark:text-[#999]">
-                    Upload evidence files to begin analysis
-                  </p>
                 </div>
               )}
             </div>
@@ -573,12 +596,21 @@ export default function CaseSidebar({
             </div>
 
             <div className="mb-6">
-              <div className="border-2 border-dashed border-[#E0E0E0] dark:border-[#2A2A2A] rounded-lg p-8 text-center hover:border-[#FF7F50] dark:hover:border-[#FF7F50] transition-colors cursor-pointer">
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 ${
+                  isDragOver
+                    ? "border-[#FF7F50] bg-[#FFF5F0] dark:bg-[#2A1A0F]"
+                    : "border-[#E0E0E0] dark:border-[#2A2A2A] hover:border-[#FF7F50] dark:hover:border-[#FF7F50]"
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-full flex items-center justify-center mx-auto mb-4">
                   <Upload className="w-6 h-6 text-[#FF7F50]" />
                 </div>
                 <p className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0] mb-1">
-                  Upload sources
+                  {isDragOver ? "Drop files here" : "Upload sources"}
                 </p>
                 <p className="text-sm text-[#666] dark:text-[#999] mb-3">
                   Drag & drop or{" "}
@@ -586,7 +618,7 @@ export default function CaseSidebar({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="text-[#FF7F50] cursor-pointer underline font-medium hover:text-[#FF6B35] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="text-[#FF7F50] cursor-pointer underline font-medium hover:text-[#FF6B35] transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border-none p-0"
                   >
                     choose file
                   </button>{" "}

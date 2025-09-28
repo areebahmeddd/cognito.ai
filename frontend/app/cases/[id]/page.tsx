@@ -997,7 +997,7 @@ export default function CasePage() {
                         className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
                           activeTab === tab.id
                             ? "border-[#FF7F50] text-[#FF7F50]"
-                            : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                            : "border-transparent text-slate-500 dark:text-slate-400 hover:text-[#FF7F50]"
                         }`}
                       >
                         <span className="text-base">{tab.icon}</span>
@@ -1163,40 +1163,42 @@ export default function CasePage() {
                     </div>
                     <div>
                       {filteredResults.length === 0 ? (
-                        <div className="text-center py-12">
-                          <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
-                            {loading ? (
-                              <div className="w-6 h-6 border-2 border-[#FF7F50] border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                              <svg
-                                className="w-6 h-6 text-[#FF7F50]"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                />
-                              </svg>
-                            )}
+                        <div className="flex items-center justify-center h-full min-h-[400px]">
+                          <div className="text-center">
+                            <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
+                              {loading ? (
+                                <div className="w-6 h-6 border-2 border-[#FF7F50] border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <svg
+                                  className="w-6 h-6 text-[#FF7F50]"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                              {loading
+                                ? "Analyzing..."
+                                : hasSearched
+                                  ? "No evidence found"
+                                  : "Ready to analyze"}
+                            </h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
+                              {loading
+                                ? "Processing your search query and analyzing case data..."
+                                : hasSearched
+                                  ? "No results found for your search. Try different keywords or broaden your search."
+                                  : "Enter a search query to analyze case data and find relevant evidence."}
+                            </p>
                           </div>
-                          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                            {loading
-                              ? "Analyzing..."
-                              : hasSearched
-                                ? "No evidence found"
-                                : "Ready to analyze"}
-                          </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
-                            {loading
-                              ? "Processing your search query and analyzing case data..."
-                              : hasSearched
-                                ? "No results found for your search. Try different keywords or broaden your search."
-                                : "Enter a search query to analyze case data and find relevant evidence."}
-                          </p>
                         </div>
                       ) : (
                         <div className="space-y-4 p-4">
@@ -1234,14 +1236,14 @@ export default function CasePage() {
                                       </div>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <div className="text-xs text-slate-500 bg-slate-200 dark:bg-slate-700 px-2 py-1 font-medium rounded-full">
-                                      {ev.direction}
-                                    </div>
-                                  </div>
                                 </div>
-                                <div className="text-xs text-slate-500">
-                                  {ev.timestamp}
+                                <div className="flex items-center gap-2">
+                                  <div className="text-xs text-slate-500">
+                                    {ev.timestamp}
+                                  </div>
+                                  <div className="text-xs font-medium text-[#FF7F50] bg-[#FFF5F0] dark:bg-[#2A1A0F] border border-[#FF7F50] dark:border-[#FF7F50] px-2 py-1 rounded-full">
+                                    {ev.direction}
+                                  </div>
                                 </div>
                               </div>
 
@@ -1329,8 +1331,27 @@ export default function CasePage() {
                                   </div>
                                 </div>
 
+                                {/* Tags Section */}
+                                {ev.tagBadges && ev.tagBadges.length > 0 && (
+                                  <div className="mb-4">
+                                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+                                      Tags
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                      {ev.tagBadges.map((tag, tagIndex) => (
+                                        <span
+                                          key={tagIndex}
+                                          className="inline-flex items-center px-2 py-1 text-xs font-medium text-[#FF7F50] bg-[#FFF5F0] dark:bg-[#2A1A0F] border border-[#FF7F50] dark:border-[#FF7F50] rounded-full"
+                                        >
+                                          {tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
                                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
+                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
                                     <svg
                                       className="w-3 h-3"
                                       fill="none"
@@ -1346,7 +1367,7 @@ export default function CasePage() {
                                     </svg>
                                     Add to Report
                                   </button>
-                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
+                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
                                     <svg
                                       className="w-3 h-3"
                                       fill="none"
@@ -1362,7 +1383,7 @@ export default function CasePage() {
                                     </svg>
                                     View Thread
                                   </button>
-                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
+                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
                                     <svg
                                       className="w-3 h-3"
                                       fill="none"
@@ -1511,44 +1532,46 @@ export default function CasePage() {
                     </div>
                     <div>
                       {filteredDailySummaries.length === 0 ? (
-                        <div className="text-center py-12">
-                          <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
-                            <svg
-                              className="w-6 h-6 text-[#FF7F50]"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
+                        <div className="flex items-center justify-center h-full min-h-[400px]">
+                          <div className="text-center">
+                            <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
+                              <svg
+                                className="w-6 h-6 text-[#FF7F50]"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                            </div>
+                            {allDailySummaries.length === 0 ? (
+                              <>
+                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                                  Timeline Analysis
+                                </h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
+                                  View evidence in chronological order to
+                                  understand the sequence of events.
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                                  No Timeline Data Found
+                                </h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
+                                  No events match your current filter criteria.
+                                  Try adjusting your filters or search for
+                                  different evidence.
+                                </p>
+                              </>
+                            )}
                           </div>
-                          {allDailySummaries.length === 0 ? (
-                            <>
-                              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                                Timeline Analysis
-                              </h3>
-                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
-                                View evidence in chronological order to
-                                understand the sequence of events.
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                                No Timeline Data Found
-                              </h3>
-                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
-                                No events match your current filter criteria.
-                                Try adjusting your filters or search for
-                                different evidence.
-                              </p>
-                            </>
-                          )}
                         </div>
                       ) : (
                         <div className="space-y-4 p-4">
@@ -1699,31 +1722,9 @@ export default function CasePage() {
 
                                             <div className="flex items-start justify-between mb-2">
                                               <div className="flex items-center gap-3">
-                                                <div
-                                                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                                    session.app
-                                                      .toLowerCase()
-                                                      .includes("whatsapp")
-                                                      ? "bg-green-100 dark:bg-green-900/30"
-                                                      : session.app
-                                                            .toLowerCase()
-                                                            .includes("sms")
-                                                        ? "bg-blue-100 dark:bg-blue-900/30"
-                                                        : "bg-blue-100 dark:bg-blue-900/30"
-                                                  }`}
-                                                >
+                                                <div className="w-8 h-8 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg flex items-center justify-center">
                                                   <svg
-                                                    className={`w-4 h-4 ${
-                                                      session.app
-                                                        .toLowerCase()
-                                                        .includes("whatsapp")
-                                                        ? "text-green-600 dark:text-green-400"
-                                                        : session.app
-                                                              .toLowerCase()
-                                                              .includes("sms")
-                                                          ? "text-blue-600 dark:text-blue-400"
-                                                          : "text-blue-600 dark:text-blue-400"
-                                                    }`}
+                                                    className="w-4 h-4 text-[#FF7F50]"
                                                     fill="none"
                                                     stroke="currentColor"
                                                     viewBox="0 0 24 24"
@@ -1973,44 +1974,47 @@ export default function CasePage() {
                     </div>
                     <div>
                       {filteredNetworkContacts.length === 0 ? (
-                        <div className="text-center py-12">
-                          <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
-                            <svg
-                              className="w-6 h-6 text-[#FF7F50]"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                              />
-                            </svg>
+                        <div className="flex items-center justify-center h-full min-h-[400px]">
+                          <div className="text-center">
+                            <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
+                              <svg
+                                className="w-6 h-6 text-[#FF7F50]"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                                />
+                              </svg>
+                            </div>
+                            {allNetworkContacts.length === 0 ? (
+                              <>
+                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                                  Communication Network
+                                </h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
+                                  Analyze communication patterns and
+                                  relationships between contacts to understand
+                                  the network structure.
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                                  No Contacts Found
+                                </h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
+                                  No contacts match your current filter
+                                  criteria. Try adjusting your filters to see
+                                  more contacts.
+                                </p>
+                              </>
+                            )}
                           </div>
-                          {allNetworkContacts.length === 0 ? (
-                            <>
-                              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                                Communication Network
-                              </h3>
-                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
-                                Analyze communication patterns and relationships
-                                between contacts to understand the network
-                                structure.
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                                No Contacts Found
-                              </h3>
-                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
-                                No contacts match your current filter criteria.
-                                Try adjusting your filters to see more contacts.
-                              </p>
-                            </>
-                          )}
                         </div>
                       ) : (
                         <div className="space-y-4 p-4">
@@ -2320,7 +2324,7 @@ export default function CasePage() {
                 {activeTab === "summary" && (
                   <div className="bg-[#F8F8F8] dark:bg-[#0F0F0F]">
                     <div className="px-4 py-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-full flex items-center justify-center">
                             <svg
@@ -2338,112 +2342,302 @@ export default function CasePage() {
                             </svg>
                           </div>
                           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                            Evidence Summary
+                            Case Intelligence Summary
                           </h2>
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          Case overview
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            Investigation overview
+                          </div>
+                          <svg
+                            className="w-2 h-2 text-green-500"
+                            fill="currentColor"
+                            viewBox="0 0 8 8"
+                          >
+                            <circle cx="4" cy="4" r="3" />
+                          </svg>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {searchData.totalResults} items analyzed
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div className="p-6">
+                    <div className="p-4">
                       {searchData.totalResults === 0 ? (
-                        <div className="text-center py-12">
-                          <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
-                            <svg
-                              className="w-6 h-6 text-[#FF7F50]"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                              />
-                            </svg>
+                        <div className="flex items-center justify-center h-full min-h-[400px]">
+                          <div className="text-center">
+                            <div className="w-12 h-12 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-xl flex items-center justify-center mx-auto mb-3">
+                              <svg
+                                className="w-6 h-6 text-[#FF7F50]"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                />
+                              </svg>
+                            </div>
+                            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                              No Intelligence Available
+                            </h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
+                              Run a search to generate actionable intelligence
+                              and case insights.
+                            </p>
                           </div>
-                          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                            No Evidence Summary
-                          </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
-                            Run a search to generate a comprehensive summary of
-                            your case evidence.
-                          </p>
                         </div>
                       ) : (
-                        <div className="space-y-6">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="space-y-8">
+                          {/* Key Metrics - Clean and Flat */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             <div className="text-center">
-                              <div className="text-2xl font-bold text-[#FF7F50] mb-1">
+                              <div className="text-4xl font-bold text-[#FF7F50] mb-2">
                                 {searchData.totalResults}
                               </div>
-                              <div className="text-sm text-slate-500 dark:text-slate-400">
-                                Total Results
+                              <div className="text-lg text-slate-600 dark:text-slate-400">
+                                Evidence Items
                               </div>
                             </div>
+
                             <div className="text-center">
-                              <div className="text-2xl font-bold text-[#FF7F50] mb-1">
-                                {Math.floor(searchData.totalResults * 0.6)}
+                              <div className="text-4xl font-bold text-red-500 mb-2">
+                                {
+                                  results.filter((r) =>
+                                    r.tagBadges.some(
+                                      (tag) =>
+                                        tag.includes("Cryptocurrency") ||
+                                        tag.includes("Financial") ||
+                                        tag.includes("Suspicious"),
+                                    ),
+                                  ).length
+                                }
                               </div>
-                              <div className="text-sm text-slate-500 dark:text-slate-400">
-                                WhatsApp
+                              <div className="text-lg text-slate-600 dark:text-slate-400">
+                                Flagged Items
                               </div>
                             </div>
+
                             <div className="text-center">
-                              <div className="text-2xl font-bold text-[#FF7F50] mb-1">
-                                {Math.floor(searchData.totalResults * 0.3)}
+                              <div className="text-4xl font-bold text-blue-500 mb-2">
+                                {new Set(results.map((r) => r.sender)).size}
                               </div>
-                              <div className="text-sm text-slate-500 dark:text-slate-400">
-                                SMS
-                              </div>
-                            </div>
-                            <div className="text-center">
-                              <div className="text-2xl font-bold text-[#FF7F50] mb-1">
-                                {Math.floor(searchData.totalResults * 0.1)}
-                              </div>
-                              <div className="text-sm text-slate-500 dark:text-slate-400">
-                                Email
+                              <div className="text-lg text-slate-600 dark:text-slate-400">
+                                Unique Contacts
                               </div>
                             </div>
                           </div>
 
-                          <div className="space-y-4">
-                            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
-                              Analysis Overview
+                          {/* Evidence Types - Simple Grid */}
+                          <div>
+                            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6 text-center">
+                              Evidence Breakdown
                             </h3>
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700">
-                                <span className="text-sm text-slate-500 dark:text-slate-400">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                              {(() => {
+                                const appCounts = results.reduce(
+                                  (acc, result) => {
+                                    const app = result.app.toLowerCase();
+                                    if (app.includes("whatsapp"))
+                                      acc.whatsapp++;
+                                    else if (app.includes("sms")) acc.sms++;
+                                    else if (app.includes("email")) acc.email++;
+                                    else acc.other++;
+                                    return acc;
+                                  },
+                                  { whatsapp: 0, sms: 0, email: 0, other: 0 },
+                                );
+
+                                return [
+                                  {
+                                    label: "WhatsApp",
+                                    count: appCounts.whatsapp,
+                                    color: "text-green-500",
+                                  },
+                                  {
+                                    label: "SMS",
+                                    count: appCounts.sms,
+                                    color: "text-blue-500",
+                                  },
+                                  {
+                                    label: "Email",
+                                    count: appCounts.email,
+                                    color: "text-purple-500",
+                                  },
+                                  {
+                                    label: "Other",
+                                    count: appCounts.other,
+                                    color: "text-slate-500",
+                                  },
+                                ].map((item, index) => (
+                                  <div key={index} className="text-center">
+                                    <div
+                                      className={`text-3xl font-bold ${item.color} mb-2`}
+                                    >
+                                      {item.count}
+                                    </div>
+                                    <div className="text-base text-slate-600 dark:text-slate-400">
+                                      {item.label}
+                                    </div>
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+
+                          {/* Investigation Timeline - Clean List */}
+                          <div>
+                            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6 text-center">
+                              Investigation Timeline
+                            </h3>
+                            <div className="max-w-md mx-auto space-y-4">
+                              {(() => {
+                                const timelineSessions =
+                                  groupEventsIntoSessions(results);
+                                const dailySummaries =
+                                  getDailySummaries(timelineSessions);
+                                const totalSessions = dailySummaries.reduce(
+                                  (sum, day) => sum + day.sessions.length,
+                                  0,
+                                );
+                                const dateRange =
+                                  dailySummaries.length > 0
+                                    ? `${dailySummaries[0].date} - ${dailySummaries[dailySummaries.length - 1].date}`
+                                    : "No data";
+
+                                return (
+                                  <>
+                                    <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700">
+                                      <span className="text-slate-600 dark:text-slate-400">
+                                        Investigation Period
+                                      </span>
+                                      <span className="font-medium text-slate-900 dark:text-slate-100">
+                                        {dateRange}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700">
+                                      <span className="text-slate-600 dark:text-slate-400">
+                                        Active Days
+                                      </span>
+                                      <span className="font-medium text-slate-900 dark:text-slate-100">
+                                        {dailySummaries.length}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-3">
+                                      <span className="text-slate-600 dark:text-slate-400">
+                                        Communication Sessions
+                                      </span>
+                                      <span className="font-medium text-slate-900 dark:text-slate-100">
+                                        {totalSessions}
+                                      </span>
+                                    </div>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          </div>
+
+                          {/* Network Overview - Simple Stats */}
+                          <div>
+                            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6 text-center">
+                              Communication Network
+                            </h3>
+                            <div className="max-w-md mx-auto space-y-4">
+                              {(() => {
+                                const allNetworkContacts =
+                                  analyzeSuspiciousContacts(
+                                    extractContactsFromResults(results),
+                                  );
+                                const flaggedContacts =
+                                  allNetworkContacts.filter(
+                                    (c) => c.suspicious,
+                                  ).length;
+                                const phoneContacts = allNetworkContacts.filter(
+                                  (c) => c.type === "phone",
+                                ).length;
+                                const emailContacts = allNetworkContacts.filter(
+                                  (c) => c.type === "email",
+                                ).length;
+
+                                return (
+                                  <>
+                                    <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700">
+                                      <span className="text-slate-600 dark:text-slate-400">
+                                        Total Contacts
+                                      </span>
+                                      <span className="font-medium text-slate-900 dark:text-slate-100">
+                                        {allNetworkContacts.length}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700">
+                                      <span className="text-slate-600 dark:text-slate-400">
+                                        Flagged Contacts
+                                      </span>
+                                      <span className="font-medium text-red-500">
+                                        {flaggedContacts}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700">
+                                      <span className="text-slate-600 dark:text-slate-400">
+                                        Phone Numbers
+                                      </span>
+                                      <span className="font-medium text-slate-900 dark:text-slate-100">
+                                        {phoneContacts}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-3">
+                                      <span className="text-slate-600 dark:text-slate-400">
+                                        Email Addresses
+                                      </span>
+                                      <span className="font-medium text-slate-900 dark:text-slate-100">
+                                        {emailContacts}
+                                      </span>
+                                    </div>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          </div>
+
+                          {/* Case Information - Minimal */}
+                          <div>
+                            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6 text-center">
+                              Case Information
+                            </h3>
+                            <div className="max-w-md mx-auto space-y-4">
+                              <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700">
+                                <span className="text-slate-600 dark:text-slate-400">
+                                  Case ID
+                                </span>
+                                <span className="font-mono text-sm text-slate-900 dark:text-slate-100 break-all">
+                                  {caseId}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700">
+                                <span className="text-slate-600 dark:text-slate-400">
                                   Search Query
                                 </span>
-                                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                <span className="font-medium text-slate-900 dark:text-slate-100">
                                   {query || "No query entered"}
                                 </span>
                               </div>
-                              <div className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700">
-                                <span className="text-sm text-slate-500 dark:text-slate-400">
-                                  Processing Time
+                              <div className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700">
+                                <span className="text-slate-600 dark:text-slate-400">
+                                  AI Analysis
                                 </span>
-                                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                  {searchData.processingTime}ms
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700">
-                                <span className="text-sm text-slate-500 dark:text-slate-400">
-                                  AI Intent
-                                </span>
-                                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                <span className="font-medium text-slate-900 dark:text-slate-100">
                                   {searchData.intent}
                                 </span>
                               </div>
-                              <div className="flex items-center justify-between py-2">
-                                <span className="text-sm text-slate-500 dark:text-slate-400">
-                                  Case ID
+                              <div className="flex justify-between items-center py-3">
+                                <span className="text-slate-600 dark:text-slate-400">
+                                  Processing Time
                                 </span>
-                                <span className="text-sm font-mono text-slate-900 dark:text-slate-100 break-all">
-                                  {caseId}
+                                <span className="font-medium text-slate-900 dark:text-slate-100">
+                                  {searchData.processingTime}ms
                                 </span>
                               </div>
                             </div>
