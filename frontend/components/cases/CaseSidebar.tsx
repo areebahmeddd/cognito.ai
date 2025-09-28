@@ -253,7 +253,6 @@ export default function CaseSidebar({
         setFiles(c.files || []);
       } else {
         try {
-
           const response = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/cases/`,
           );
