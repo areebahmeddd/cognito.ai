@@ -53,6 +53,12 @@ ELASTICSEARCH_INDEX=data
 GEMINI_API_KEY=your_api_key
 ```
 
+Create a `.env` file in `frontend/`:
+
+```
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+```
+
 ## 🖥️ Backend (FastAPI)
 
 Install and run API:
