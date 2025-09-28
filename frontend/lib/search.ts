@@ -189,7 +189,7 @@ export async function searchQuery(query: string): Promise<{
   processingTime: number;
 }> {
   try {
-    const response = await fetch("http://127.0.0.1:8000/api/v1/search/query", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/search/query`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

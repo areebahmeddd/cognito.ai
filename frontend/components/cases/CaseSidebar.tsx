@@ -145,7 +145,7 @@ export default function CaseSidebar({
         reject(new Error("Network error"));
       });
 
-      xhr.open("POST", "http://127.0.0.1:8000/api/v1/data/upload");
+      xhr.open("POST", `${process.env.NEXT_PUBLIC_API_URL}/data/upload`);
       xhr.send(formData);
     });
   };
@@ -210,7 +210,7 @@ export default function CaseSidebar({
         results: results,
       };
 
-      const response = await fetch("http://127.0.0.1:8000/api/v1/data/export", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/data/export`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -250,7 +250,7 @@ export default function CaseSidebar({
         setFiles(c.files || []);
       } else {
         try {
-          const response = await fetch(`http://127.0.0.1:8000/api/v1/cases/`);
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cases/`);
           if (response.ok) {
             const data = await response.json();
             const backendCase = data.cases.find(
