@@ -38,7 +38,6 @@ export default function HowItWorks() {
         </div>
 
         <div className="relative">
-          {/* Connecting lines - only visible on large screens */}
           <div className="absolute top-8 left-1/2 hidden lg:block w-full -translate-x-1/2">
             <div className="flex justify-between items-center px-8">
               <div className="flex-1 h-0.5 bg-[#E0E0E0] dark:bg-[#4A4A4A]"></div>

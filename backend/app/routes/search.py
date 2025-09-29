@@ -13,6 +13,18 @@ async def search_query(request: QueryRequest) -> Dict[str, Any]:
         intent_plan = analyze_intent(request.query)
         elasticsearch_dsl = build_query(intent_plan)
 
+        if "query" in elasticsearch_dsl:
+            if "bool" not in elasticsearch_dsl["query"]:
+                elasticsearch_dsl["query"] = {
+                    "bool": {"must": [elasticsearch_dsl["query"]]}
+                }
+
+            if "filter" not in elasticsearch_dsl["query"]["bool"]:
+                elasticsearch_dsl["query"]["bool"]["filter"] = []
+            elasticsearch_dsl["query"]["bool"]["filter"].append(
+                {"term": {"case_id": request.case_id}}
+            )
+
         search_response = es_client.search(index=index_name, body=elasticsearch_dsl)
         raw_documents = [
             hit.get("_source", {})

@@ -1,11 +1,17 @@
 import os
-import re
 import csv
 import json
 import zipfile
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from .classifier import classify_file, batch_classify
+from ..utils.helpers import (
+    get_extension,
+    get_source,
+    get_timestamp,
+    clean_value,
+    clean_header,
+)
 
 
 def process_files(
@@ -17,9 +23,7 @@ def process_files(
     os.makedirs(output_dir, exist_ok=True)
 
     extracted_files = extract_files(zip_path, tsv_files, input_dir)
-
     filenames = [os.path.basename(tsv_file) for tsv_file in extracted_files]
-
     file_classifications = batch_classify(filenames)
 
     successful = 0
@@ -153,96 +157,3 @@ def create_doc(
             doc[clean_header_name] = clean_value(value)
 
     return doc
-
-
-def get_extension(filename: str) -> str:
-    match = re.search(r"\.(\w+)$", filename.lower())
-    if match:
-        ext = match.group(1)
-        return f"{ext}_record"
-    return "unknown_record"
-
-
-def get_source(row: Dict[str, str], fallback_path: str) -> str:
-    source_fields = [
-        "source_file",
-        "source_path",
-        "path",
-        "file_path",
-        "originating_file",
-    ]
-
-    for field in source_fields:
-        if field in row and row[field] and str(row[field]).strip():
-            return str(row[field]).strip()
-
-    return fallback_path
-
-
-def get_timestamp(row: Dict[str, str]) -> Optional[str]:
-    time_fields = [
-        "call_date",
-        "date",
-        "timestamp",
-        "time",
-        "created_date",
-        "last_access_date",
-    ]
-
-    for field in time_fields:
-        if field in row and row[field] and str(row[field]).strip():
-            return str(row[field]).strip()
-
-    for header, value in row.items():
-        if value and str(value).strip():
-            time_patterns = [
-                r"\d{4}-\d{2}-\d{2}",
-                r"\d{4}/\d{2}/\d{2}",
-                r"\d{2}-\d{2}-\d{4}",
-                r"\d{2}/\d{2}/\d{4}",
-            ]
-            for pattern in time_patterns:
-                if re.search(pattern, str(value)):
-                    return str(value).strip()
-    return None
-
-
-def clean_value(value: str) -> Any:
-    cleaned = (
-        str(value)
-        .replace("\ufeff", "")
-        .replace("\ufffd", "")
-        .replace("\x00", "")
-        .strip()
-    )
-
-    if cleaned.lower() in ["true", "false"]:
-        return cleaned.lower() == "true"
-
-    try:
-        if "." in cleaned:
-            return float(cleaned)
-        else:
-            return int(cleaned)
-    except ValueError:
-        return cleaned
-
-
-def clean_header(header: str) -> str:
-    cleaned = (
-        header.lower()
-        .replace(" ", "_")
-        .replace("(", "")
-        .replace(")", "")
-        .replace("%", "percent")
-        .replace("/", "_")
-        .replace("-", "_")
-        .replace(".", "")
-        .replace("?", "")
-        .replace("\ufeff", "")
-        .replace("\u200b", "")
-        .replace("\u200c", "")
-        .replace("\u200d", "")
-        .strip()
-    )
-    return cleaned

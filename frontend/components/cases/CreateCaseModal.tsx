@@ -161,15 +161,11 @@ export default function CreateCaseModal({
   const handleSubmit = async () => {
     if (!caseName.trim()) {
       setError("Case name is required");
-      toast.error("Case name is required");
       return;
     }
 
     if (caseName.trim().length < 3) {
       setError("Case name must be at least 3 characters long");
-      toast.error("Case name is too short", {
-        description: "Minimum 3 characters",
-      });
       return;
     }
 
@@ -271,13 +267,6 @@ export default function CreateCaseModal({
         })),
       };
 
-      const STORAGE_KEY = "cognito-cases";
-      const existingCases = JSON.parse(
-        localStorage.getItem(STORAGE_KEY) || "[]",
-      );
-      const updatedCases = [...existingCases, frontendCaseData];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCases));
-
       onSuccess(frontendCaseData);
       onClose();
 
@@ -292,7 +281,6 @@ export default function CreateCaseModal({
           ? error.message
           : "Failed to create case. Please try again.";
       setError(message);
-      toast.error("Operation failed", { description: message });
     } finally {
       clearInterval(statusInterval);
       setIsUploading(false);

@@ -14,8 +14,8 @@ def generate_report(api_response: Dict[str, Any]) -> str:
     temp_dir = tempfile.mkdtemp(prefix="pdf_")
 
     results = api_response.get("results", [])
-    artifact_id = results[0]["artifact_id"]
-    pdf_filename = f"{artifact_id}.pdf"
+    case_id = api_response.get("case_id", "unknown")
+    pdf_filename = f"{case_id}.pdf"
     pdf_path = os.path.join(temp_dir, pdf_filename)
 
     doc = SimpleDocTemplate(

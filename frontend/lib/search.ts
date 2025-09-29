@@ -1,5 +1,6 @@
 interface SearchRequest {
   query: string;
+  case_id: string;
 }
 
 interface SearchResponse {
@@ -181,7 +182,10 @@ export interface EvidenceItem {
   raw_data?: SearchResult;
 }
 
-export async function searchQuery(query: string): Promise<{
+export async function searchQuery(
+  query: string,
+  caseId: string,
+): Promise<{
   query: string;
   intent: string;
   results: EvidenceItem[];
@@ -197,7 +201,7 @@ export async function searchQuery(query: string): Promise<{
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, case_id: caseId }),
       },
     );
 

@@ -279,6 +279,30 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div>
                         <p className="text-[#2A2A2A] dark:text-[#E0E0E0] font-medium">
+                          Two-Factor Authentication (2FA)
+                        </p>
+                        <p className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0]">
+                          Add an extra layer of security to your account
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0]">
+                          Disabled
+                        </span>
+                        <button
+                          disabled
+                          className="px-3 py-1.5 bg-[#E0E0E0] dark:bg-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] rounded-md text-sm font-medium whitespace-nowrap w-24 cursor-not-allowed opacity-50"
+                        >
+                          Enable 2FA
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-[#E0E0E0] dark:border-[#2A2A2A] pt-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="text-[#2A2A2A] dark:text-[#E0E0E0] font-medium">
                           Delete Account
                         </p>
                         <p className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0]">
@@ -302,27 +326,52 @@ export default function SettingsPage() {
       </div>
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#E0E0E0] dark:border-[#2A2A2A] p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0] mb-2">
-              Delete Account
-            </h3>
-            <p className="text-[#4A4A4A] dark:text-[#B0B0B0] mb-6">
-              Are you sure you want to delete your account? This action cannot
-              be undone and will permanently remove all your data.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={handleDeleteAccount}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium"
-              >
-                Yes, Delete Account
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={() => setShowDeleteConfirm(false)}
+          />
+
+          <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A]">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-red-600 dark:text-red-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0] mb-1">
+                  Delete Account
+                </h2>
+                <p className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0]">
+                  Are you sure you want to delete your account? This action
+                  cannot be undone and will permanently remove all your data.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 px-4 py-2 bg-[#E0E0E0] dark:bg-[#2A2A2A] text-[#2A2A2A] dark:text-[#E0E0E0] rounded-md text-sm font-medium"
+                className="border-[#E0E0E0] dark:border-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="bg-red-600 text-white hover:bg-red-700 transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+              >
+                Yes, Delete Account
               </button>
             </div>
           </div>
