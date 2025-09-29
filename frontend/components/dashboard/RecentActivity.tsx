@@ -19,58 +19,54 @@ export default function RecentActivity() {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
-    // Load recent activities from localStorage or API
-    const savedActivities = localStorage.getItem("cognito-recent-activities");
-    if (savedActivities) {
-      setActivities(JSON.parse(savedActivities));
-    } else {
-      // Mock data for demo
-      const mockActivities: ActivityItem[] = [
-        {
-          id: "1",
-          type: "case_created",
-          title: "Created new case",
-          description: "Crypto messaging ring investigation",
-          timestamp: "2 hours ago",
-          caseId: "1",
-        },
-        {
-          id: "2",
-          type: "search_performed",
-          title: "Performed search",
-          description: "Found 23 results for 'bitcoin transactions'",
-          timestamp: "4 hours ago",
-        },
-        {
-          id: "3",
-          type: "file_uploaded",
-          title: "Uploaded files",
-          description: "Added 5 WhatsApp export files",
-          timestamp: "1 day ago",
-        },
-        {
-          id: "4",
-          type: "analysis_completed",
-          title: "Analysis completed",
-          description: "Foreign communications sweep - 156 files processed",
-          timestamp: "2 days ago",
-          caseId: "2",
-        },
-        {
-          id: "5",
-          type: "case_created",
-          title: "Created new case",
-          description: "Financial fraud investigation - Bank records analysis",
-          timestamp: "3 days ago",
-          caseId: "3",
-        },
-      ];
-      setActivities(mockActivities);
-      localStorage.setItem(
-        "cognito-recent-activities",
-        JSON.stringify(mockActivities),
-      );
-    }
+    const fetchRecentActivities = async () => {
+      try {
+        const mockActivities: ActivityItem[] = [
+          {
+            id: "1",
+            type: "case_created",
+            title: "Created new case",
+            description: "Crypto messaging ring investigation",
+            timestamp: "2 hours ago",
+            caseId: "1",
+          },
+          {
+            id: "2",
+            type: "search_performed",
+            title: "Performed search",
+            description: "Found 23 results for 'bitcoin transactions'",
+            timestamp: "4 hours ago",
+          },
+          {
+            id: "3",
+            type: "file_uploaded",
+            title: "Uploaded files",
+            description: "Added 5 WhatsApp export files",
+            timestamp: "1 day ago",
+          },
+          {
+            id: "4",
+            type: "analysis_completed",
+            title: "Analysis completed",
+            description: "Foreign communications sweep - 156 files processed",
+            timestamp: "2 days ago",
+            caseId: "2",
+          },
+          {
+            id: "5",
+            type: "case_created",
+            title: "Created new case",
+            description:
+              "Financial fraud investigation - Bank records analysis",
+            timestamp: "3 days ago",
+            caseId: "3",
+          },
+        ];
+        setActivities(mockActivities);
+      } catch (error) {}
+    };
+
+    fetchRecentActivities();
   }, []);
 
   const getActivityIcon = (type: ActivityItem["type"]) => {
@@ -161,7 +157,7 @@ export default function RecentActivity() {
         <h2 className="text-xl font-light text-[#2A2A2A] dark:text-[#E0E0E0]">
           Recent <span className="text-[#FF7F50]">Activity</span>
         </h2>
-        <button className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0] font-medium">
+        <button className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0] font-medium hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors">
           View All
         </button>
       </div>

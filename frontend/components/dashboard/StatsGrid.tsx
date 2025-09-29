@@ -49,20 +49,20 @@ export default function StatsGrid() {
   });
 
   useEffect(() => {
-    const savedStats = localStorage.getItem("cognito-user-stats");
-    if (savedStats) {
-      setStats(JSON.parse(savedStats));
-    } else {
-      const mockStats: UserStats = {
-        name: "Areeb",
-        timeSaved: 24.5,
-        filesAnalyzed: 156,
-        casesCreated: 8,
-        searchesPerformed: 342,
-      };
-      setStats(mockStats);
-      localStorage.setItem("cognito-user-stats", JSON.stringify(mockStats));
-    }
+    const fetchUserStats = async () => {
+      try {
+        const mockStats: UserStats = {
+          name: "Areeb",
+          timeSaved: 24.5,
+          filesAnalyzed: 156,
+          casesCreated: 8,
+          searchesPerformed: 342,
+        };
+        setStats(mockStats);
+      } catch (error) {}
+    };
+
+    fetchUserStats();
   }, []);
 
   const statsData = [

@@ -49,14 +49,15 @@ Create a `.env` file in `backend/`:
 
 ```
 ELASTICSEARCH_URL=http://localhost:9200
-ELASTICSEARCH_INDEX=data
+ELASTICSEARCH_INDEX=cognito
+MONGODB_CONNECTION_STRING=mongodb://localhost:27017/cognito
 GEMINI_API_KEY=your_api_key
 ```
 
 Create a `.env` file in `frontend/`:
 
 ```
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api/v1
 ```
 
 ## 🖥️ Backend (FastAPI)

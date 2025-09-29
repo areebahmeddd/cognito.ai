@@ -1,55 +1,53 @@
-import os
 import json
+import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
+
 from elasticsearch import Elasticsearch, helpers
 from elasticsearch.exceptions import ConnectionError, NotFoundError
+
 from ..core.config import settings
+
 
 es_client = Elasticsearch(settings.elasticsearch_url)
 index_name = settings.elasticsearch_index
 
 
-def search_dsl(
-    query_dict: Dict[str, Any],
-    size: int = 10,
-    from_: int = 0,
-    sort: Optional[List[Dict[str, Any]]] = None,
-    highlight: Optional[Dict[str, Any]] = None,
+def bulk_index(
+    dir_path: str,
+    case_id: str | None = None,
+    device_id: str | None = None,
+    file_hash: str | None = None,
+    zip_name: str | None = None,
 ) -> Dict[str, Any]:
-    size = min(size or 10, 200)
-    body: Dict[str, Any] = {
-        "query": query_dict or {"match_all": {}},
-        "size": size,
-        "from": from_,
-    }
-    if sort:
-        body["sort"] = sort
-    if highlight:
-        body["highlight"] = highlight
-
-    response = es_client.search(index=index_name, body=body)
-    return response
-
-
-def bulk_index(dir_path: str) -> Dict[str, Any]:
     def iter_docs(paths: List[str]):
         for path in paths:
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    if isinstance(data, list):
-                        for doc in data:
-                            yield {
-                                "_index": index_name,
-                                "_source": doc,
-                            }
-                    else:
-                        doc = data
-                        yield {
-                            "_index": index_name,
-                            "_source": doc,
-                        }
+
+                if isinstance(data, list):
+                    for doc in data:
+                        if case_id:
+                            doc["case_id"] = case_id
+                        if device_id:
+                            doc["device_id"] = device_id
+                        if file_hash:
+                            doc["file_hash"] = file_hash
+                        if zip_name:
+                            doc["zip_name"] = zip_name
+                        yield {"_index": index_name, "_source": doc}
+                else:
+                    doc = data
+                    if case_id:
+                        doc["case_id"] = case_id
+                    if device_id:
+                        doc["device_id"] = device_id
+                    if file_hash:
+                        doc["file_hash"] = file_hash
+                    if zip_name:
+                        doc["zip_name"] = zip_name
+                    yield {"_index": index_name, "_source": doc}
             except Exception:
                 continue
 
@@ -60,6 +58,10 @@ def bulk_index(dir_path: str) -> Dict[str, Any]:
     ]
 
     try:
+        print(
+            f"[es] indexing {len(json_files)} json files into '{index_name}'",
+            flush=True,
+        )
         success, errors = helpers.bulk(
             es_client,
             iter_docs(json_files),
@@ -69,11 +71,13 @@ def bulk_index(dir_path: str) -> Dict[str, Any]:
 
         es_client.indices.refresh(index=index_name)
 
-        return {
+        result = {
             "success_count": success,
             "error_count": len(errors) if errors else 0,
             "files_processed": len(json_files),
         }
+        print(f"[es] indexed => {result}", flush=True)
+        return result
     except Exception:
         return {
             "success_count": 0,
@@ -106,6 +110,10 @@ def create_index() -> None:
         "mappings": {
             "dynamic": True,
             "properties": {
+                "case_id": {"type": "keyword"},
+                "device_id": {"type": "keyword"},
+                "file_hash": {"type": "keyword"},
+                "zip_name": {"type": "keyword"},
                 "artifact_id": {"type": "keyword"},
                 "timestamp": {
                     "type": "date",
@@ -254,7 +262,6 @@ def create_index() -> None:
                 "notes": {"type": "text"},
                 "languages": {"type": "keyword"},
                 "source_file": {"type": "keyword"},
-                "file_hash": {"type": "keyword"},
                 "value": {
                     "type": "text",
                     "fields": {"kw": {"type": "keyword", "ignore_above": 256}},
@@ -321,10 +328,87 @@ def create_index() -> None:
             },
         },
     }
+
     es_client.indices.create(index=index_name, body=index_settings)
 
 
-def ensure_map() -> None:
+def delete_index() -> None:
+    es_client.indices.delete(index=index_name, ignore=[400, 404])
+
+
+def delete_documents(case_id: str) -> Dict[str, Any]:
+    try:
+        query = {"query": {"term": {"case_id": case_id}}}
+        response = es_client.delete_by_query(index=index_name, body=query)
+        es_client.indices.refresh(index=index_name)
+        return {
+            "deleted_count": response.get("deleted", 0),
+            "case_id": case_id,
+            "status": "success",
+        }
+    except Exception as e:
+        return {
+            "deleted_count": 0,
+            "case_id": case_id,
+            "status": "error",
+            "error": str(e),
+        }
+
+
+def delete_file(case_id: str, json_file_name: str) -> Dict[str, Any]:
+    try:
+        query = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"case_id": case_id}},
+                        {
+                            "bool": {
+                                "should": [
+                                    {"term": {"source_file": json_file_name}},
+                                    {"term": {"originating_file": json_file_name}},
+                                    {"wildcard": {"source_path": f"*{json_file_name}"}},
+                                ],
+                                "minimum_should_match": 1,
+                            }
+                        },
+                    ]
+                }
+            }
+        }
+
+        response = es_client.delete_by_query(
+            index=index_name, body=query, conflicts="proceed"
+        )
+        es_client.indices.refresh(index=index_name)
+
+        return {"deleted_count": response.get("deleted", 0), "status": "success"}
+    except Exception as e:
+        return {"deleted_count": 0, "status": "error", "error": str(e)}
+
+
+def delete_upload(case_id: str, zip_name: str) -> Dict[str, Any]:
+    try:
+        query = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"case_id": case_id}},
+                        {"term": {"zip_name": zip_name}},
+                    ]
+                }
+            }
+        }
+        response = es_client.delete_by_query(
+            index=index_name, body=query, conflicts="proceed"
+        )
+        es_client.indices.refresh(index=index_name)
+        return {"deleted_count": response.get("deleted", 0), "status": "success"}
+    except Exception as e:
+        return {"deleted_count": 0, "status": "error", "error": str(e)}
+
+
+def ensure_mapping() -> None:
     if not es_client.indices.exists(index=index_name):
         create_index()
 
@@ -333,11 +417,7 @@ def ensure_map() -> None:
         es_client.indices.put_mapping(index=index_name, body={"dynamic": True})
 
 
-def delete_index() -> None:
-    es_client.indices.delete(index=index_name, ignore=[400, 404])
-
-
-def wait_es(max_retries: int = 10, delay: float = 2.0) -> bool:
+def wait_elasticsearch(max_retries: int = 10, delay: float = 2.0) -> bool:
     for _ in range(max_retries):
         try:
             if es_client.ping():
@@ -348,7 +428,7 @@ def wait_es(max_retries: int = 10, delay: float = 2.0) -> bool:
     return False
 
 
-def get_total() -> int:
+def get_count() -> int:
     try:
         return es_client.count(index=index_name)["count"]
     except NotFoundError:
@@ -357,7 +437,7 @@ def get_total() -> int:
         return 0
 
 
-def get_name() -> str:
+def get_index() -> str:
     return index_name
 
 

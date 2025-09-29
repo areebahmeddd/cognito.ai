@@ -48,6 +48,11 @@ export default function CasePage() {
     useState("All Events");
   const [selectedTimelineTime, setSelectedTimelineTime] = useState("All Time");
   const [hasSearched, setHasSearched] = useState(false);
+  const [fileMetadata, setFileMetadata] = useState<{
+    file_name: string;
+    files_count: number;
+    files_list: string[];
+  } | null>(null);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   const [selectedNetworkFilter, setSelectedNetworkFilter] =
     useState("All Contacts");
@@ -839,7 +844,7 @@ export default function CasePage() {
 
     setLoading(true);
     try {
-      const searchResult = await searchQuery(query);
+      const searchResult = await searchQuery(query, caseId);
       setHasSearched(true);
       setResults(searchResult.results);
       setSearchData({
@@ -876,6 +881,8 @@ export default function CasePage() {
             caseId={caseId}
             searchData={searchData}
             results={results}
+            fileMetadata={fileMetadata}
+            onFileUploaded={setFileMetadata}
           />
 
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
@@ -1051,12 +1058,12 @@ export default function CasePage() {
                       </div>
 
                       {hasSearched && (
-                        <div className="mb-4 p-3 bg-[#F8F8F8] dark:bg-[#0F0F0F] rounded-lg border border-[#FF7F50] dark:border-[#FF7F50]">
+                        <div className="mb-4 p-3 bg-[#F8F8F8] dark:bg-[#0F0F0F] rounded-lg border border-[#10B981] dark:border-[#10B981]">
                           <div className="flex items-center gap-2 mb-2">
-                            <div className="w-4 h-4 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-full flex items-center justify-center relative">
-                              <div className="absolute inset-0 bg-[#FF7F50] rounded-full animate-gentle-glow opacity-30"></div>
+                            <div className="w-4 h-4 bg-[#F0FDF4] dark:bg-[#0F1A0F] rounded-full flex items-center justify-center relative">
+                              <div className="absolute inset-0 bg-[#10B981] rounded-full animate-gentle-glow opacity-30"></div>
                               <svg
-                                className="w-2 h-2 text-[#FF7F50] relative z-10"
+                                className="w-2 h-2 text-[#10B981] relative z-10"
                                 fill="currentColor"
                                 viewBox="0 0 8 8"
                               >
@@ -1176,7 +1183,7 @@ export default function CasePage() {
                         <div className="space-y-4 p-4">
                           {filteredResults.map((ev, index) => (
                             <div
-                              key={ev.id}
+                              key={`${ev.id || ev.artifact_id || "row"}-${index}`}
                               className="bg-[#F8F8F8] dark:bg-[#0F0F0F] border border-[#FF7F50] dark:border-[#FF7F50] rounded-lg overflow-hidden"
                             >
                               <div className="flex items-center justify-between p-4 border-b border-[#FF7F50] dark:border-[#FF7F50] bg-[#FFF5F0] dark:bg-[#2A1A0F]">

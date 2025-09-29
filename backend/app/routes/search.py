@@ -1,8 +1,11 @@
+from typing import Any, Dict
+
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any
+
 from ..models.schemas import QueryRequest, UFDRDocument
 from ..services.agent import analyze_intent, build_query
 from ..services.elasticsearch import es_client, index_name
+
 
 router = APIRouter()
 
@@ -12,6 +15,19 @@ async def search_query(request: QueryRequest) -> Dict[str, Any]:
     try:
         intent_plan = analyze_intent(request.query)
         elasticsearch_dsl = build_query(intent_plan)
+
+        if "query" in elasticsearch_dsl:
+            if "bool" not in elasticsearch_dsl["query"]:
+                elasticsearch_dsl["query"] = {
+                    "bool": {"must": [elasticsearch_dsl["query"]]}
+                }
+
+            if "filter" not in elasticsearch_dsl["query"]["bool"]:
+                elasticsearch_dsl["query"]["bool"]["filter"] = []
+
+            elasticsearch_dsl["query"]["bool"]["filter"].append(
+                {"term": {"case_id": request.case_id}}
+            )
 
         search_response = es_client.search(index=index_name, body=elasticsearch_dsl)
         raw_documents = [

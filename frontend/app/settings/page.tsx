@@ -2,6 +2,7 @@
 
 import DashboardNavbar from "@/components/DashboardNavbar";
 import Footer from "@/components/Footer";
+import { Trash2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -279,6 +280,30 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div>
                         <p className="text-[#2A2A2A] dark:text-[#E0E0E0] font-medium">
+                          Two-Factor Authentication (2FA)
+                        </p>
+                        <p className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0]">
+                          Add an extra layer of security to your account
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0]">
+                          Disabled
+                        </span>
+                        <button
+                          disabled
+                          className="px-3 py-1.5 bg-[#E0E0E0] dark:bg-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] rounded-md text-sm font-medium whitespace-nowrap w-24 cursor-not-allowed opacity-50"
+                        >
+                          Enable 2FA
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-[#E0E0E0] dark:border-[#2A2A2A] pt-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="text-[#2A2A2A] dark:text-[#E0E0E0] font-medium">
                           Delete Account
                         </p>
                         <p className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0]">
@@ -302,27 +327,40 @@ export default function SettingsPage() {
       </div>
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#E0E0E0] dark:border-[#2A2A2A] p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0] mb-2">
-              Delete Account
-            </h3>
-            <p className="text-[#4A4A4A] dark:text-[#B0B0B0] mb-6">
-              Are you sure you want to delete your account? This action cannot
-              be undone and will permanently remove all your data.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={handleDeleteAccount}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium"
-              >
-                Yes, Delete Account
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={() => setShowDeleteConfirm(false)}
+          />
+
+          <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A]">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="h-10 w-10 rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] flex items-center justify-center flex-shrink-0">
+                <Trash2 className="h-5 w-5 text-[#FF7F50]" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0] mb-1">
+                  Delete Account
+                </h2>
+                <p className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0]">
+                  Are you sure you want to delete your account? This action
+                  cannot be undone and will permanently remove all your data.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 px-4 py-2 bg-[#E0E0E0] dark:bg-[#2A2A2A] text-[#2A2A2A] dark:text-[#E0E0E0] rounded-md text-sm font-medium"
+                className="border-[#E0E0E0] dark:border-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+              >
+                Yes, Delete Account
               </button>
             </div>
           </div>

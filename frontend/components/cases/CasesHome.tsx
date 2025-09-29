@@ -14,27 +14,84 @@ import { Archive, ArchiveRestore, Edit, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-const STORAGE_KEY = "cognito-cases";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-function loadCases(): CaseItem[] {
-  if (typeof window === "undefined") return [];
+interface BackendCase {
+  case_id: string;
+  case_name: string;
+  description: string;
+  device_id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  metadata: any;
+  files_count: number;
+}
+
+async function loadCases(): Promise<CaseItem[]> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as CaseItem[];
-  } catch {
+    const response = await fetch(`${API_BASE_URL}/cases/`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch cases");
+    }
+    const data = await response.json();
+    const backendCases: BackendCase[] = data.cases || [];
+
+    return backendCases.map((caseData) => {
+      const uploads = Array.isArray(caseData?.metadata?.uploads)
+        ? caseData.metadata.uploads
+        : [];
+      const totalUploads = uploads.length;
+      return {
+        id: caseData.case_id,
+        title: caseData.case_name,
+        description: caseData.description,
+        updatedAt: caseData.updated_at,
+        createdAt: caseData.created_at,
+        color: ["#FF7F50", "#FF7F50", "#FF7F50", "#FF7F50", "#FF7F50"][
+          Math.floor(Math.random() * 5)
+        ],
+        files: [],
+        status: caseData.status,
+        filesCount: totalUploads,
+      };
+    });
+  } catch (error) {
     return [];
   }
 }
 
-function saveCases(items: CaseItem[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+async function deleteCase(caseId: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/cases/${caseId}`, {
+      method: "DELETE",
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
 }
 
-function seedIfEmpty() {
-  saveCases([]);
-  return [];
+async function archiveCase(caseId: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/cases/${caseId}/archive`, {
+      method: "POST",
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function activateCase(caseId: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/cases/${caseId}/activate`, {
+      method: "POST",
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
 }
 
 export default function CasesHome() {
@@ -48,6 +105,8 @@ export default function CasesHome() {
     id: string;
     title: string;
   } | null>(null);
+  const [isDeletingCase, setIsDeletingCase] = useState(false);
+  const [indexById, setIndexById] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchCases();
@@ -55,26 +114,25 @@ export default function CasesHome() {
 
   const fetchCases = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cases/`);
-      if (response.ok) {
-        const data = await response.json();
-        const frontendCases = data.cases.map((caseItem: any) => ({
-          id: caseItem.id,
-          title: caseItem.title,
-          updatedAt: caseItem.updated_at,
-          color: ["#FF7F50", "#FF7F50", "#FF7F50", "#FF7F50", "#FF7F50"][
-            Math.floor(Math.random() * 5)
-          ],
-        }));
-        setItems(frontendCases);
-        saveCases(frontendCases);
-      } else {
-        setItems(seedIfEmpty());
-      }
+      const cases = await loadCases();
+      const indexMap: Record<string, number> = {};
+      cases.forEach((c, i) => {
+        indexMap[c.id] = i + 1;
+      });
+
+      const activeCases = cases.filter((c) => c.status !== "archived");
+      const archivedCases = cases
+        .filter((c) => c.status === "archived")
+        .sort(
+          (a, b) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+        );
+      setItems(activeCases);
+      setArchivedItems(archivedCases);
+      setIndexById(indexMap);
     } catch (error) {
-      setItems(seedIfEmpty());
       toast.error("Failed to load cases", {
-        description: "Using local data",
+        description: "Please try again later",
       });
     }
   };
@@ -92,7 +150,7 @@ export default function CasesHome() {
     window.location.href = `/cases/${id}`;
   };
 
-  const handleMenuAction = (id: string, action: string) => {
+  const handleMenuAction = async (id: string, action: string) => {
     switch (action) {
       case "edit":
         const caseToEdit = items.find((item) => item.id === id);
@@ -110,54 +168,73 @@ export default function CasesHome() {
         }
         break;
       case "archive":
-        const caseToArchive = items.find((item) => item.id === id);
-        if (caseToArchive) {
-          const updated = items.filter((item) => item.id !== id);
-          setItems(updated);
-          saveCases(updated);
-          setArchivedItems((prev) => [...prev, caseToArchive]);
+        const success = await archiveCase(id);
+        if (success) {
+          toast.success("Case archived");
+          fetchCases();
+        } else {
+          toast.error("Failed to archive case");
         }
         break;
       case "unarchive":
-        const caseToUnarchive = archivedItems.find((item) => item.id === id);
-        if (caseToUnarchive) {
-          const updated = archivedItems.filter((item) => item.id !== id);
-          setArchivedItems(updated);
-          setItems((prev) => [...prev, caseToUnarchive]);
-          saveCases([...items, caseToUnarchive]);
+        const activateSuccess = await activateCase(id);
+        if (activateSuccess) {
+          toast.success("Case activated");
+          fetchCases();
+        } else {
+          toast.error("Failed to activate case");
         }
         break;
     }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (deleteConfirm) {
-      if (showArchived) {
-        const updated = archivedItems.filter(
-          (item) => item.id !== deleteConfirm.id,
-        );
-        setArchivedItems(updated);
+      setIsDeletingCase(true);
+      const success = await deleteCase(deleteConfirm.id);
+      if (success) {
+        toast.success("Case deleted");
+        fetchCases();
       } else {
-        const updated = items.filter((item) => item.id !== deleteConfirm.id);
-        setItems(updated);
-        saveCases(updated);
+        toast.error("Failed to delete case");
       }
+      setIsDeletingCase(false);
       setDeleteConfirm(null);
     }
   };
 
-  const handleEditSuccess = (updatedCase: CaseItem) => {
-    const updated = items.map((item) =>
-      item.id === updatedCase.id ? updatedCase : item,
-    );
-    setItems(updated);
-    saveCases(updated);
+  const handleEditSuccess = async (updatedCase: CaseItem) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/cases/${updatedCase.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          case_name: updatedCase.title,
+          description: updatedCase.description,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Case updated");
+        fetchCases();
+      } else {
+        toast.error("Failed to update case");
+      }
+    } catch (error) {
+      toast.error("Failed to update case");
+    }
+
     setIsEditModalOpen(false);
     setEditingCase(null);
   };
 
   return (
     <>
+      {isModalOpen && (
+        <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]" />
+      )}
       <div className="mx-auto max-w-7xl px-6 py-8">
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -175,7 +252,7 @@ export default function CasesHome() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowArchived(!showArchived)}
-                className="px-4 py-2 text-sm font-medium text-[#4A4A4A] dark:text-[#B0B0B0] border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-lg hover:bg-[#F8F8F8] dark:hover:bg-[#2A2A2A] transition-colors duration-200"
+                className="px-4 py-2 text-sm font-medium text-[#4A4A4A] dark:text-[#B0B0B0] border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-lg transition-colors duration-200 hover:text-[#FF7F50] hover:border-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F]"
               >
                 {showArchived
                   ? `View Active (${items.length})`
@@ -188,8 +265,12 @@ export default function CasesHome() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {!showArchived && <NewCaseCard onCreate={handleCreate} />}
           {(showArchived ? archivedItems : items).map((item, index) => (
-            <div key={item.id} className="relative group">
-              <CaseCard item={item} onOpen={handleOpen} index={index} />
+            <div key={`${item.id}-${index}`} className="relative group">
+              <CaseCard
+                item={item}
+                onOpen={handleOpen}
+                index={Math.max((indexById[item.id] ?? index) - 1, 0)}
+              />
               <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -274,43 +355,46 @@ export default function CasesHome() {
       />
 
       {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md mx-4 rounded-xl bg-white dark:bg-[#1A1A1A] border border-[#E0E0E0] dark:border-[#2A2A2A] shadow-xl">
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
-                    Delete Case
-                  </h3>
-                  <p className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0]">
-                    This action cannot be undone
-                  </p>
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={() => setDeleteConfirm(null)}
+          />
+
+          <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A]">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="h-10 w-10 rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] flex items-center justify-center flex-shrink-0">
+                <Trash2 className="h-5 w-5 text-[#FF7F50]" />
               </div>
-              <p className="text-[#4A4A4A] dark:text-[#B0B0B0] mb-6">
-                Are you sure you want to delete{" "}
-                <span className="font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
-                  "{deleteConfirm.title}"
-                </span>
-                ? This will permanently remove the case and all its data.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setDeleteConfirm(null)}
-                  className="px-4 py-2 text-sm font-medium text-[#4A4A4A] dark:text-[#B0B0B0] border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-lg hover:bg-[#F8F8F8] dark:hover:bg-[#2A2A2A] transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200"
-                >
+              <div className="flex-1">
+                <h2 className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0] mb-1">
                   Delete Case
-                </button>
+                </h2>
+                <p className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0]">
+                  Are you sure you want to delete{" "}
+                  <span className="font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
+                    "{deleteConfirm.title}"
+                  </span>
+                  ? This will permanently remove the case and all its data.
+                </p>
               </div>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => !isDeletingCase && setDeleteConfirm(null)}
+                className="border-[#E0E0E0] dark:border-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+                disabled={isDeletingCase}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+                disabled={isDeletingCase}
+              >
+                {isDeletingCase ? "Deleting..." : "Yes, Delete Case"}
+              </button>
             </div>
           </div>
         </div>

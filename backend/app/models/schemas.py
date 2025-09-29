@@ -186,6 +186,7 @@ class UFDRDocument(BaseModel):
 
 class QueryRequest(BaseModel):
     query: str
+    case_id: str
 
 
 class CreateCaseRequest(BaseModel):

@@ -161,15 +161,11 @@ export default function CreateCaseModal({
   const handleSubmit = async () => {
     if (!caseName.trim()) {
       setError("Case name is required");
-      toast.error("Case name is required");
       return;
     }
 
     if (caseName.trim().length < 3) {
       setError("Case name must be at least 3 characters long");
-      toast.error("Case name is too short", {
-        description: "Minimum 3 characters",
-      });
       return;
     }
 
@@ -271,13 +267,6 @@ export default function CreateCaseModal({
         })),
       };
 
-      const STORAGE_KEY = "cognito-cases";
-      const existingCases = JSON.parse(
-        localStorage.getItem(STORAGE_KEY) || "[]",
-      );
-      const updatedCases = [...existingCases, frontendCaseData];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCases));
-
       onSuccess(frontendCaseData);
       onClose();
 
@@ -292,7 +281,6 @@ export default function CreateCaseModal({
           ? error.message
           : "Failed to create case. Please try again.";
       setError(message);
-      toast.error("Operation failed", { description: message });
     } finally {
       clearInterval(statusInterval);
       setIsUploading(false);
@@ -317,11 +305,13 @@ export default function CreateCaseModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+        className={`absolute inset-0 bg-black/20 backdrop-blur-sm ${isUploading ? "pointer-events-none" : ""}`}
         onClick={handleClose}
       />
 
-      <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A] max-h-[90vh] overflow-y-auto">
+      <div
+        className={`relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A] max-h-[90vh] overflow-y-auto ${isUploading ? "pointer-events-none" : ""}`}
+      >
         <button
           onClick={handleClose}
           className="absolute top-3 right-3 p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"

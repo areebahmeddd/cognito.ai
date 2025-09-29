@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CaseItem } from "./CaseCard";
 
@@ -23,7 +23,14 @@ export default function EditCaseModal({
   caseItem,
 }: EditCaseModalProps) {
   const [caseName, setCaseName] = useState(caseItem?.title || "");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(caseItem?.description || "");
+
+  useEffect(() => {
+    if (caseItem) {
+      setCaseName(caseItem.title || "");
+      setDescription(caseItem.description || "");
+    }
+  }, [caseItem]);
 
   const handleSave = () => {
     if (!caseItem || !caseName.trim()) {
@@ -43,19 +50,17 @@ export default function EditCaseModal({
     const updatedCase: CaseItem = {
       ...caseItem,
       title: caseName.trim(),
+      description: description.trim(),
       updatedAt: new Date().toISOString(),
     };
 
     onSave(updatedCase);
-    toast.success("Case updated successfully", {
-      description: `"${caseName.trim()}" has been saved`,
-    });
     onClose();
   };
 
   const handleClose = () => {
     setCaseName(caseItem?.title || "");
-    setDescription("");
+    setDescription(caseItem?.description || "");
     onClose();
   };
 

@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     elasticsearch_url: str
     elasticsearch_index: str
     gemini_api_key: str
+    mongodb_connection_string: str
 
     class Config:
         env_file = ".env"
