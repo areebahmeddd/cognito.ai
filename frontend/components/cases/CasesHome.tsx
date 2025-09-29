@@ -269,7 +269,7 @@ export default function CasesHome() {
               <CaseCard
                 item={item}
                 onOpen={handleOpen}
-                index={indexById[item.id] ?? index}
+                index={Math.max((indexById[item.id] ?? index) - 1, 0)}
               />
               <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <DropdownMenu>

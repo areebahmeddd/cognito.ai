@@ -18,6 +18,7 @@ def bulk_index(
     case_id: str | None = None,
     device_id: str | None = None,
     file_hash: str | None = None,
+    zip_name: str | None = None,
 ) -> Dict[str, Any]:
     def iter_docs(paths: List[str]):
         for path in paths:
@@ -33,6 +34,8 @@ def bulk_index(
                             doc["device_id"] = device_id
                         if file_hash:
                             doc["file_hash"] = file_hash
+                        if zip_name:
+                            doc["zip_name"] = zip_name
                         yield {"_index": index_name, "_source": doc}
                 else:
                     doc = data
@@ -42,6 +45,8 @@ def bulk_index(
                         doc["device_id"] = device_id
                     if file_hash:
                         doc["file_hash"] = file_hash
+                    if zip_name:
+                        doc["zip_name"] = zip_name
                     yield {"_index": index_name, "_source": doc}
             except Exception:
                 continue
@@ -102,6 +107,7 @@ def create_index() -> None:
                 "case_id": {"type": "keyword"},
                 "device_id": {"type": "keyword"},
                 "file_hash": {"type": "keyword"},
+                "zip_name": {"type": "keyword"},
                 "artifact_id": {"type": "keyword"},
                 "timestamp": {
                     "type": "date",
@@ -370,6 +376,27 @@ def delete_file(case_id: str, json_file_name: str) -> Dict[str, Any]:
         )
         es_client.indices.refresh(index=index_name)
 
+        return {"deleted_count": response.get("deleted", 0), "status": "success"}
+    except Exception as e:
+        return {"deleted_count": 0, "status": "error", "error": str(e)}
+
+
+def delete_upload(case_id: str, zip_name: str) -> Dict[str, Any]:
+    try:
+        query = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"case_id": case_id}},
+                        {"term": {"zip_name": zip_name}},
+                    ]
+                }
+            }
+        }
+        response = es_client.delete_by_query(
+            index=index_name, body=query, conflicts="proceed"
+        )
+        es_client.indices.refresh(index=index_name)
         return {"deleted_count": response.get("deleted", 0), "status": "success"}
     except Exception as e:
         return {"deleted_count": 0, "status": "error", "error": str(e)}

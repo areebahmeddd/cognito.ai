@@ -520,17 +520,17 @@ export default function CaseSidebar({
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `court-report-${caseId}.pdf`;
+      link.download = `${caseId}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      toast.error("Export Failed", {
+      toast.error("Export failed", {
         description:
           error instanceof Error
             ? error.message
-            : "Unable to generate court report. Please try again.",
+            : "Unable to generate the court report. Please try again.",
       });
     }
   }, [searchData, results, caseId]);
@@ -999,7 +999,7 @@ export default function CaseSidebar({
             <button
               onClick={handleExportCourtReport}
               disabled={!searchData || !results}
-              className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:scale-[1.02] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg
                 className="mr-2 h-4 w-4"
@@ -1016,7 +1016,14 @@ export default function CaseSidebar({
               </svg>
               Court Report
             </button>
-            <button className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] transition-colors">
+            <button
+              onClick={() =>
+                toast.info("All Evidence", {
+                  description: "This feature is under development.",
+                })
+              }
+              className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:scale-[1.02] transition-transform"
+            >
               <svg
                 className="mr-2 h-4 w-4"
                 fill="none"
@@ -1032,7 +1039,14 @@ export default function CaseSidebar({
               </svg>
               All Evidence
             </button>
-            <button className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] transition-colors">
+            <button
+              onClick={() =>
+                toast.info("Timeline", {
+                  description: "This feature is under development.",
+                })
+              }
+              className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:scale-[1.02] transition-transform"
+            >
               <svg
                 className="mr-2 h-4 w-4"
                 fill="none"
@@ -1048,7 +1062,14 @@ export default function CaseSidebar({
               </svg>
               Timeline
             </button>
-            <button className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] transition-colors">
+            <button
+              onClick={() =>
+                toast.info("Network", {
+                  description: "This feature is under development.",
+                })
+              }
+              className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:scale-[1.02] transition-transform"
+            >
               <svg
                 className="mr-2 h-4 w-4"
                 fill="none"

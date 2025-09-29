@@ -230,6 +230,7 @@ async def store_file(file_data: Dict[str, Any]) -> str:
             "case_id": file_data.get("case_id"),
             "device_id": file_data.get("device_id"),
             "file_name": file_data.get("file_name"),
+            "zip_name": file_data.get("zip_name"),
             "source_path": file_data.get("source_path"),
             "records": file_data.get("records", []),
             "record_count": file_data.get("record_count", 0),

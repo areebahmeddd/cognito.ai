@@ -14,7 +14,10 @@ from ..services.mongodb import (
     archive_case as mongo_archive_case,
     activate_case as mongo_activate_case,
 )
-from ..services.elasticsearch import delete_documents, delete_file
+from ..services.elasticsearch import (
+    delete_documents,
+    delete_upload as es_delete_upload,
+)
 
 
 router = APIRouter()
@@ -70,6 +73,50 @@ async def get_files(case_id: str):
         return JSONResponse(content={"files": files, "uploads": uploads})
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to get case files")
+
+
+@router.get("/{case_id}/files/{file_name}")
+async def get_file(case_id: str, file_name: str):
+    try:
+        from ..services.mongodb import get_case, files_collection
+
+        case_obj = await get_case(case_id)
+        if not case_obj:
+            raise HTTPException(status_code=404, detail="Case not found")
+
+        json_file_name = file_name.replace(".tsv", ".json")
+        file_doc = await files_collection.find_one(
+            {"case_id": case_id, "file_name": json_file_name}
+        )
+
+        if not file_doc:
+            raise HTTPException(
+                status_code=404, detail="File data not found in database"
+            )
+
+        records = file_doc.get("records", [])
+        response_data = {
+            "file_name": file_name,
+            "json_file_name": json_file_name,
+            "case_id": case_id,
+            "case_name": case_obj.get("case_name", "Unknown"),
+            "total_records": len(records),
+            "records": records,
+            "file_metadata": {
+                "source_path": file_doc.get("source_path", ""),
+                "record_count": file_doc.get("record_count", 0),
+                "created_at": file_doc.get("created_at", ""),
+                "updated_at": file_doc.get("updated_at", ""),
+            },
+        }
+
+        return JSONResponse(content=response_data)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get file content: {str(e)}"
+        )
 
 
 @router.put("/{case_id}")
@@ -133,50 +180,6 @@ async def activate_case(case_id: str):
         raise HTTPException(status_code=500, detail="Failed to activate case")
 
 
-@router.get("/{case_id}/files/{file_name}")
-async def get_file(case_id: str, file_name: str):
-    try:
-        from ..services.mongodb import get_case, files_collection
-
-        case_obj = await get_case(case_id)
-        if not case_obj:
-            raise HTTPException(status_code=404, detail="Case not found")
-
-        json_file_name = file_name.replace(".tsv", ".json")
-        file_doc = await files_collection.find_one(
-            {"case_id": case_id, "file_name": json_file_name}
-        )
-
-        if not file_doc:
-            raise HTTPException(
-                status_code=404, detail="File data not found in database"
-            )
-
-        records = file_doc.get("records", [])
-        response_data = {
-            "file_name": file_name,
-            "json_file_name": json_file_name,
-            "case_id": case_id,
-            "case_name": case_obj.get("case_name", "Unknown"),
-            "total_records": len(records),
-            "records": records,
-            "file_metadata": {
-                "source_path": file_doc.get("source_path", ""),
-                "record_count": file_doc.get("record_count", 0),
-                "created_at": file_doc.get("created_at", ""),
-                "updated_at": file_doc.get("updated_at", ""),
-            },
-        }
-
-        return JSONResponse(content=response_data)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get file content: {str(e)}"
-        )
-
-
 @router.delete("/{case_id}/uploads/{zip_name}")
 async def delete_upload(case_id: str, zip_name: str):
     try:
@@ -203,9 +206,8 @@ async def delete_upload(case_id: str, zip_name: str):
         await files_collection.delete_many({"case_id": case_id, "zip_name": zip_name})
 
         es_deleted = 0
-        for json_name in json_names:
-            es_result = delete_file(case_id, json_name)
-            es_deleted += es_result.get("deleted_count", 0)
+        es_result = es_delete_upload(case_id, zip_name)
+        es_deleted = es_result.get("deleted_count", 0)
 
         metadata = case_obj.get("metadata", {}) or {}
         uploads = metadata.get("uploads", []) if isinstance(metadata, dict) else []

@@ -114,7 +114,9 @@ async def upload_file(
 
         indexing_result = {"success_count": 0, "error_count": 0, "files_processed": 0}
         if temp_dir and os.path.isdir(temp_dir):
-            indexing_result = bulk_index(temp_dir, case_id, device_id, file_hash)
+            indexing_result = bulk_index(
+                temp_dir, case_id, device_id, file_hash, file.filename
+            )
 
         if indexing_result["success_count"] > 0:
             try:
