@@ -48,6 +48,7 @@ async def create_case(case_data: Dict[str, Any]) -> str:
             "metadata": case_data.get("metadata", {}),
         }
         result = await cases_collection.insert_one(case_doc)
+        print(f"[mongo] case created {case_doc.get('case_id')}", flush=True)
         return str(result.inserted_id)
     except Exception as e:
         raise Exception(f"Failed to create case: {str(e)}")
@@ -131,6 +132,8 @@ async def update_case(case_id: str, case_data: Dict[str, Any]) -> Dict[str, Any]
         result = await cases_collection.update_one(
             {"case_id": case_id}, {"$set": update_data}
         )
+        if result.modified_count:
+            print(f"[mongo] case updated {case_id}", flush=True)
         return await get_case(case_id) if result.modified_count > 0 else None
     except Exception as e:
         raise Exception(f"Failed to update case: {str(e)}")
@@ -140,6 +143,8 @@ async def delete_case(case_id: str) -> bool:
     try:
         case_result = await cases_collection.delete_one({"case_id": case_id})
         await files_collection.delete_many({"case_id": case_id})
+        if case_result.deleted_count:
+            print(f"[mongo] case deleted {case_id}", flush=True)
         return case_result.deleted_count > 0
     except Exception as e:
         raise Exception(f"Failed to delete case: {str(e)}")

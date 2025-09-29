@@ -58,6 +58,10 @@ def bulk_index(
     ]
 
     try:
+        print(
+            f"[es] indexing {len(json_files)} json files into '{index_name}'",
+            flush=True,
+        )
         success, errors = helpers.bulk(
             es_client,
             iter_docs(json_files),
@@ -67,11 +71,13 @@ def bulk_index(
 
         es_client.indices.refresh(index=index_name)
 
-        return {
+        result = {
             "success_count": success,
             "error_count": len(errors) if errors else 0,
             "files_processed": len(json_files),
         }
+        print(f"[es] indexed => {result}", flush=True)
+        return result
     except Exception:
         return {
             "success_count": 0,

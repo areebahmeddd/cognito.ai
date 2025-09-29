@@ -1,3 +1,4 @@
+import os
 import uuid
 from typing import Any, Dict
 
@@ -85,8 +86,14 @@ async def get_file(case_id: str, file_name: str):
             raise HTTPException(status_code=404, detail="Case not found")
 
         json_file_name = file_name.replace(".tsv", ".json")
+        normalized = "".join(
+            char
+            for char in os.path.basename(json_file_name)
+            if char.isalnum() or char in "._-"
+        )
+        candidates = [json_file_name, normalized]
         file_doc = await files_collection.find_one(
-            {"case_id": case_id, "file_name": json_file_name}
+            {"case_id": case_id, "file_name": {"$in": candidates}}
         )
 
         if not file_doc:

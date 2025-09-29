@@ -13,6 +13,7 @@ gemini_model = genai.GenerativeModel(model_name="gemini-2.5-flash-lite")
 
 def classify_file(filename: str) -> Dict[str, str]:
     try:
+        print(f"[ai] classify_file: {filename}", flush=True)
         clean_name = clean_filename(filename)
         result = classify_ai(clean_name)
         return validate_result(result)
@@ -22,6 +23,7 @@ def classify_file(filename: str) -> Dict[str, str]:
 
 def batch_classify(filenames: list[str]) -> Dict[str, Dict[str, str]]:
     try:
+        print(f"[ai] batch_classify: {len(filenames)} files", flush=True)
         clean_filenames = [clean_filename(f) for f in filenames]
         result = batch_classify_ai(clean_filenames)
 
@@ -32,6 +34,7 @@ def batch_classify(filenames: list[str]) -> Dict[str, Dict[str, str]]:
             else:
                 raise Exception("Missing classification result")
 
+        print(f"[ai] batch_classify: ok -> {len(classifications)}", flush=True)
         return classifications
     except Exception as e:
         raise Exception(f"Batch classification failed: {str(e)}")
@@ -71,6 +74,7 @@ Examples:
 JSON Response:"""
 
     try:
+        print("[ai] classify_ai: request", flush=True)
         response = gemini_model.generate_content(prompt)
         response_text = response.text.strip()
 
@@ -124,6 +128,7 @@ Examples:
 JSON Response:"""
 
     try:
+        print(f"[ai] batch_classify_ai: request for {len(filenames)}", flush=True)
         response = gemini_model.generate_content(prompt)
         response_text = response.text.strip()
 

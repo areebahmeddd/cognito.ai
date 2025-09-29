@@ -23,9 +23,18 @@ def process_files(
     os.makedirs(input_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
 
+    print(
+        f"[parser] extracting {len(tsv_files)} TSV from {os.path.basename(zip_path)}",
+        flush=True,
+    )
     extracted_files = extract_files(zip_path, tsv_files, input_dir)
     filenames = [os.path.basename(f) for f in extracted_files]
+    # temporary disable batch classification due to memory issues with large files + ai rate limit
+    # try:
+    print(f"[parser] classifying {len(filenames)} files", flush=True)
     file_classifications = batch_classify(filenames)
+    # except Exception:
+    #     file_classifications = {filename: {"type": "Unknown Data", "category": "general data"} for filename in filenames}
 
     successful = 0
     total_records = 0
@@ -42,6 +51,10 @@ def process_files(
             successful += 1
             total_records += num_records
 
+    print(
+        f"[parser] converted {successful}/{len(extracted_files)} files -> {total_records} records",
+        flush=True,
+    )
     return {
         "temp_dir": output_dir,
         "files_converted": successful,

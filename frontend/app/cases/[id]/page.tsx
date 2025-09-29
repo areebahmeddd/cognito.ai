@@ -1183,7 +1183,7 @@ export default function CasePage() {
                         <div className="space-y-4 p-4">
                           {filteredResults.map((ev, index) => (
                             <div
-                              key={ev.id}
+                              key={`${ev.id || ev.artifact_id || "row"}-${index}`}
                               className="bg-[#F8F8F8] dark:bg-[#0F0F0F] border border-[#FF7F50] dark:border-[#FF7F50] rounded-lg overflow-hidden"
                             >
                               <div className="flex items-center justify-between p-4 border-b border-[#FF7F50] dark:border-[#FF7F50] bg-[#FFF5F0] dark:bg-[#2A1A0F]">

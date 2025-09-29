@@ -11,9 +11,19 @@ gemini_model = genai.GenerativeModel(model_name="gemini-2.5-flash")
 
 
 def analyze_intent(query: str) -> Dict[str, Any]:
+    # temporary disable gemini due to ai rate limit
+    # try:
+    print(f"[agent] analyze: '{query}'", flush=True)
     text = create_prompt(query)
     response = gemini_model.generate_content(text)
     content = (getattr(response, "text", "") or "").strip()
+    # except Exception:
+    #     return {
+    #         "search_types": ["general"],
+    #         "exact_match": False,
+    #         "keywords": [query],
+    #         "query_intent": "forensic_analysis",
+    #     }
 
     if "```json" in content:
         try:
@@ -58,6 +68,10 @@ def analyze_intent(query: str) -> Dict[str, Any]:
     intent_plan.setdefault("keywords", [query])
     intent_plan.setdefault("query_intent", "forensic_analysis")
 
+    print(
+        f"[agent] plan: types={intent_plan.get('search_types')} exact={intent_plan.get('exact_match')} keywords={len(intent_plan.get('keywords', []))}",
+        flush=True,
+    )
     return intent_plan
 
 
@@ -67,6 +81,10 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
     fields: Optional[List[str]] = plan.get("fields")
     exact_match: bool = bool(plan.get("exact_match", False))
     keywords: List[str] = plan.get("keywords", [])
+    print(
+        f"[agent] build: types={search_types} time_range={time_range} exact={exact_match} kw={keywords[:3]}",
+        flush=True,
+    )
 
     field_mappings = {
         "communications": [

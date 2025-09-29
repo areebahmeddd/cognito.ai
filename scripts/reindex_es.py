@@ -10,22 +10,22 @@ def main() -> None:
 
     from app.services.elasticsearch import (
         es_client,
-        get_name,
-        get_total,
-        wait_es,
+        get_index,
+        get_count,
+        wait_elasticsearch,
         delete_index,
         create_index,
     )
     from elasticsearch import helpers
 
-    index = get_name()
+    index = get_index()
     json_dir = project / "JSON_Exports"
 
     print("== Elasticsearch Reindex ==")
     print(f"Index: {index}")
 
     print("Waiting for Elasticsearch ...")
-    if not wait_es():
+    if not wait_elasticsearch():
         print("Elasticsearch not reachable")
         sys.exit(2)
 
@@ -38,7 +38,7 @@ def main() -> None:
     print(f"Ingesting from: {json_dir}")
     success, errors = ingest_dir(json_dir, index, es_client, helpers)
 
-    total = get_total()
+    total = get_count()
     print("== Summary ==")
     print(f"Indexed (files sum): {success}")
     print(f"Errors: {errors}")
@@ -100,6 +100,7 @@ def ingest_dir(json_dir: Path, index: str, es_client, helpers) -> Tuple[int, int
                         index=index,
                         body={"query": {"term": {"source_file": file_path.name}}},
                         refresh=True,
+                        conflicts="proceed",
                     )
                 except Exception:
                     pass
@@ -108,7 +109,7 @@ def ingest_dir(json_dir: Path, index: str, es_client, helpers) -> Tuple[int, int
                     print(str(e))
                 total_err += 1
             else:
-                print(f"[INJESTED] {file_path.name}: {ok} docs")
+                print(f"[INGESTED] {file_path.name}: {ok} docs")
                 total_ok += int(ok or 0)
         except Exception as exc:
             try:
@@ -116,6 +117,7 @@ def ingest_dir(json_dir: Path, index: str, es_client, helpers) -> Tuple[int, int
                     index=index,
                     body={"query": {"term": {"source_file": file_path.name}}},
                     refresh=True,
+                    conflicts="proceed",
                 )
             except Exception:
                 pass

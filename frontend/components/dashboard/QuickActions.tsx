@@ -117,7 +117,7 @@ export default function QuickActions({ onCreateCase }: QuickActionsProps) {
           <button
             key={index}
             onClick={action.onClick}
-            className={`${action.color} text-white rounded-lg p-6 flex items-center gap-4 text-left w-full max-w-xs transition-all duration-200 hover:scale-[1.02]`}
+            className={`${action.color} text-white rounded-lg p-6 flex items-center gap-4 text-left w-full max-w-xs transition-all duration-200 hover:scale-[1.02] cursor-pointer`}
           >
             <div className="flex-shrink-0 w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
               {action.icon}

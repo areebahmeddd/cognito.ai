@@ -252,7 +252,7 @@ export default function CasesHome() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowArchived(!showArchived)}
-                className="px-4 py-2 text-sm font-medium text-[#4A4A4A] dark:text-[#B0B0B0] border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-lg hover:bg-[#F8F8F8] dark:hover:bg-[#2A2A2A] transition-colors duration-200"
+                className="px-4 py-2 text-sm font-medium text-[#4A4A4A] dark:text-[#B0B0B0] border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-lg transition-colors duration-200 hover:text-[#FF7F50] hover:border-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F]"
               >
                 {showArchived
                   ? `View Active (${items.length})`
@@ -363,8 +363,8 @@ export default function CasesHome() {
 
           <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A]">
             <div className="flex items-start gap-4 mb-6">
-              <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-                <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <div className="h-10 w-10 rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] flex items-center justify-center flex-shrink-0">
+                <Trash2 className="h-5 w-5 text-[#FF7F50]" />
               </div>
               <div className="flex-1">
                 <h2 className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0] mb-1">
@@ -390,10 +390,10 @@ export default function CasesHome() {
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="bg-red-600 text-white hover:bg-red-700 transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
                 disabled={isDeletingCase}
               >
-                {isDeletingCase ? "Deleting..." : "Delete Case"}
+                {isDeletingCase ? "Deleting..." : "Yes, Delete Case"}
               </button>
             </div>
           </div>

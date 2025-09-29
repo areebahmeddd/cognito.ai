@@ -1,14 +1,7 @@
 "use client";
 
 import CreateCaseModal from "@/components/cases/CreateCaseModal";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+// removed Dialog-based modal; using custom overlay for consistency
 import {
   ChevronDown,
   ChevronRight,
@@ -848,61 +841,7 @@ export default function CaseSidebar({
                             </div>
                           </div>
 
-                          <Dialog
-                            open={isDeleteConfirmOpen}
-                            onOpenChange={setIsDeleteConfirmOpen}
-                          >
-                            <DialogContent className="bg-white dark:bg-[#1A1A1A] border border-[#E0E0E0] dark:border-[#2A2A2A]">
-                              <DialogHeader>
-                                <DialogTitle>Delete upload?</DialogTitle>
-                                <DialogDescription>
-                                  This will remove all parsed files from this
-                                  upload. You can’t undo this action.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="text-sm text-[#666] dark:text-[#999]">
-                                {pendingDeleteZip}
-                              </div>
-                              <DialogFooter>
-                                <button
-                                  className="rounded px-3 py-2 text-sm border border-[#E0E0E0] dark:border-[#2A2A2A]"
-                                  onClick={() => setIsDeleteConfirmOpen(false)}
-                                >
-                                  Cancel
-                                </button>
-                                <button
-                                  className="rounded px-3 py-2 text-sm bg-red-600 text-white"
-                                  onClick={async () => {
-                                    if (!pendingDeleteZip) return;
-                                    try {
-                                      const response = await fetch(
-                                        `${API_BASE_URL}/cases/${caseId}/uploads/${encodeURIComponent(pendingDeleteZip)}`,
-                                        { method: "DELETE" },
-                                      );
-                                      if (!response.ok) {
-                                        toast.error("Failed to delete upload");
-                                      } else {
-                                        setFiles((prev) =>
-                                          (prev || []).filter(
-                                            (g: any) =>
-                                              g.file_name !== pendingDeleteZip,
-                                          ),
-                                        );
-                                        toast.success("Upload deleted");
-                                      }
-                                    } catch (e) {
-                                      toast.error("Error deleting upload");
-                                    } finally {
-                                      setIsDeleteConfirmOpen(false);
-                                      setPendingDeleteZip(null);
-                                    }
-                                  }}
-                                >
-                                  Delete
-                                </button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
+                          {/* Delete confirm overlay rendered globally below */}
                           {isZipFile && (
                             <div className="flex items-center gap-2">
                               {hasRecords && (
@@ -919,7 +858,7 @@ export default function CaseSidebar({
                                 </button>
                               )}
                               <button
-                                className="p-1 rounded hover:bg-[#FDECEC] dark:hover:bg-[#2A1A1A] cursor-pointer"
+                                className="p-1 rounded dark:hover:bg-[#2A1A1A] cursor-pointer"
                                 title="Delete upload"
                                 onClick={() => handleDeleteUpload(f.file_name)}
                               >
@@ -958,10 +897,10 @@ export default function CaseSidebar({
                                     onClick={() => loadMoreFiles(idx)}
                                     className="w-full text-xs text-[#FF7F50] dark:text-[#FF7F50] p-2 rounded cursor-pointer"
                                   >
-                                    +
+                                    View more (+
                                     {f.files_list.length -
-                                      (visibleFileCounts.get(idx) || 10)}{" "}
-                                    more files
+                                      (visibleFileCounts.get(idx) || 10)}
+                                    )
                                   </button>
                                 )}
                               </div>
@@ -1107,7 +1046,9 @@ export default function CaseSidebar({
             }}
           />
 
-          <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A]">
+          <div
+            className={`relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A] ${isUploading ? "pointer-events-none" : ""}`}
+          >
             <button
               onClick={() => {
                 setSelectedFiles([]);
@@ -1115,7 +1056,7 @@ export default function CaseSidebar({
                 setIsUploading(false);
                 setIsFileUploadModalOpen(false);
               }}
-              className="absolute top-3 right-3 p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
+              className="absolute top-3 right-3 p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent focus:ring-0 focus:outline-none"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1266,7 +1207,7 @@ export default function CaseSidebar({
                   setViewingFile(null);
                   setFileContent(null);
                 }}
-                className="p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
+                className="p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent focus:ring-0 focus:outline-none"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1378,57 +1319,72 @@ export default function CaseSidebar({
         </div>
       )}
 
-      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-        <DialogContent className="bg-white dark:bg-[#1A1A1A] border border-[#E0E0E0] dark:border-[#2A2A2A]">
-          <DialogHeader>
-            <DialogTitle>Delete upload?</DialogTitle>
-            <DialogDescription>
-              This will remove all parsed files from this upload. You can’t undo
-              this action.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="text-sm text-[#666] dark:text-[#999]">
-            {pendingDeleteZip}
-          </div>
-          <DialogFooter>
-            <button
-              className="rounded px-3 py-2 text-sm border border-[#E0E0E0] dark:border-[#2A2A2A]"
-              onClick={() => setIsDeleteConfirmOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
-              className="rounded px-3 py-2 text-sm bg-red-600 text-white"
-              onClick={async () => {
-                if (!pendingDeleteZip) return;
-                try {
-                  const response = await fetch(
-                    `${API_BASE_URL}/cases/${caseId}/uploads/${encodeURIComponent(pendingDeleteZip)}`,
-                    { method: "DELETE" },
-                  );
-                  if (!response.ok) {
-                    toast.error("Failed to delete upload");
-                  } else {
-                    setFiles((prev) =>
-                      (prev || []).filter(
-                        (g: any) => g.file_name !== pendingDeleteZip,
-                      ),
+      {isDeleteConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={() => setIsDeleteConfirmOpen(false)}
+          />
+
+          <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A]">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="h-10 w-10 rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] flex items-center justify-center flex-shrink-0">
+                <Trash2 className="h-5 w-5 text-[#FF7F50]" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0] mb-1">
+                  Delete upload
+                </h2>
+                <p className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0]">
+                  Are you sure you want to delete{" "}
+                  <span className="font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
+                    "{pendingDeleteZip}"
+                  </span>
+                  ? This will remove all parsed files from this upload.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                className="border-[#E0E0E0] dark:border-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+                onClick={() => setIsDeleteConfirmOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+                onClick={async () => {
+                  if (!pendingDeleteZip) return;
+                  try {
+                    const response = await fetch(
+                      `${API_BASE_URL}/cases/${caseId}/uploads/${encodeURIComponent(pendingDeleteZip)}`,
+                      { method: "DELETE" },
                     );
-                    toast.success("Upload deleted");
+                    if (!response.ok) {
+                      toast.error("Failed to delete upload");
+                    } else {
+                      setFiles((prev) =>
+                        (prev || []).filter(
+                          (g: any) => g.file_name !== pendingDeleteZip,
+                        ),
+                      );
+                      toast.success("Upload deleted");
+                    }
+                  } catch (e) {
+                    toast.error("Error deleting upload");
+                  } finally {
+                    setIsDeleteConfirmOpen(false);
+                    setPendingDeleteZip(null);
                   }
-                } catch (e) {
-                  toast.error("Error deleting upload");
-                } finally {
-                  setIsDeleteConfirmOpen(false);
-                  setPendingDeleteZip(null);
-                }
-              }}
-            >
-              Delete
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
