@@ -1,47 +1,48 @@
-import os
 import json
+import os
 import time
 from typing import Any, Dict, List
+
 from elasticsearch import Elasticsearch, helpers
 from elasticsearch.exceptions import ConnectionError, NotFoundError
+
 from ..core.config import settings
+
 
 es_client = Elasticsearch(settings.elasticsearch_url)
 index_name = settings.elasticsearch_index
 
 
 def bulk_index(
-    dir_path: str, case_id: str = None, device_id: str = None, file_hash: str = None
+    dir_path: str,
+    case_id: str | None = None,
+    device_id: str | None = None,
+    file_hash: str | None = None,
 ) -> Dict[str, Any]:
     def iter_docs(paths: List[str]):
         for path in paths:
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    if isinstance(data, list):
-                        for doc in data:
-                            if case_id:
-                                doc["case_id"] = case_id
-                            if device_id:
-                                doc["device_id"] = device_id
-                            if file_hash:
-                                doc["file_hash"] = file_hash
-                            yield {
-                                "_index": index_name,
-                                "_source": doc,
-                            }
-                    else:
-                        doc = data
+
+                if isinstance(data, list):
+                    for doc in data:
                         if case_id:
                             doc["case_id"] = case_id
                         if device_id:
                             doc["device_id"] = device_id
                         if file_hash:
                             doc["file_hash"] = file_hash
-                        yield {
-                            "_index": index_name,
-                            "_source": doc,
-                        }
+                        yield {"_index": index_name, "_source": doc}
+                else:
+                    doc = data
+                    if case_id:
+                        doc["case_id"] = case_id
+                    if device_id:
+                        doc["device_id"] = device_id
+                    if file_hash:
+                        doc["file_hash"] = file_hash
+                    yield {"_index": index_name, "_source": doc}
             except Exception:
                 continue
 
@@ -315,6 +316,7 @@ def create_index() -> None:
             },
         },
     }
+
     es_client.indices.create(index=index_name, body=index_settings)
 
 
@@ -362,10 +364,12 @@ def delete_file(case_id: str, json_file_name: str) -> Dict[str, Any]:
                 }
             }
         }
+
         response = es_client.delete_by_query(
             index=index_name, body=query, conflicts="proceed"
         )
         es_client.indices.refresh(index=index_name)
+
         return {"deleted_count": response.get("deleted", 0), "status": "success"}
     except Exception as e:
         return {"deleted_count": 0, "status": "error", "error": str(e)}

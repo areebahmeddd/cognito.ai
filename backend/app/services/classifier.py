@@ -1,8 +1,11 @@
-import re
 import json
-import google.generativeai as genai
+import re
 from typing import Dict
+
+import google.generativeai as genai
+
 from ..core.config import settings
+
 
 genai.configure(api_key=settings.gemini_api_key)
 gemini_model = genai.GenerativeModel(model_name="gemini-2.5-flash-lite")
@@ -21,12 +24,14 @@ def batch_classify(filenames: list[str]) -> Dict[str, Dict[str, str]]:
     try:
         clean_filenames = [clean_filename(f) for f in filenames]
         result = batch_classify_ai(clean_filenames)
+
         classifications = {}
         for i, filename in enumerate(filenames):
             if i < len(result):
                 classifications[filename] = validate_result(result[i])
             else:
                 raise Exception("Missing classification result")
+
         return classifications
     except Exception as e:
         raise Exception(f"Batch classification failed: {str(e)}")
@@ -68,20 +73,18 @@ JSON Response:"""
     try:
         response = gemini_model.generate_content(prompt)
         response_text = response.text.strip()
+
         json_match = re.search(r"\{[^}]*\}", response_text)
-        if json_match:
-            json_str = json_match.group(0)
-            return json.loads(json_str)
-        else:
+        if not json_match:
             raise ValueError("No JSON found in response")
+
+        return json.loads(json_match.group(0))
     except Exception as e:
         raise Exception(f"AI classification failed: {str(e)}")
 
 
 def batch_classify_ai(filenames: list[str]) -> list[Dict[str, str]]:
-    filename_list = "\n".join(
-        [f"{i + 1}. {filename}" for i, filename in enumerate(filenames)]
-    )
+    filename_list = "\n".join(f"{i + 1}. {f}" for i, f in enumerate(filenames))
 
     prompt = f"""
 You are an expert at classifying digital forensics file types. Analyze the following filenames and determine for each:
@@ -123,12 +126,12 @@ JSON Response:"""
     try:
         response = gemini_model.generate_content(prompt)
         response_text = response.text.strip()
+
         json_match = re.search(r"\[.*\]", response_text, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(0)
-            return json.loads(json_str)
-        else:
+        if not json_match:
             raise ValueError("No JSON array found in response")
+
+        return json.loads(json_match.group(0))
     except Exception as e:
         raise Exception(f"Batch AI classification failed: {str(e)}")
 
@@ -161,9 +164,7 @@ def validate_result(result: Dict[str, str]) -> Dict[str, str]:
     if not file_type:
         file_type = "Unknown Data"
 
-    file_type = file_type.title()
-
-    return {"type": file_type, "category": category}
+    return {"type": file_type.title(), "category": category}
 
 
 def clean_filename(filename: str) -> str:
@@ -174,63 +175,3 @@ def clean_filename(filename: str) -> str:
     clean = re.sub(r"[-_]", " ", clean)
     clean = re.sub(r"\s+", " ", clean).strip()
     return clean
-
-
-# def fallback_classification(filename: str) -> Dict[str, str]:
-#     category_map: Dict[str, Dict[str, List[str]]] = {
-#         "messages": {
-#             "type": "Message Data",
-#             "keywords": [
-#                 "whatsapp", "sms", "message", "chat",
-#                 "discord", "teams", "telegram", "viber", "tiktok"
-#             ],
-#         },
-#         "browsing history": {
-#             "type": "Browsing History",
-#             "keywords": [
-#                 "browser", "webhistory", "chrome", "firefox",
-#                 "safari", "duckduckgo", "search"
-#             ],
-#         },
-#         "calls": {
-#             "type": "Call Data",
-#             "keywords": ["call", "phone", "duo", "teamscall"],
-#         },
-#         "contacts": {
-#             "type": "Contact Data",
-#             "keywords": ["contact", "friends", "users", "snapchat"],
-#         },
-#         "location data": {
-#             "type": "Location Data",
-#             "keywords": ["location", "gps", "maps", "waze", "life360"],
-#         },
-#         "account data": {
-#             "type": "Account Data",
-#             "keywords": ["account", "userid", "identity", "login", "user"],
-#         },
-#         "file data": {
-#             "type": "File Data",
-#             "keywords": ["file", "download", "media", "image", "video", "audio"],
-#         },
-#         "notifications": {
-#             "type": "Notification Data",
-#             "keywords": ["notification", "alert", "fcm"],
-#         },
-#         "usage data": {
-#             "type": "Usage Data",
-#             "keywords": ["usage", "battery", "turbo", "wellbeing"],
-#         },
-#     }
-
-#     base_name = (
-#         filename.lower()
-#         .replace(".json", "")
-#         .replace(".tsv", "")
-#         .replace(".txt", "")
-#     )
-
-#     for category, info in category_map.items():
-#         if any(keyword in base_name for keyword in info["keywords"]):
-#             return {"type": info["type"], "category": category}
-
-#     return {"type": "Unknown Data", "category": "general data"}

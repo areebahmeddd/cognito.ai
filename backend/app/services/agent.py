@@ -1,7 +1,10 @@
 import json
+from typing import Any, Dict, List, Optional
+
 import google.generativeai as genai
-from typing import Dict, Any, List, Optional
+
 from ..core.config import settings
+
 
 genai.configure(api_key=settings.gemini_api_key)
 gemini_model = genai.GenerativeModel(model_name="gemini-2.5-flash")
@@ -98,13 +101,7 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
             "name^1.5",
             "value^1.5",
         ],
-        "location": [
-            "place^3",
-            "address^2",
-            "latitude^2",
-            "longitude^2",
-            "altitude^2",
-        ],
+        "location": ["place^3", "address^2", "latitude^2", "longitude^2", "altitude^2"],
         "social": [
             "username^3",
             "display_name^2",
@@ -239,12 +236,7 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
     if keywords:
         target_fields = [
             f for f in combined_fields if f.split("^")[0] in text_like_fields
-        ] or [
-            "message^3",
-            "body^3",
-            "text^3",
-            "title^2",
-        ]
+        ] or ["message^3", "body^3", "text^3", "title^2"]
 
         if len(keywords) > 1:
             for keyword in keywords:
@@ -278,11 +270,12 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
                     )
             query_dsl["query"]["bool"]["minimum_should_match"] = 1
         else:
+            joined = " ".join([str(k) for k in keywords if k])
             if exact_match:
                 query_dsl["query"]["bool"]["must"].append(
                     {
                         "multi_match": {
-                            "query": " ".join([str(k) for k in keywords if k]),
+                            "query": joined,
                             "fields": target_fields,
                             "type": "phrase",
                         }
@@ -292,7 +285,7 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
                 query_dsl["query"]["bool"]["must"].append(
                     {
                         "multi_match": {
-                            "query": " ".join([str(k) for k in keywords if k]),
+                            "query": joined,
                             "fields": target_fields,
                             "fuzziness": "AUTO",
                         }
@@ -351,8 +344,7 @@ def build_query(plan: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def create_prompt(query: str) -> str:
-    return (
-        f"""
+    return f"""
 You are a forensic data analysis expert. Convert the following natural language query into a SIMPLE plan for building an Elasticsearch DSL for UFDR (Universal Forensic Data Report) data.
 
 Query: "{query}"
@@ -371,7 +363,8 @@ Available fields (non-exhaustive):
 - entities (may contain extracted addresses like crypto, upi, etc.)
 
 Return STRICT JSON with EXACT keys:
-{{"query_intent": "clear, descriptive sentence that explains what the user is searching for with the keywords.",
+{{
+  "query_intent": "clear, descriptive sentence that explains what the user is searching for with the keywords.",
   "search_types": ["communications" | "calls" | "web" | "location" | "social" | "system" | "contacts" | "cookies" | "notifications" | "general"],
   "time_range": "YYYY-MM-DD to YYYY-MM-DD" (optional),
   "fields": ["field", ...] (optional),
@@ -398,5 +391,4 @@ Guidelines:
    - Logs/usage/system events -> include search_types ["system", "notifications"] and prefer fields ["package_name", "app", "title", "message", "status", "event_type", "notification_type", "app_package_name"].
 6) Include both the original term AND related terms in keywords array.
 7) Do NOT include explanations or extra keys.
-"""
-    ).strip()
+""".strip()

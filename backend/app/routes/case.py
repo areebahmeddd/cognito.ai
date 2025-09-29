@@ -1,7 +1,9 @@
 import uuid
+from typing import Any, Dict
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from typing import Dict, Any
+
 from ..services.mongodb import (
     create_case,
     get_cases,
@@ -12,8 +14,8 @@ from ..services.mongodb import (
     archive_case as mongo_archive_case,
     activate_case as mongo_activate_case,
 )
-from ..services.elasticsearch import delete_documents
-from ..services.elasticsearch import delete_file
+from ..services.elasticsearch import delete_documents, delete_file
+
 
 router = APIRouter()
 
@@ -25,6 +27,7 @@ async def list_cases():
         return JSONResponse(content={"cases": cases})
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to get cases")
+
 
 @router.post("/case")
 async def new_case(case_data: Dict[str, Any]):
@@ -43,6 +46,7 @@ async def new_case(case_data: Dict[str, Any]):
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to create case")
 
+
 @router.get("/{case_id}")
 async def fetch_case(case_id: str):
     try:
@@ -55,6 +59,7 @@ async def fetch_case(case_id: str):
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to get case")
 
+
 @router.get("/{case_id}/files")
 async def get_files(case_id: str):
     try:
@@ -65,6 +70,7 @@ async def get_files(case_id: str):
         return JSONResponse(content={"files": files, "uploads": uploads})
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to get case files")
+
 
 @router.put("/{case_id}")
 async def edit_case(case_id: str, case_data: Dict[str, Any]):
@@ -77,6 +83,7 @@ async def edit_case(case_id: str, case_data: Dict[str, Any]):
         raise
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to update case")
+
 
 @router.delete("/{case_id}")
 async def remove_case(case_id: str):
@@ -99,6 +106,7 @@ async def remove_case(case_id: str):
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to delete case")
 
+
 @router.post("/{case_id}/archive")
 async def archive_case(case_id: str):
     try:
@@ -111,6 +119,7 @@ async def archive_case(case_id: str):
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to archive case")
 
+
 @router.post("/{case_id}/activate")
 async def activate_case(case_id: str):
     try:
@@ -122,6 +131,7 @@ async def activate_case(case_id: str):
         raise
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to activate case")
+
 
 @router.get("/{case_id}/files/{file_name}")
 async def get_file(case_id: str, file_name: str):
@@ -141,6 +151,7 @@ async def get_file(case_id: str, file_name: str):
             raise HTTPException(
                 status_code=404, detail="File data not found in database"
             )
+
         records = file_doc.get("records", [])
         response_data = {
             "file_name": file_name,
@@ -165,6 +176,7 @@ async def get_file(case_id: str, file_name: str):
             status_code=500, detail=f"Failed to get file content: {str(e)}"
         )
 
+
 @router.delete("/{case_id}/uploads/{zip_name}")
 async def delete_upload(case_id: str, zip_name: str):
     try:
@@ -173,33 +185,40 @@ async def delete_upload(case_id: str, zip_name: str):
         case_obj = await get_case(case_id)
         if not case_obj:
             raise HTTPException(status_code=404, detail="Case not found")
+
         json_names = []
         file_cursor = files_collection.find({"case_id": case_id, "zip_name": zip_name})
         async for file_doc in file_cursor:
             file_name = file_doc.get("file_name")
             if isinstance(file_name, str) and file_name.endswith(".json"):
                 json_names.append(file_name)
+
         deleted_files = 0
         if json_names:
             delete_result = await files_collection.delete_many(
-                {
-                    "case_id": case_id,
-                    "file_name": {"$in": json_names},
-                }
+                {"case_id": case_id, "file_name": {"$in": json_names}}
             )
             deleted_files = getattr(delete_result, "deleted_count", 0)
+
         await files_collection.delete_many({"case_id": case_id, "zip_name": zip_name})
+
         es_deleted = 0
         for json_name in json_names:
             es_result = delete_file(case_id, json_name)
             es_deleted += es_result.get("deleted_count", 0)
+
         metadata = case_obj.get("metadata", {}) or {}
         uploads = metadata.get("uploads", []) if isinstance(metadata, dict) else []
+
         new_uploads = [
             upload_item
             for upload_item in uploads
-            if not (isinstance(upload_item, dict) and upload_item.get("file_name") == zip_name)
+            if not (
+                isinstance(upload_item, dict)
+                and upload_item.get("file_name") == zip_name
+            )
         ]
+
         await cases_collection.update_one(
             {"case_id": case_id},
             {

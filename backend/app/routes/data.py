@@ -4,9 +4,11 @@ import shutil
 import zipfile
 import tempfile
 from datetime import datetime
+from typing import Any, Dict, Optional
+
 from fastapi import APIRouter, HTTPException, File, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse
-from typing import Dict, Any, Optional
+
 from ..services.elasticsearch import (
     get_count,
     get_index,
@@ -19,6 +21,7 @@ from ..services.parser import process_files
 from ..services.pdf import generate_report
 from ..services.mongodb import store_files
 from ..utils.helpers import calculate_hash, check_duplicate, validate_case
+
 
 router = APIRouter()
 
@@ -106,6 +109,7 @@ async def upload_file(
         }
 
         from ..services.mongodb import update_case
+
         await update_case(case_id, {"metadata": metadata})
 
         indexing_result = {"success_count": 0, "error_count": 0, "files_processed": 0}
@@ -147,6 +151,7 @@ async def upload_file(
             status_code=500, detail=f"Upload processing failed: {str(e)}"
         )
 
+
 @router.post("/export")
 async def export_report(api_response: Dict[str, Any]):
     try:
@@ -171,6 +176,7 @@ async def export_report(api_response: Dict[str, Any]):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
+
 
 @router.get("/stats")
 async def get_stats():
