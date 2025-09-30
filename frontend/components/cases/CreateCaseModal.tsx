@@ -160,12 +160,16 @@ export default function CreateCaseModal({
 
   const handleSubmit = async () => {
     if (!caseName.trim()) {
-      setError("Case name is required");
+      const message = "Case name is required";
+      setError(message);
+      toast.error("Invalid case name", { description: message });
       return;
     }
 
     if (caseName.trim().length < 3) {
-      setError("Case name must be at least 3 characters long");
+      const message = "Case name must be at least 3 characters long";
+      setError(message);
+      toast.error("Invalid case name", { description: message });
       return;
     }
 

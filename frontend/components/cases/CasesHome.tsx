@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Archive, ArchiveRestore, Edit, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Edit, Share2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -159,6 +159,17 @@ export default function CasesHome() {
           setIsEditModalOpen(true);
         }
         break;
+      case "share":
+        try {
+          const origin =
+            typeof window !== "undefined" ? window.location.origin : "";
+          const link = `${origin}/cases/${id}`;
+          await navigator.clipboard.writeText(link);
+          toast.success("Link copied to clipboard");
+        } catch (error) {
+          toast.error("Failed to copy link");
+        }
+        break;
       case "delete":
         const caseToDelete = showArchived
           ? archivedItems.find((item) => item.id === id)
@@ -252,7 +263,7 @@ export default function CasesHome() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowArchived(!showArchived)}
-                className="px-4 py-2 text-sm font-medium text-[#4A4A4A] dark:text-[#B0B0B0] border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-lg transition-colors duration-200 hover:text-[#FF7F50] hover:border-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F]"
+                className="px-4 py-2 text-sm font-medium text-[#4A4A4A] dark:text-[#B0B0B0] border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-lg transition-colors duration-200 hover:text-[#FF7F50] hover:border-[#FF7F50] dark:hover:text-[#FF7F50] dark:hover:border-[#FF7F50]"
               >
                 {showArchived
                   ? `View Active (${items.length})`
@@ -292,21 +303,28 @@ export default function CasesHome() {
                       <>
                         <DropdownMenuItem
                           onClick={() => handleMenuAction(item.id, "edit")}
-                          className="hover:bg-[#F8F8F8] dark:hover:bg-[#2A2A2A] cursor-pointer"
+                          className="cursor-pointer hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50]"
                         >
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
+                          onClick={() => handleMenuAction(item.id, "share")}
+                          className="cursor-pointer hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50]"
+                        >
+                          <Share2 className="mr-2 h-4 w-4" />
+                          Share
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onClick={() => handleMenuAction(item.id, "archive")}
-                          className="hover:bg-[#F8F8F8] dark:hover:bg-[#2A2A2A] cursor-pointer"
+                          className="cursor-pointer hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50]"
                         >
                           <Archive className="mr-2 h-4 w-4" />
                           Archive
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleMenuAction(item.id, "delete")}
-                          className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 cursor-pointer"
+                          className="text-red-600 dark:text-red-400 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-600 dark:hover:text-red-400"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete

@@ -2,7 +2,7 @@ export default function NewCaseCard({ onCreate }: { onCreate: () => void }) {
   return (
     <button
       onClick={onCreate}
-      className="group flex w-full items-center justify-center rounded-xl border-2 border-dashed border-[#E0E0E0] dark:border-[#404040] bg-[#F8F8F8] dark:bg-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] p-8 h-[200px] transition-colors duration-200 hover:bg-[#F5F5F5] dark:hover:bg-[#252525]"
+      className="group flex w-full items-center justify-center rounded-xl border-2 border-dashed border-[#E0E0E0] dark:border-[#404040] bg-[#F8F8F8] dark:bg-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] p-8 h-[200px] transition duration-200 hover:border-dotted hover:border-[#FF7F50] dark:hover:border-[#FF7F50]"
     >
       <div className="flex flex-col items-center">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50] border border-[#FF7F50]/20 dark:border-[#FF7F50]/30">
