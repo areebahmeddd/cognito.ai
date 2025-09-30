@@ -1,7 +1,6 @@
 "use client";
 
 import CreateCaseModal from "@/components/cases/CreateCaseModal";
-// removed Dialog-based modal; using custom overlay for consistency
 import {
   ChevronDown,
   ChevronRight,
@@ -480,7 +479,14 @@ export default function CaseSidebar({
   }, [selectedFiles, caseId, onFileUploaded]);
 
   const handleExportCourtReport = useCallback(async () => {
-    if (!searchData || !results) {
+    if (
+      !searchData ||
+      !results ||
+      (Array.isArray(results) && results.length === 0)
+    ) {
+      toast.info("No Court Report available", {
+        description: "Run a search to generate a court-ready PDF.",
+      });
       return;
     }
 
@@ -524,6 +530,49 @@ export default function CaseSidebar({
           error instanceof Error
             ? error.message
             : "Unable to generate the court report. Please try again.",
+      });
+    }
+  }, [searchData, results, caseId]);
+
+  const handleExportRawArtifacts = useCallback(() => {
+    if (
+      !searchData ||
+      !results ||
+      (Array.isArray(results) && results.length === 0)
+    ) {
+      toast.info("No artifacts to export", {
+        description: "Enter a query to produce JSON results.",
+      });
+      return;
+    }
+
+    try {
+      const payload = {
+        intent: searchData.intent,
+        totalResults: searchData.totalResults,
+        processingTime: searchData.processingTime,
+        results: results,
+        case_id: caseId,
+        exported_at: new Date().toISOString(),
+        schema_version: 1,
+      };
+
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${caseId}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error("Export failed", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to export raw artifacts. Please try again.",
       });
     }
   }, [searchData, results, caseId]);
@@ -681,7 +730,7 @@ export default function CaseSidebar({
               </div>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="ml-2 p-1 rounded cursor-pointer"
+                className="ml-2 p-1 rounded"
                 title="Switch cases"
               >
                 <ChevronDown
@@ -840,13 +889,11 @@ export default function CaseSidebar({
                               Unknown size • {recordCount} records
                             </div>
                           </div>
-
-                          {/* Delete confirm overlay rendered globally below */}
                           {isZipFile && (
                             <div className="flex items-center gap-2">
                               {hasRecords && (
                                 <button
-                                  className="px-2 py-1 text-xs text-[#FF7F50] cursor-pointer"
+                                  className="px-2 py-1 text-xs text-[#FF7F50]"
                                   onClick={() => toggleFileExpansion(idx)}
                                   title={isExpanded ? "Collapse" : "Expand"}
                                 >
@@ -858,7 +905,7 @@ export default function CaseSidebar({
                                 </button>
                               )}
                               <button
-                                className="p-1 rounded dark:hover:bg-[#2A1A1A] cursor-pointer"
+                                className="p-1 rounded dark:hover:bg-[#2A1A1A]"
                                 title="Delete upload"
                                 onClick={() => handleDeleteUpload(f.file_name)}
                               >
@@ -895,7 +942,7 @@ export default function CaseSidebar({
                                   (visibleFileCounts.get(idx) || 10) && (
                                   <button
                                     onClick={() => loadMoreFiles(idx)}
-                                    className="w-full text-xs text-[#FF7F50] dark:text-[#FF7F50] p-2 rounded cursor-pointer"
+                                    className="w-full text-xs text-[#FF7F50] dark:text-[#FF7F50] p-2 rounded"
                                   >
                                     View more (+
                                     {f.files_list.length -
@@ -953,12 +1000,12 @@ export default function CaseSidebar({
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              Court Report
+              Court Report (PDF)
             </button>
             <button
               onClick={() =>
-                toast.info("All Evidence", {
-                  description: "This feature is under development.",
+                toast.info("Data Tables (CSV)", {
+                  description: "Exporting CSV coming soon.",
                 })
               }
               className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:scale-[1.02] transition-transform"
@@ -969,19 +1016,15 @@ export default function CaseSidebar({
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
+                <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
+                <path d="M3 9h18M8 5v14M13 5v14" />
               </svg>
-              All Evidence
+              Data Tables (CSV)
             </button>
             <button
               onClick={() =>
-                toast.info("Timeline", {
-                  description: "This feature is under development.",
+                toast.info("Timelines (CSV)", {
+                  description: "Exporting timelines to CSV coming soon.",
                 })
               }
               className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:scale-[1.02] transition-transform"
@@ -999,14 +1042,10 @@ export default function CaseSidebar({
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              Timeline
+              Timelines (CSV)
             </button>
             <button
-              onClick={() =>
-                toast.info("Network", {
-                  description: "This feature is under development.",
-                })
-              }
+              onClick={handleExportRawArtifacts}
               className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:scale-[1.02] transition-transform"
             >
               <svg
@@ -1016,13 +1055,13 @@ export default function CaseSidebar({
                 viewBox="0 0 24 24"
               >
                 <path
+                  d="M8 9l-4 3 4 3M16 9l4 3-4 3"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                 />
               </svg>
-              Network
+              Raw Artifacts (JSON)
             </button>
           </div>
         </div>
@@ -1093,7 +1132,7 @@ export default function CaseSidebar({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="text-[#FF7F50] cursor-pointer underline font-medium hover:text-[#FF6B35] transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border-none p-0"
+                    className="text-[#FF7F50] underline font-medium hover:text-[#FF6B35] transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border-none p-0"
                   >
                     choose file
                   </button>{" "}
