@@ -15,7 +15,7 @@
 - **Natural-Language Querying**: Gemini-powered NLQ translated to Elasticsearch DSL.
 - **Secure Persistence**: MongoDB storage with JWT-based authentication.
 - **Visual Analytics**: timeline and network views, case drill-downs, exportable reports.
-- **Dev-Friendly Setup**: Docker Compose for ES; FastAPI + Next.js local dev.
+- **Dev-Friendly Setup**: Docker Compose for ES + Mongo; FastAPI + Next.js local dev.
 
 ## 🗂️ Project Structure
 
@@ -143,7 +143,7 @@ Create a `.env` file in `backend/`:
 ELASTICSEARCH_URL=http://localhost:9200
 ELASTICSEARCH_INDEX=cognito
 MONGODB_CONNECTION_STRING=mongodb://localhost:27017/cognito
-GEMINI_API_KEY=your_api_key
+GEMINI_API_KEY=<your_api_key>
 ```
 
 Create a `.env` file in `frontend/`:
