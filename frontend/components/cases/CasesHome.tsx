@@ -4,13 +4,21 @@ import CaseCard, { CaseItem } from "@/components/cases/CaseCard";
 import CreateCaseModal from "@/components/cases/CreateCaseModal";
 import EditCaseModal from "@/components/cases/EditCaseModal";
 import NewCaseCard from "@/components/cases/NewCaseCard";
+import ViewCaseModal from "@/components/cases/ViewCaseModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Archive, ArchiveRestore, Edit, Share2, Trash2 } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  Eye,
+  Filter,
+  Share2,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -98,9 +106,12 @@ export default function CasesHome() {
   const [items, setItems] = useState<CaseItem[]>([]);
   const [archivedItems, setArchivedItems] = useState<CaseItem[]>([]);
   const [showArchived, setShowArchived] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editingCase, setEditingCase] = useState<CaseItem | null>(null);
+  const [viewingCase, setViewingCase] = useState<CaseItem | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     id: string;
     title: string;
@@ -152,11 +163,13 @@ export default function CasesHome() {
 
   const handleMenuAction = async (id: string, action: string) => {
     switch (action) {
-      case "edit":
-        const caseToEdit = items.find((item) => item.id === id);
-        if (caseToEdit) {
-          setEditingCase(caseToEdit);
-          setIsEditModalOpen(true);
+      case "view":
+        const caseToView = (showArchived ? archivedItems : items).find(
+          (item) => item.id === id,
+        );
+        if (caseToView) {
+          setViewingCase(caseToView);
+          setIsViewModalOpen(true);
         }
         break;
       case "share":
@@ -269,90 +282,130 @@ export default function CasesHome() {
                   ? `View Active (${items.length})`
                   : `View Archived (${archivedItems.length})`}
               </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="px-4 py-2 text-sm font-medium text-[#4A4A4A] dark:text-[#B0B0B0] border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-lg transition-colors duration-200 hover:text-[#FF7F50] hover:border-[#FF7F50] dark:hover:text-[#FF7F50] dark:hover:border-[#FF7F50] flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    Filters
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-48 bg-white dark:bg-[#1A1A1A] border border-[#E0E0E0] dark:border-[#2A2A2A] shadow-lg z-50"
+                >
+                  <DropdownMenuItem
+                    onClick={() => setSortOrder("desc")}
+                    className="hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50]"
+                  >
+                    Newest first
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setSortOrder("asc")}
+                    className="hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50]"
+                  >
+                    Oldest first
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {!showArchived && <NewCaseCard onCreate={handleCreate} />}
-          {(showArchived ? archivedItems : items).map((item, index) => (
-            <div key={`${item.id}-${index}`} className="relative group">
-              <CaseCard
-                item={item}
-                onOpen={handleOpen}
-                index={Math.max((indexById[item.id] ?? index) - 1, 0)}
-              />
-              <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="h-6 w-6 p-0 rounded-md text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors duration-200">
-                      <svg
-                        className="w-4 h-4"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                      </svg>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="w-48 bg-white dark:bg-[#1A1A1A] border border-[#E0E0E0] dark:border-[#2A2A2A] shadow-lg z-50"
-                  >
-                    {!showArchived ? (
-                      <>
-                        <DropdownMenuItem
-                          onClick={() => handleMenuAction(item.id, "edit")}
-                          className="cursor-pointer hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50]"
+          {[...(showArchived ? archivedItems : items)]
+            .sort((a, b) => {
+              const aTime = new Date(a.updatedAt).getTime();
+              const bTime = new Date(b.updatedAt).getTime();
+              return sortOrder === "desc" ? bTime - aTime : aTime - bTime;
+            })
+            .map((item, index) => (
+              <div key={`${item.id}-${index}`} className="relative group">
+                <CaseCard
+                  item={item}
+                  onOpen={handleOpen}
+                  index={Math.max((indexById[item.id] ?? index) - 1, 0)}
+                />
+                <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="h-6 w-6 p-0 rounded-md text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors duration-200">
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
                         >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleMenuAction(item.id, "share")}
-                          className="cursor-pointer hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50]"
-                        >
-                          <Share2 className="mr-2 h-4 w-4" />
-                          Share
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleMenuAction(item.id, "archive")}
-                          className="cursor-pointer hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50]"
-                        >
-                          <Archive className="mr-2 h-4 w-4" />
-                          Archive
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleMenuAction(item.id, "delete")}
-                          className="text-red-600 dark:text-red-400 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-600 dark:hover:text-red-400"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </>
-                    ) : (
-                      <>
-                        <DropdownMenuItem
-                          onClick={() => handleMenuAction(item.id, "unarchive")}
-                          className="hover:bg-[#F8F8F8] dark:hover:bg-[#2A2A2A] cursor-pointer"
-                        >
-                          <ArchiveRestore className="mr-2 h-4 w-4" />
-                          Unarchive
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleMenuAction(item.id, "delete")}
-                          className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 cursor-pointer"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                        </svg>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-48 bg-white dark:bg-[#1A1A1A] border border-[#E0E0E0] dark:border-[#2A2A2A] shadow-lg z-50"
+                    >
+                      {!showArchived ? (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => handleMenuAction(item.id, "view")}
+                            className="hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50]"
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleMenuAction(item.id, "share")}
+                            className="hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50]"
+                          >
+                            <Share2 className="mr-2 h-4 w-4" />
+                            Share
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleMenuAction(item.id, "archive")}
+                            className="hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50]"
+                          >
+                            <Archive className="mr-2 h-4 w-4" />
+                            Archive
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleMenuAction(item.id, "delete")}
+                            className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-600 dark:hover:text-red-400"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => handleMenuAction(item.id, "view")}
+                            className="hover:bg-[#F8F8F8] dark:hover:bg-[#2A2A2A]"
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleMenuAction(item.id, "unarchive")
+                            }
+                            className="hover:bg-[#F8F8F8] dark:hover:bg-[#2A2A2A]"
+                          >
+                            <ArchiveRestore className="mr-2 h-4 w-4" />
+                            Unarchive
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleMenuAction(item.id, "delete")}
+                            className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
 
@@ -372,6 +425,17 @@ export default function CasesHome() {
         caseItem={editingCase}
       />
 
+      <ViewCaseModal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setViewingCase(null);
+        }}
+        onSave={handleEditSuccess}
+        caseItem={viewingCase}
+        canEdit={!showArchived}
+      />
+
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
@@ -380,6 +444,24 @@ export default function CasesHome() {
           />
 
           <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A]">
+            <button
+              aria-label="Close"
+              onClick={() => setDeleteConfirm(null)}
+              className="absolute top-3 right-3 text-[#666] dark:text-[#999] hover:text-[#FF7F50] transition-colors p-1 rounded-md"
+            >
+              <svg
+                className="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
             <div className="flex items-start gap-4 mb-6">
               <div className="h-10 w-10 rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] flex items-center justify-center flex-shrink-0">
                 <Trash2 className="h-5 w-5 text-[#FF7F50]" />

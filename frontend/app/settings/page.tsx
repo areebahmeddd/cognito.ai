@@ -2,7 +2,7 @@
 
 import DashboardNavbar from "@/components/DashboardNavbar";
 import Footer from "@/components/Footer";
-import { Trash2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -334,6 +334,13 @@ export default function SettingsPage() {
           />
 
           <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A]">
+            <button
+              aria-label="Close"
+              onClick={() => setShowDeleteConfirm(false)}
+              className="absolute top-3 right-3 text-[#666] dark:text-[#999] hover:text-[#FF7F50] transition-colors p-1 rounded-md"
+            >
+              <X className="h-5 w-5" />
+            </button>
             <div className="flex items-start gap-4 mb-6">
               <div className="h-10 w-10 rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] flex items-center justify-center flex-shrink-0">
                 <Trash2 className="h-5 w-5 text-[#FF7F50]" />

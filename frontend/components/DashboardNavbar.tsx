@@ -85,7 +85,7 @@ export default function DashboardNavbar() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-[#2A2A2A] dark:text-[#E0E0E0] focus:outline-none cursor-pointer">
+              <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-[#2A2A2A] dark:text-[#E0E0E0] focus:outline-none">
                 <div className="h-8 w-8 rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] flex items-center justify-center border border-[#FF7F50]/20 dark:border-[#FF7F50]/30">
                   <User className="h-4 w-4 text-[#FF7F50]" />
                 </div>

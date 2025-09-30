@@ -120,6 +120,16 @@
     @apply border-border outline-ring/50;
     font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   }
+  a,
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  label[for],
+  .cursor-pointer {
+    cursor: pointer;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;

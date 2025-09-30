@@ -89,7 +89,7 @@ export default function Navbar() {
             <Button
               onClick={handleSignIn}
               size="sm"
-              className="cursor-pointer bg-[#2A2A2A] text-white dark:bg-[#E0E0E0] dark:text-[#2A2A2A] hover:bg-[#2A2A2A] hover:text-white dark:hover:bg-[#E0E0E0] dark:hover:text-[#2A2A2A] px-6 py-2 rounded-lg font-medium"
+              className="bg-[#2A2A2A] text-white dark:bg-[#E0E0E0] dark:text-[#2A2A2A] hover:bg-[#2A2A2A] hover:text-white dark:hover:bg-[#E0E0E0] dark:hover:text-[#2A2A2A] px-6 py-2 rounded-lg font-medium"
             >
               Sign In
             </Button>

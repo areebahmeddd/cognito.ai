@@ -374,7 +374,7 @@ export default function CreateCaseModal({
               Upload Files (Optional)
             </Label>
             <div
-              className={`mt-2 border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 hover:border-[#FF7F50] dark:hover:border-[#FF7F50] cursor-pointer ${
+              className={`mt-2 border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 hover:border-[#FF7F50] dark:hover:border-[#FF7F50] ${
                 isDragOver
                   ? "border-[#FF7F50] bg-[#FFF5F0] dark:bg-[#2A1A0F]"
                   : "border-[#E0E0E0] dark:border-[#2A2A2A]"

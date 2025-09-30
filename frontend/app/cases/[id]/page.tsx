@@ -894,7 +894,7 @@ export default function CasePage() {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="Search case data..."
-                      className="h-10 border border-[#FF7F50] dark:border-[#FF7F50] pl-10 pr-10"
+                      className="h-10 border border-[#FF7F50] dark:border-[#FF7F50] pl-10 pr-10 focus:border-[#FF7F50] focus-visible:border-[#FF7F50] focus:ring-0 focus-visible:ring-0 focus:ring-offset-0 focus-visible:ring-offset-0"
                       onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
                     />
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -919,7 +919,7 @@ export default function CasePage() {
                         isListening
                           ? "text-[#FF7F50] animate-pulse"
                           : "text-slate-400 hover:text-[#FF7F50] dark:hover:text-[#FF7F50]"
-                      } ${!recognition ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                      } ${!recognition ? "opacity-50 cursor-not-allowed" : ""}`}
                       title={
                         recognition
                           ? isListening
@@ -965,10 +965,10 @@ export default function CasePage() {
                 <div className="bg-[#F8F8F8] dark:bg-[#0F0F0F]">
                   <div className="flex">
                     {[
-                      { id: "search", label: "Search Results", icon: "" },
-                      { id: "timeline", label: "Timeline", icon: "" },
-                      { id: "network", label: "Network", icon: "" },
-                      { id: "summary", label: "Summary", icon: "" },
+                      { id: "search", label: "Search Results" },
+                      { id: "timeline", label: "Timeline" },
+                      { id: "network", label: "Network" },
+                      { id: "summary", label: "Summary" },
                     ].map((tab) => (
                       <button
                         key={tab.id}
@@ -979,7 +979,6 @@ export default function CasePage() {
                             : "border-transparent text-slate-500 dark:text-slate-400 hover:text-[#FF7F50]"
                         }`}
                       >
-                        <span className="text-base">{tab.icon}</span>
                         {tab.label}
                       </button>
                     ))}
