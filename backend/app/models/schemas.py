@@ -191,4 +191,5 @@ class QueryRequest(BaseModel):
 
 class CreateCaseRequest(BaseModel):
     title: str
-    description: str = ""
+    description: Optional[str] = None
+    priority_tag: Optional[str] = None

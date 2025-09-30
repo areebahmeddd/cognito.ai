@@ -4,6 +4,7 @@ import AuthModal from "@/components/auth/AuthModal";
 import { MobileNav } from "@/components/MobileNav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { clearUser, setUser } from "@/lib/user";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -28,15 +29,23 @@ export default function Navbar() {
     setIsAuthModalOpen(true);
   };
 
-  const handleAuthSuccess = (userData: { username: string; email: string }) => {
+  const handleAuthSuccess = (userData: {
+    username: string;
+    email: string;
+    role: string;
+  }) => {
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
+    setUser({
+      name: userData.username,
+      email: userData.email,
+      role: userData.role,
+    });
     window.location.reload();
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem("cognito-auth");
-    localStorage.removeItem("cognito-current-user");
+    clearUser();
     setIsAuthenticated(false);
     toast.success("Signed out successfully", {
       description: "You have been logged out",

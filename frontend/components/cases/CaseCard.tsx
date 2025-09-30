@@ -9,6 +9,7 @@ export interface CaseItem {
   status?: string;
   filesCount?: number;
   archivedAt?: string;
+  priority_tag?: string;
 }
 
 export default function CaseCard({
@@ -40,6 +41,13 @@ export default function CaseCard({
       className="group relative w-full cursor-pointer rounded-xl border border-[#E0E0E0] dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] p-6 h-[200px] overflow-hidden"
       onClick={() => onOpen(item.id)}
     >
+      {item.priority_tag && (
+        <div className="absolute bottom-4 right-4 z-10">
+          <div className="bg-[#F3F4F6] dark:bg-[#374151] text-[#6B7280] dark:text-[#9CA3AF] text-[10px] font-medium px-2 py-1 rounded-full border border-[#E5E7EB] dark:border-[#4B5563]">
+            {item.priority_tag}
+          </div>
+        </div>
+      )}
       <div className="flex h-full items-center gap-6">
         <div className="text-7xl font-bold text-[#FF7F50] flex-shrink-0 leading-none">
           {(index + 1).toString().padStart(2, "0")}

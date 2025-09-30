@@ -34,6 +34,7 @@ interface BackendCase {
   updated_at: string;
   metadata: any;
   files_count: number;
+  priority_tag?: string;
 }
 
 async function loadCases(): Promise<CaseItem[]> {
@@ -62,6 +63,7 @@ async function loadCases(): Promise<CaseItem[]> {
         files: [],
         status: caseData.status,
         filesCount: totalUploads,
+        priority_tag: caseData?.priority_tag,
       };
     });
   } catch (error) {
@@ -107,6 +109,7 @@ export default function CasesHome() {
   const [archivedItems, setArchivedItems] = useState<CaseItem[]>([]);
   const [showArchived, setShowArchived] = useState(false);
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [tagFilter, setTagFilter] = useState<string>("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -291,8 +294,11 @@ export default function CasesHome() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-48 bg-white dark:bg-[#1A1A1A] border border-[#E0E0E0] dark:border-[#2A2A2A] shadow-lg z-50"
+                  className="w-56 bg-white dark:bg-[#1A1A1A] border border-[#E0E0E0] dark:border-[#2A2A2A] shadow-lg z-50"
                 >
+                  <div className="px-2 py-1.5 text-xs text-[#666] dark:text-[#999]">
+                    Sort
+                  </div>
                   <DropdownMenuItem
                     onClick={() => setSortOrder("desc")}
                     className="hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50]"
@@ -305,6 +311,33 @@ export default function CasesHome() {
                   >
                     Oldest first
                   </DropdownMenuItem>
+                  <div className="px-2 pt-2 pb-1 text-xs text-[#666] dark:text-[#999] border-t border-[#E0E0E0] dark:border-[#2A2A2A] mt-1">
+                    Priority
+                  </div>
+                  <DropdownMenuItem
+                    onClick={() => setTagFilter("all")}
+                    className={`${tagFilter === "all" ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]" : ""}`}
+                  >
+                    All
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setTagFilter("High Priority")}
+                    className={`${tagFilter === "High Priority" ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]" : ""}`}
+                  >
+                    High Priority
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setTagFilter("Medium Priority")}
+                    className={`${tagFilter === "Medium Priority" ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]" : ""}`}
+                  >
+                    Medium Priority
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setTagFilter("Low Priority")}
+                    className={`${tagFilter === "Low Priority" ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]" : ""}`}
+                  >
+                    Low Priority
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -314,6 +347,11 @@ export default function CasesHome() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {!showArchived && <NewCaseCard onCreate={handleCreate} />}
           {[...(showArchived ? archivedItems : items)]
+            .filter((c) =>
+              tagFilter === "all"
+                ? true
+                : (c as any).priority_tag === tagFilter,
+            )
             .sort((a, b) => {
               const aTime = new Date(a.updatedAt).getTime();
               const bTime = new Date(b.updatedAt).getTime();

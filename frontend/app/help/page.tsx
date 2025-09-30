@@ -168,7 +168,7 @@ export default function HelpPage() {
                         onClick={() =>
                           setExpandedFAQ(expandedFAQ === index ? null : index)
                         }
-                        className="w-full px-4 py-3 text-left flex items-center justify-between"
+                        className="w-full px-4 py-3 text-left flex items-center justify-between hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors duration-200 rounded-lg"
                       >
                         <h4 className="font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
                           {faq.question}

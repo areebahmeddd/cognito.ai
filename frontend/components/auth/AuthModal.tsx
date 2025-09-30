@@ -1,15 +1,25 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Lock, Mail, User, X } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Lock, Mail, User, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (userData: { username: string; email: string }) => void;
+  onSuccess: (userData: {
+    username: string;
+    email: string;
+    role: string;
+  }) => void;
 }
 
 type AuthMode = "signin" | "signup" | "forgot";
@@ -27,6 +37,7 @@ export default function AuthModal({
     email: "",
     password: "",
     confirmPassword: "",
+    role: "Analyst",
   });
   const [error, setError] = useState("");
 
@@ -62,10 +73,15 @@ export default function AuthModal({
           JSON.stringify({
             username: user.username,
             email: user.email,
+            role: user.role,
           }),
         );
 
-        onSuccess({ username: user.username, email: user.email });
+        onSuccess({
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        });
       } else if (mode === "signup") {
         const users = JSON.parse(localStorage.getItem("cognito-users") || "[]");
         const existingUser = users.find(
@@ -85,6 +101,7 @@ export default function AuthModal({
           username: formData.username,
           email: formData.email,
           password: formData.password,
+          role: formData.role,
           createdAt: new Date().toISOString(),
         };
 
@@ -97,10 +114,15 @@ export default function AuthModal({
           JSON.stringify({
             username: newUser.username,
             email: newUser.email,
+            role: newUser.role,
           }),
         );
 
-        onSuccess({ username: newUser.username, email: newUser.email });
+        onSuccess({
+          username: newUser.username,
+          email: newUser.email,
+          role: newUser.role,
+        });
       } else if (mode === "forgot") {
         throw new Error("Password reset functionality not implemented yet");
       }
@@ -119,6 +141,7 @@ export default function AuthModal({
       email: "",
       password: "",
       confirmPassword: "",
+      role: "Analyst",
     });
     setError("");
   };
@@ -137,7 +160,7 @@ export default function AuthModal({
         onClick={onClose}
       />
 
-      <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A]">
+      <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A] overflow-visible">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
@@ -199,6 +222,64 @@ export default function AuthModal({
                   className="pl-10 border-[#E0E0E0] dark:border-[#2A2A2A] focus:border-[#FF7F50] focus:ring-[#FF7F50]/20"
                   required
                 />
+              </div>
+            </div>
+          )}
+
+          {mode === "signup" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
+                Role
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#666] dark:text-[#999]" />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] dark:border-[#2A2A2A] focus:border-[#FF7F50] focus:ring-[#FF7F50]/20 rounded-md bg-white dark:bg-[#1A1A1A] text-[#2A2A2A] dark:text-[#E0E0E0] flex items-center justify-between text-left hover:border-[#FF7F50] transition-colors">
+                      <span>{formData.role}</span>
+                      <ChevronDown className="w-4 h-4 text-[#666] dark:text-[#999] flex-shrink-0" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    side="bottom"
+                    sideOffset={4}
+                    className="w-96 bg-white dark:bg-[#1A1A1A] border border-[#E0E0E0] dark:border-[#2A2A2A] shadow-lg z-[9999] rounded-md p-1"
+                    avoidCollisions={true}
+                    collisionPadding={8}
+                  >
+                    <DropdownMenuItem
+                      onClick={() => handleInputChange("role", "Analyst")}
+                      className={`hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50] ${
+                        formData.role === "Analyst"
+                          ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]"
+                          : ""
+                      }`}
+                    >
+                      Analyst
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleInputChange("role", "Officer")}
+                      className={`hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50] ${
+                        formData.role === "Officer"
+                          ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]"
+                          : ""
+                      }`}
+                    >
+                      Officer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleInputChange("role", "Supervisor")}
+                      className={`hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50] ${
+                        formData.role === "Supervisor"
+                          ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]"
+                          : ""
+                      }`}
+                    >
+                      Supervisor
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           )}

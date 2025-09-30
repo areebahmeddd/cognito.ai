@@ -2,22 +2,39 @@
 
 import DashboardNavbar from "@/components/DashboardNavbar";
 import Footer from "@/components/Footer";
+import { getUser, setUser } from "@/lib/user";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function ProfilePage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [userData, setUserData] = useState({
+    fullName: "",
+    email: "",
+    role: "",
+  });
   const [formData, setFormData] = useState({
-    fullName: "Areeb",
-    email: "testing@areeb.dev",
-    role: "Forensic Analyst",
+    fullName: "",
+    email: "",
+    role: "",
   });
 
   useEffect(() => {
     const checkAuth = () => {
       const mockAuth = localStorage.getItem("cognito-auth");
       setIsAuthenticated(mockAuth === "true");
+
+      const user = getUser();
+      if (user) {
+        const userInfo = {
+          fullName: user.name,
+          email: user.email,
+          role: user.role,
+        };
+        setUserData(userInfo);
+        setFormData(userInfo);
+      }
     };
 
     checkAuth();
@@ -53,6 +70,19 @@ export default function ProfilePage() {
       });
       return;
     }
+
+    setUser({
+      name: formData.fullName,
+      email: formData.email,
+      role: formData.role,
+    });
+
+    setUserData({
+      fullName: formData.fullName,
+      email: formData.email,
+      role: formData.role,
+    });
+
     setIsEditing(false);
     toast.success("Profile updated successfully", {
       description: "Your profile information has been saved",
@@ -62,12 +92,9 @@ export default function ProfilePage() {
   const handleCancel = () => {
     setIsEditing(false);
     setFormData({
-      fullName: "Areeb",
-      email: "testing@areeb.dev",
-      role: "Forensic Analyst",
-    });
-    toast.info("Changes cancelled", {
-      description: "Profile information restored to original values",
+      fullName: userData.fullName,
+      email: userData.email,
+      role: userData.role,
     });
   };
 
@@ -110,18 +137,18 @@ export default function ProfilePage() {
                 <div className="flex items-center space-x-6">
                   <div className="h-20 w-20 rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] flex items-center justify-center border border-[#FF7F50]/20 dark:border-[#FF7F50]/30">
                     <span className="text-2xl font-medium text-[#FF7F50]">
-                      S
+                      {userData.fullName.charAt(0).toUpperCase() || "U"}
                     </span>
                   </div>
                   <div>
                     <h2 className="text-xl font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
-                      Areeb
+                      {userData.fullName || "User"}
                     </h2>
                     <p className="text-[#4A4A4A] dark:text-[#B0B0B0]">
-                      testing@areeb.dev
+                      {userData.email || "No email"}
                     </p>
-                    <p className="text-sm text-[#4A4A4A] dark:text-[#B0B0B0] mt-1">
-                      Forensic Analyst
+                    <p className="text-sm text-[#FF7F50] font-medium mt-1">
+                      {userData.role || "No role"}
                     </p>
                   </div>
                 </div>
@@ -137,7 +164,7 @@ export default function ProfilePage() {
                       <>
                         <button
                           onClick={handleSave}
-                          className="flex items-center gap-2 px-3 py-1 text-sm text-white bg-[#FF7F50] rounded-md font-medium"
+                          className="flex items-center gap-2 px-3 py-1 text-sm text-white bg-[#FF7F50] hover:bg-[#E66A3A] rounded-md font-medium transition-colors duration-200"
                         >
                           <svg
                             className="w-4 h-4"
@@ -156,7 +183,7 @@ export default function ProfilePage() {
                         </button>
                         <button
                           onClick={handleCancel}
-                          className="flex items-center gap-2 px-3 py-1 text-sm text-[#4A4A4A] dark:text-[#B0B0B0] font-medium"
+                          className="flex items-center gap-2 px-3 py-1 text-sm text-[#4A4A4A] dark:text-[#B0B0B0] font-medium hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors duration-200"
                         >
                           <svg
                             className="w-4 h-4"
@@ -177,7 +204,7 @@ export default function ProfilePage() {
                     ) : (
                       <button
                         onClick={handleEdit}
-                        className="flex items-center gap-2 px-3 py-1 text-sm text-[#4A4A4A] dark:text-[#B0B0B0] font-medium"
+                        className="flex items-center gap-2 px-3 py-1 text-sm text-[#4A4A4A] dark:text-[#B0B0B0] font-medium hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors duration-200"
                       >
                         <svg
                           className="w-4 h-4"

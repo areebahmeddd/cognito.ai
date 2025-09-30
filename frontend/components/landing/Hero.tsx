@@ -2,6 +2,7 @@
 
 import AuthModal from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
+import { setUser } from "@/lib/user";
 import {
   ArrowRight,
   FileSpreadsheet,
@@ -38,9 +39,18 @@ export default function Hero() {
     setIsAuthModalOpen(true);
   };
 
-  const handleAuthSuccess = (userData: { username: string; email: string }) => {
+  const handleAuthSuccess = (userData: {
+    username: string;
+    email: string;
+    role: string;
+  }) => {
     setIsSignedIn(true);
     setIsAuthModalOpen(false);
+    setUser({
+      name: userData.username,
+      email: userData.email,
+      role: userData.role,
+    });
     window.location.reload();
   };
 

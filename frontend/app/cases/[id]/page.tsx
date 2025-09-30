@@ -2320,7 +2320,7 @@ export default function CasePage() {
                             </svg>
                           </div>
                           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                            Case Intelligence Summary
+                            Case Summary
                           </h2>
                         </div>
                         <div className="flex items-center gap-2">
@@ -2360,11 +2360,11 @@ export default function CasePage() {
                               </svg>
                             </div>
                             <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                              No Intelligence Available
+                              No Summary Available
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
-                              Run a search to generate actionable intelligence
-                              and case insights.
+                              Run a search to generate actionable summary of the
+                              case.
                             </p>
                           </div>
                         </div>

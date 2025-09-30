@@ -45,6 +45,7 @@ interface StoredCase {
   color?: string;
   status?: string;
   filesCount?: number;
+  priority_tag?: string;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -59,6 +60,7 @@ interface BackendCase {
   updated_at: string;
   metadata: any;
   files_count: number;
+  priority_tag?: string;
 }
 
 async function getCase(caseId: string): Promise<StoredCase | null> {
@@ -110,6 +112,7 @@ async function getCase(caseId: string): Promise<StoredCase | null> {
       files: files,
       status: caseData.status,
       filesCount: totalRecordsSingle,
+      priority_tag: caseData?.priority_tag,
     };
   } catch (error) {
     return null;
@@ -182,6 +185,7 @@ async function getAllCases(): Promise<StoredCase[]> {
         status: caseData.status,
         filesCount: totalRecords,
         totalUploads: totalUploads,
+        priority_tag: caseData?.priority_tag,
       };
     });
   } catch (error) {
@@ -1139,7 +1143,7 @@ export default function CaseSidebar({
                   to upload
                 </p>
                 <p className="text-xs text-[#999] dark:text-[#666]">
-                  Supported file types: .ufdr, .zip
+                  Supported file types: .ufdr
                 </p>
               </div>
               <input

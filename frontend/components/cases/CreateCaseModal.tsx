@@ -29,6 +29,7 @@ export default function CreateCaseModal({
 }: CreateCaseModalProps) {
   const [caseName, setCaseName] = useState("");
   const [description, setDescription] = useState("");
+  const [priorityTag, setPriorityTag] = useState<string>("");
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -215,6 +216,7 @@ export default function CreateCaseModal({
           body: JSON.stringify({
             title: caseName,
             description: description,
+            priority_tag: priorityTag || undefined,
           }),
         },
       );
@@ -264,6 +266,7 @@ export default function CreateCaseModal({
         color: ["#FF7F50", "#FF7F50", "#FF7F50", "#FF7F50", "#FF7F50"][
           Math.floor(Math.random() * 5)
         ],
+        priority_tag: priorityTag,
         files: uploadFiles.map((f) => ({
           name: f.file.name,
           size: f.file.size,
@@ -295,6 +298,7 @@ export default function CreateCaseModal({
     if (!isUploading) {
       setCaseName("");
       setDescription("");
+      setPriorityTag("");
       setUploadFiles([]);
       setUploadProgress(0);
       setError("");
@@ -339,7 +343,7 @@ export default function CreateCaseModal({
                 htmlFor="caseName"
                 className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]"
               >
-                Case Name *
+                Case Name <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="caseName"
@@ -367,11 +371,53 @@ export default function CreateCaseModal({
                 className="mt-1 border-[#E0E0E0] dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] text-[#2A2A2A] dark:text-[#E0E0E0] focus:ring-[#FF7F50] focus:border-[#FF7F50]"
               />
             </div>
+            <div>
+              <Label
+                htmlFor="priority"
+                className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]"
+              >
+                Priority Tag
+              </Label>
+              <div className="mt-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {[
+                  {
+                    value: "High Priority",
+                    color: "bg-red-500/10 text-red-600",
+                  },
+                  {
+                    value: "Medium Priority",
+                    color: "bg-amber-500/10 text-amber-600",
+                  },
+                  {
+                    value: "Low Priority",
+                    color: "bg-emerald-500/10 text-emerald-600",
+                  },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() =>
+                      setPriorityTag((prev) =>
+                        prev === opt.value ? "" : opt.value,
+                      )
+                    }
+                    className={`px-3 py-2 rounded-lg text-xs border transition-colors ${
+                      priorityTag === opt.value
+                        ? `border-[#FF7F50] ${opt.color}`
+                        : "border-[#E0E0E0] dark:border-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] hover:border-[#FF7F50]"
+                    }`}
+                    disabled={isUploading}
+                  >
+                    {opt.value}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div>
             <Label className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
-              Upload Files (Optional)
+              Upload Files
             </Label>
             <div
               className={`mt-2 border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 hover:border-[#FF7F50] dark:hover:border-[#FF7F50] ${
@@ -398,7 +444,7 @@ export default function CreateCaseModal({
                 {isDragOver ? "" : "choose files"}
               </button>
               <p className="text-xs text-[#666] dark:text-[#999] mt-2">
-                Supported file types: .ufdr, .zip
+                Supported file types: .ufdr
               </p>
               <input
                 ref={fileInputRef}

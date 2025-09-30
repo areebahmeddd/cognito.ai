@@ -41,6 +41,7 @@ async def new_case(case_data: Dict[str, Any]):
             "case_id": case_id,
             "case_name": case_data.get("title", f"Case {case_id[:8]}"),
             "description": case_data.get("description", ""),
+            "priority_tag": case_data.get("priority_tag", ""),
             "device_id": case_data.get("device_id", str(uuid.uuid4())),
             "metadata": {},
         }

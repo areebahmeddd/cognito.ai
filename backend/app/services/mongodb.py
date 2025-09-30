@@ -42,6 +42,7 @@ async def create_case(case_data: Dict[str, Any]) -> str:
             "case_name": case_data.get("case_name"),
             "device_id": case_data.get("device_id"),
             "description": case_data.get("description", ""),
+            "priority_tag": case_data.get("priority_tag"),
             "status": "active",
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat(),
@@ -105,6 +106,8 @@ async def update_case(case_id: str, case_data: Dict[str, Any]) -> Dict[str, Any]
             update_data["case_name"] = case_data.get("case_name")
         if "description" in case_data:
             update_data["description"] = case_data.get("description")
+        if "priority_tag" in case_data:
+            update_data["priority_tag"] = case_data.get("priority_tag")
 
         if "metadata" in case_data:
             existing_case = await get_case(case_id)

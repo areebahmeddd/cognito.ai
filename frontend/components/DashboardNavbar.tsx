@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { clearUser, getUser } from "@/lib/user";
 import {
   FileSpreadsheet,
   Github,
@@ -24,15 +25,24 @@ import { toast } from "sonner";
 
 export default function DashboardNavbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+    role: string;
+  } | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
     const authStatus = localStorage.getItem("cognito-auth");
     setIsAuthenticated(authStatus === "true");
+
+    const userData = getUser();
+    setUser(userData);
   }, []);
 
   const handleSignOut = () => {
-    localStorage.removeItem("cognito-auth");
+    clearUser();
+    setIsAuthenticated(false);
     toast.success("Signed out successfully", {
       description: "You have been logged out",
     });
@@ -87,10 +97,16 @@ export default function DashboardNavbar() {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-[#2A2A2A] dark:text-[#E0E0E0] focus:outline-none">
                 <div className="h-8 w-8 rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] flex items-center justify-center border border-[#FF7F50]/20 dark:border-[#FF7F50]/30">
-                  <User className="h-4 w-4 text-[#FF7F50]" />
+                  {user?.name ? (
+                    <span className="text-sm font-medium text-[#FF7F50]">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  ) : (
+                    <User className="h-4 w-4 text-[#FF7F50]" />
+                  )}
                 </div>
                 <span className="hidden md:inline text-sm font-medium">
-                  Areeb
+                  {user?.name || "User"}
                 </span>
               </button>
             </DropdownMenuTrigger>
@@ -100,10 +116,10 @@ export default function DashboardNavbar() {
             >
               <div className="px-3 py-2">
                 <p className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
-                  Areeb
+                  {user?.name || "User"}
                 </p>
                 <p className="text-xs text-[#4A4A4A] dark:text-[#B0B0B0]">
-                  testing@areeb.dev
+                  {user?.email || "No email"}
                 </p>
               </div>
               <DropdownMenuSeparator />
