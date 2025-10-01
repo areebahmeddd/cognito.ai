@@ -135,10 +135,10 @@ export default function Hero() {
               <Button
                 size="lg"
                 onClick={handleSignIn}
-                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 px-8 py-4 rounded-lg font-medium text-base"
+                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 px-8 py-4 rounded-lg font-medium text-base group"
               >
                 Get Started
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 ease-out group-hover:translate-x-1 group-hover:scale-110 text-[#FF7F50]" />
               </Button>
               <Button
                 variant="outline"
@@ -149,9 +149,9 @@ export default function Hero() {
                     "_blank",
                   )
                 }
-                className="border-[#E0E0E0] text-[#4A4A4A] hover:bg-[#F5F5F5] dark:border-[#4A4A4A] dark:text-[#B0B0B0] dark:hover:bg-[#2A2A2A] transition-all duration-300 px-8 py-4 rounded-lg font-medium text-base"
+                className="border-[#E0E0E0] text-[#4A4A4A] hover:bg-[#F5F5F5] dark:border-[#4A4A4A] dark:text-[#B0B0B0] dark:hover:bg-[#2A2A2A] transition-all duration-300 px-8 py-4 rounded-lg font-medium text-base group"
               >
-                <Play className="mr-2 h-4 w-4" />
+                <Play className="mr-2 h-4 w-4 transition-transform duration-300 ease-out group-hover:translate-x-1 group-hover:scale-105 text-[#FF7F50]" />
                 Watch Demo
               </Button>
             </div>

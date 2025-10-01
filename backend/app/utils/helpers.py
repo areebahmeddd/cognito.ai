@@ -21,7 +21,7 @@ def get_source(row: Dict[str, str], fallback_path: str) -> str:
         "originating_file",
     ]
     for field in source_fields:
-        if row.get(field) and str(row[field]).strip():
+        if field in row and row[field] and str(row[field]).strip():
             return str(row[field]).strip()
     return fallback_path
 
@@ -36,10 +36,10 @@ def get_timestamp(row: Dict[str, str]) -> Optional[str]:
         "last_access_date",
     ]
     for field in time_fields:
-        if row.get(field) and str(row[field]).strip():
+        if field in row and row[field] and str(row[field]).strip():
             return str(row[field]).strip()
 
-    for value in row.values():
+    for header, value in row.items():
         if value and str(value).strip():
             time_patterns = [
                 r"\d{4}-\d{2}-\d{2}",
@@ -70,24 +70,23 @@ def clean_value(value: str) -> Any:
 
 
 def clean_header(header: str) -> str:
-    replacements = {
-        " ": "_",
-        "(": "",
-        ")": "",
-        "%": "percent",
-        "/": "_",
-        "-": "_",
-        ".": "",
-        "?": "",
-        "\ufeff": "",
-        "\u200b": "",
-        "\u200c": "",
-        "\u200d": "",
-    }
-    cleaned = header.lower()
-    for old, new in replacements.items():
-        cleaned = cleaned.replace(old, new)
-    return cleaned.strip()
+    cleaned = (
+        header.lower()
+        .replace(" ", "_")
+        .replace("(", "")
+        .replace(")", "")
+        .replace("%", "percent")
+        .replace("/", "_")
+        .replace("-", "_")
+        .replace(".", "")
+        .replace("?", "")
+        .replace("\ufeff", "")
+        .replace("\u200b", "")
+        .replace("\u200c", "")
+        .replace("\u200d", "")
+        .strip()
+    )
+    return cleaned
 
 
 async def validate_case(case_id: str) -> bool:
@@ -114,6 +113,7 @@ def check_duplicate(file_hash: str, case_id: str) -> bool:
             },
             "size": 1,
         }
+
         response = es_client.search(index=index_name, body=query)
         return response["hits"]["total"]["value"] > 0
     except Exception:

@@ -1,6 +1,7 @@
 "use client";
 
 import CreateCaseModal from "@/components/cases/CreateCaseModal";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ChevronDown,
   ChevronRight,
@@ -233,7 +234,28 @@ export default function CaseSidebar({
   const [visibleFileCounts, setVisibleFileCounts] = useState<
     Map<number, number>
   >(new Map());
+  const [isExportOptionsOpen, setIsExportOptionsOpen] = useState(false);
+  const [includeReportInfo] = useState(true); // locked ON
+  const [includeChain, setIncludeChain] = useState(true);
+  const [includeSources, setIncludeSources] = useState(true);
+  const [includeExecutive, setIncludeExecutive] = useState(true);
+  const [includeDetailed, setIncludeDetailed] = useState(false);
+  const [isDataCsvOpen, setIsDataCsvOpen] = useState(false);
+  const [isTimelineCsvOpen, setIsTimelineCsvOpen] = useState(false);
+  const [isRawJsonOpen, setIsRawJsonOpen] = useState(false);
+  const [dataCsvStart, setDataCsvStart] = useState<string>("");
+  const [dataCsvEnd, setDataCsvEnd] = useState<string>("");
+  const [timelineStart, setTimelineStart] = useState<string>("");
+  const [timelineEnd, setTimelineEnd] = useState<string>("");
+  const [dataRedactPii, setDataRedactPii] = useState<boolean>(true);
+  const [dataNormalizeTs, setDataNormalizeTs] = useState<boolean>(true);
+  const [timelineRedactPii, setTimelineRedactPii] = useState<boolean>(true);
+  const [timelineBucket, setTimelineBucket] = useState<"none" | "hour" | "day">(
+    "none",
+  );
+  const [timelineDedup, setTimelineDedup] = useState<boolean>(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const toggleButtonRef = useRef<HTMLButtonElement>(null);
   const [dropdownLimit, setDropdownLimit] = useState<number>(5);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -493,14 +515,24 @@ export default function CaseSidebar({
       });
       return;
     }
+    setIsExportOptionsOpen(true);
+  }, [searchData, results]);
 
+  const confirmExportCourtReport = useCallback(async () => {
     try {
       const apiResponse = {
-        intent: searchData.intent,
-        totalResults: searchData.totalResults,
-        processingTime: searchData.processingTime,
+        intent: searchData?.intent,
+        totalResults: searchData?.totalResults,
+        processingTime: searchData?.processingTime,
         results: results,
         case_id: caseId,
+        sections: {
+          report_information: includeReportInfo,
+          chain_of_custody: includeChain,
+          evidence_sources: includeSources,
+          executive_summary: includeExecutive,
+          detailed_examination_results: includeDetailed,
+        },
       };
 
       const response = await fetch(
@@ -528,6 +560,7 @@ export default function CaseSidebar({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      setIsExportOptionsOpen(false);
     } catch (error) {
       toast.error("Export failed", {
         description:
@@ -536,7 +569,16 @@ export default function CaseSidebar({
             : "Unable to generate the court report. Please try again.",
       });
     }
-  }, [searchData, results, caseId]);
+  }, [
+    searchData,
+    results,
+    caseId,
+    includeReportInfo,
+    includeChain,
+    includeSources,
+    includeExecutive,
+    includeDetailed,
+  ]);
 
   const handleExportRawArtifacts = useCallback(() => {
     if (
@@ -549,18 +591,24 @@ export default function CaseSidebar({
       });
       return;
     }
+    setIsRawJsonOpen(true);
+  }, [searchData, results, caseId]);
 
+  const getRawArtifactsPayload = useCallback(() => {
+    return {
+      intent: searchData?.intent,
+      totalResults: searchData?.totalResults,
+      processingTime: searchData?.processingTime,
+      results: results,
+      case_id: caseId,
+      exported_at: new Date().toISOString(),
+      schema_version: 1,
+    };
+  }, [searchData, results, caseId]);
+
+  const downloadRawArtifactsJson = useCallback(() => {
     try {
-      const payload = {
-        intent: searchData.intent,
-        totalResults: searchData.totalResults,
-        processingTime: searchData.processingTime,
-        results: results,
-        case_id: caseId,
-        exported_at: new Date().toISOString(),
-        schema_version: 1,
-      };
-
+      const payload = getRawArtifactsPayload();
       const json = JSON.stringify(payload, null, 2);
       const blob = new Blob([json], { type: "application/json" });
       const url = window.URL.createObjectURL(blob);
@@ -571,6 +619,7 @@ export default function CaseSidebar({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      setIsRawJsonOpen(false);
     } catch (error) {
       toast.error("Export failed", {
         description:
@@ -579,7 +628,302 @@ export default function CaseSidebar({
             : "Unable to export raw artifacts. Please try again.",
       });
     }
-  }, [searchData, results, caseId]);
+  }, [getRawArtifactsPayload, caseId]);
+
+  const copyRawArtifactsToClipboard = useCallback(async () => {
+    try {
+      const payload = getRawArtifactsPayload();
+      const json = JSON.stringify(payload, null, 2);
+      await navigator.clipboard.writeText(json);
+      toast.success("Copied to clipboard");
+    } catch (error) {
+      toast.error("Copy failed", {
+        description:
+          error instanceof Error ? error.message : "Unable to copy JSON.",
+      });
+    }
+  }, [getRawArtifactsPayload]);
+
+  const parseTimestamp = (ts: string | undefined): number | null => {
+    if (!ts) return null;
+    const parts = ts.split(",");
+    const datePart = parts[0]?.trim();
+    const timePart = (parts[1] || "").trim();
+    if (!datePart) return null;
+    const [d, m, y] = datePart.split("/").map((n) => parseInt(n, 10));
+    let hh = 0,
+      mm = 0,
+      ss = 0;
+    if (timePart) {
+      const [h, mi, s] = timePart.split(":").map((n) => parseInt(n, 10));
+      hh = h || 0;
+      mm = mi || 0;
+      ss = s || 0;
+    }
+    if (!y || !m || !d) return null;
+    const dt = new Date(y, (m || 1) - 1, d, hh, mm, ss);
+    return dt.getTime();
+  };
+
+  const filterByDateRange = (
+    rows: any[],
+    start: string,
+    end: string,
+  ): any[] => {
+    if (!start && !end) return rows;
+    const startMs = start ? new Date(start).getTime() : null;
+    const endMs = end
+      ? new Date(end).getTime() + 24 * 60 * 60 * 1000 - 1
+      : null; // inclusive
+    return rows.filter((r) => {
+      const tsMs = parseTimestamp(r?.timestamp);
+      if (tsMs === null) return false;
+      if (startMs !== null && tsMs < startMs) return false;
+      if (endMs !== null && tsMs > endMs) return false;
+      return true;
+    });
+  };
+
+  const toCsv = (rows: any[], columns: string[]): string => {
+    const esc = (v: any) => {
+      const s = v === undefined || v === null ? "" : String(v);
+      if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    };
+    const header = columns.join(",");
+    const lines = rows.map((row) => columns.map((c) => esc(row[c])).join(","));
+    return [header, ...lines].join("\n");
+  };
+
+  const redactText = (text: any): string => {
+    const s = String(text ?? "");
+    if (!s) return "";
+    const emailRegex =
+      /\b([A-Z0-9._%+-])[A-Z0-9._%+-]*@([A-Z0-9.-]+\.[A-Z]{2,})\b/gi;
+    let red = s.replace(emailRegex, (_m, a, b) => `${String(a)}***@${b}`);
+    const phoneRegex = /(?:(?:\+?\d[\s\-().]*){7,})/g;
+    red = red.replace(phoneRegex, (m) => {
+      const digits = m.replace(/\D/g, "");
+      if (digits.length < 7) return m;
+      return `[REDACTED:${digits.slice(-2)}]`;
+    });
+    return red;
+  };
+
+  const normalizeTimestamp = (ts: string | undefined): string => {
+    const ms = parseTimestamp(ts || "");
+    if (ms === null) return ts || "";
+    return new Date(ms).toISOString();
+  };
+
+  const transformRowForDataCsv = (row: any) => {
+    const r: any = { ...row };
+    if (dataRedactPii) {
+      r.sender = redactText(r.sender);
+      r.content = redactText(r.content);
+      r.conversation_name = redactText(r.conversation_name);
+      r.source = redactText(r.source);
+    }
+    if (dataNormalizeTs) {
+      r.timestamp = normalizeTimestamp(r.timestamp);
+    }
+    return r;
+  };
+
+  const bucketKey = (ms: number, mode: "hour" | "day"): string => {
+    const d = new Date(ms);
+    if (mode === "day") {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:00`;
+  };
+
+  const buildTimelineRows = (rows: any[]) => {
+    const sorted = [...rows].sort(
+      (a, b) =>
+        (parseTimestamp(a?.timestamp) || 0) -
+        (parseTimestamp(b?.timestamp) || 0),
+    );
+    let filtered = sorted;
+    if (timelineDedup) {
+      const out: any[] = [];
+      for (const r of sorted) {
+        const ms = parseTimestamp(r?.timestamp) || 0;
+        const last = out[out.length - 1];
+        if (
+          last &&
+          last.app === r.app &&
+          String(last.sender || "").trim() === String(r.sender || "").trim() &&
+          String(last.content || "").trim() ===
+            String(r.content || "").trim() &&
+          Math.abs((parseTimestamp(last.timestamp) || 0) - ms) <= 5 * 60 * 1000
+        ) {
+          continue;
+        }
+        out.push(r);
+      }
+      filtered = out;
+    }
+
+    if (timelineBucket === "none") {
+      return filtered.map((r) => {
+        const row: any = { ...r };
+        if (timelineRedactPii) {
+          row.sender = redactText(row.sender);
+          row.content = redactText(row.content);
+          row.conversation_name = redactText(row.conversation_name);
+          row.source = redactText(row.source);
+        }
+        return row;
+      });
+    }
+
+    const buckets = new Map<
+      string,
+      { count: number; apps: Set<string>; senders: Set<string> }
+    >();
+    for (const r of filtered) {
+      const ms = parseTimestamp(r?.timestamp);
+      if (ms === null) continue;
+      const key = bucketKey(ms, timelineBucket);
+      const entry = buckets.get(key) || {
+        count: 0,
+        apps: new Set<string>(),
+        senders: new Set<string>(),
+      };
+      entry.count += 1;
+      if (r.app) entry.apps.add(String(r.app));
+      if (r.sender)
+        entry.senders.add(
+          timelineRedactPii ? redactText(String(r.sender)) : String(r.sender),
+        );
+      buckets.set(key, entry);
+    }
+    const out: any[] = [];
+    for (const [key, v] of Array.from(buckets.entries()).sort((a, b) =>
+      a[0] > b[0] ? 1 : -1,
+    )) {
+      out.push({
+        timestamp_bucket: key,
+        total_events: v.count,
+        unique_apps: v.apps.size,
+        unique_senders: v.senders.size,
+      });
+    }
+    return out;
+  };
+
+  const openDataCsvModal = useCallback(() => {
+    if (!results || results.length === 0) {
+      toast.info("No data to export", {
+        description: "Run a search to generate exportable data tables.",
+      });
+      return;
+    }
+    setIsDataCsvOpen(true);
+  }, [results]);
+
+  const openTimelineCsvModal = useCallback(() => {
+    if (!results || results.length === 0) {
+      toast.info("No data to export", {
+        description: "Run a search to generate exportable timelines.",
+      });
+      return;
+    }
+    setIsTimelineCsvOpen(true);
+  }, [results]);
+
+  const downloadDataCsv = useCallback(() => {
+    const baseRows = Array.isArray(results) ? results : [];
+    const filtered = filterByDateRange(baseRows, dataCsvStart, dataCsvEnd);
+    const transformed = filtered.map(transformRowForDataCsv);
+    const columns = [
+      "timestamp",
+      "app",
+      "direction",
+      "sender",
+      "content",
+      "conversation_name",
+      "file_type",
+      "artifact_id",
+      "device_id",
+      "source",
+    ];
+    const normalized = transformed.map((r) => ({
+      timestamp: r.timestamp ?? "",
+      app: r.app ?? "",
+      direction: r.direction ?? "",
+      sender: r.sender ?? "",
+      content: r.content ?? "",
+      conversation_name: r.conversation_name ?? "",
+      file_type: r.file_type ?? r.data_type ?? "",
+      artifact_id: r.artifact_id ?? "",
+      device_id: r.device_id ?? "",
+      source: r.source ?? "",
+    }));
+    const csv = toCsv(normalized, columns);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${caseId}-data-tables.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    setIsDataCsvOpen(false);
+  }, [results, dataCsvStart, dataCsvEnd, caseId]);
+
+  const downloadTimelineCsv = useCallback(() => {
+    const baseRows = Array.isArray(results) ? results : [];
+    const rangeFiltered =
+      timelineStart || timelineEnd
+        ? filterByDateRange(baseRows, timelineStart, timelineEnd)
+        : baseRows;
+    const rows = buildTimelineRows(rangeFiltered);
+    let columns: string[];
+    if (timelineBucket === "none") {
+      columns = [
+        "timestamp",
+        "event_type",
+        "app",
+        "actor",
+        "direction",
+        "preview",
+        "source",
+      ];
+    } else {
+      columns = [
+        "timestamp_bucket",
+        "total_events",
+        "unique_apps",
+        "unique_senders",
+      ];
+    }
+    let csvRows = rows;
+    if (timelineBucket === "none") {
+      csvRows = rows.map((r: any) => ({
+        timestamp: r.timestamp ?? "",
+        event_type: r.file_type || r.data_type || "tsv_record",
+        app: r.app ?? "",
+        actor: r.sender ?? "",
+        direction: r.direction ?? "",
+        preview: r.content ?? "",
+        source: r.source ?? "",
+      }));
+    }
+    const csv = toCsv(csvRows, columns);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${caseId}-timeline.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    setIsTimelineCsvOpen(false);
+  }, [results, timelineStart, timelineEnd, caseId]);
 
   useEffect(() => {
     const loadCaseData = async () => {
@@ -638,12 +982,13 @@ export default function CaseSidebar({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-      }
+      const target = event.target as Node;
+      const clickedInsideDropdown =
+        dropdownRef.current && dropdownRef.current.contains(target);
+      const clickedToggleButton =
+        toggleButtonRef.current && toggleButtonRef.current.contains(target);
+      if (clickedInsideDropdown || clickedToggleButton) return;
+      setIsDropdownOpen(false);
     };
 
     if (isDropdownOpen) {
@@ -672,24 +1017,26 @@ export default function CaseSidebar({
     };
   }, [caseId]);
 
+  // Note: intentionally removed duplicate click-outside effect to prevent double handlers
+
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    if (isDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+    if ((files || []).length > 0 && expandedFiles.size === 0) {
+      const initialExpanded = new Set<number>();
+      const initialCounts = new Map<number, number>();
+      (files || []).forEach((f: any, idx: number) => {
+        const isZip = f?.file_name?.endsWith(".zip");
+        const recordCount = f?.files_count || f?.record_count || 0;
+        if (isZip && recordCount > 0) {
+          initialExpanded.add(idx);
+          if (!initialCounts.has(idx)) {
+            initialCounts.set(idx, 10);
+          }
+        }
+      });
+      setExpandedFiles(initialExpanded);
+      setVisibleFileCounts(initialCounts);
     }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isDropdownOpen]);
+  }, [files]);
 
   const handleCaseSwitch = (newCaseId: string) => {
     setIsDropdownOpen(false);
@@ -722,8 +1069,8 @@ export default function CaseSidebar({
     <>
       <aside className="w-80 h-full flex flex-col border-r border-[#E0E0E0] dark:border-[#2A2A2A] bg-[#F8F8F8] dark:bg-[#0F0F0F] overflow-hidden min-h-0">
         <div className="p-4 border-b border-[#E0E0E0] dark:border-[#2A2A2A]">
-          <div className="mb-3 p-3 rounded-lg bg-[#F8F8F8] dark:bg-[#0F0F0F] border border-[#E0E0E0] dark:border-[#2A2A2A]">
-            <div className="flex items-start justify-between mb-2">
+          <div className="mb-3 mx-1 p-3 rounded-lg bg-[#F8F8F8] dark:bg-[#0F0F0F] border border-[#E0E0E0] dark:border-[#2A2A2A]">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-[#2A2A2A] dark:text-[#E0E0E0] break-words">
                   {title}
@@ -733,6 +1080,7 @@ export default function CaseSidebar({
                 </p>
               </div>
               <button
+                ref={toggleButtonRef}
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="ml-2 p-1 rounded"
                 title="Switch cases"
@@ -776,7 +1124,7 @@ export default function CaseSidebar({
 
           <div ref={dropdownRef} className="relative">
             {isDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-[#F8F8F8] dark:bg-[#0F0F0F] border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-lg shadow-lg z-50">
+              <div className="absolute top-full right-0 mt-0.5 w-72 bg-[#F8F8F8] dark:bg-[#0F0F0F] border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-md shadow-md z-50 overflow-hidden">
                 <div className="p-3 border-b border-[#E0E0E0] dark:border-[#2A2A2A]">
                   <div className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
                     Recent Cases
@@ -785,7 +1133,7 @@ export default function CaseSidebar({
                     Switch between your cases
                   </div>
                 </div>
-                <div className="max-h-64 overflow-y-auto">
+                <div className="max-h-56 overflow-y-auto">
                   {allCases.length === 0 ? (
                     <div className="p-4 text-center">
                       <div className="text-sm text-[#666] dark:text-[#999] mb-1">
@@ -886,7 +1234,7 @@ export default function CaseSidebar({
                             <FileText className="h-5 w-5 text-[#FF7F50] flex-shrink-0" />
                           )}
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
+                            <div className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
                               {f.file_name}
                             </div>
                             <div className="text-xs text-[#666] dark:text-[#999]">
@@ -935,9 +1283,7 @@ export default function CaseSidebar({
                                         onClick={() => fetchFileContent(file)}
                                       >
                                         <FileText className="h-3 w-3" />
-                                        <span className="truncate flex-1">
-                                          {file}
-                                        </span>
+                                        <span className="flex-1">{file}</span>
                                         <Eye className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                                       </button>
                                     </div>
@@ -1007,11 +1353,7 @@ export default function CaseSidebar({
               Court Report (PDF)
             </button>
             <button
-              onClick={() =>
-                toast.info("Data Tables (CSV)", {
-                  description: "Exporting CSV coming soon.",
-                })
-              }
+              onClick={openDataCsvModal}
               className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:scale-[1.02] transition-transform"
             >
               <svg
@@ -1026,11 +1368,7 @@ export default function CaseSidebar({
               Data Tables (CSV)
             </button>
             <button
-              onClick={() =>
-                toast.info("Timelines (CSV)", {
-                  description: "Exporting timelines to CSV coming soon.",
-                })
-              }
+              onClick={openTimelineCsvModal}
               className="w-full inline-flex items-center justify-start rounded-lg px-3 py-2 text-sm text-[#FF7F50] hover:scale-[1.02] transition-transform"
             >
               <svg
@@ -1220,6 +1558,523 @@ export default function CaseSidebar({
                 ) : (
                   "Upload Files"
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isDataCsvOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-200 ease-out">
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-200 ease-out"
+            onClick={() => setIsDataCsvOpen(false)}
+          />
+          <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A] transition-transform duration-200 ease-out will-change-transform">
+            <button
+              onClick={() => setIsDataCsvOpen(false)}
+              className="absolute top-3 right-3 p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent focus:ring-0 focus:outline-none"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0] mb-2">
+              Export Data Tables
+            </h2>
+            <div className="text-sm text-[#666] dark:text-[#999] mb-4">
+              Filter by date range and select options. Preview shows first 10
+              rows.
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div className="sm:col-span-1">
+                <label className="text-xs text-[#666] dark:text-[#999]">
+                  Start date
+                </label>
+                <input
+                  type="date"
+                  value={dataCsvStart}
+                  onChange={(e) => setDataCsvStart(e.target.value)}
+                  className="w-full mt-1 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A] bg-transparent px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="sm:col-span-1">
+                <label className="text-xs text-[#666] dark:text-[#999]">
+                  End date
+                </label>
+                <input
+                  type="date"
+                  value={dataCsvEnd}
+                  onChange={(e) => setDataCsvEnd(e.target.value)}
+                  className="w-full mt-1 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A] bg-transparent px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                <label className="flex items-center gap-2 p-2 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A]">
+                  <input
+                    type="checkbox"
+                    checked={dataRedactPii}
+                    onChange={(e) => setDataRedactPii(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm">Redact PII</span>
+                </label>
+                <label className="flex items-center gap-2 p-2 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A]">
+                  <input
+                    type="checkbox"
+                    checked={dataNormalizeTs}
+                    onChange={(e) => setDataNormalizeTs(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm">
+                    Normalize timestamps to ISO 8601
+                  </span>
+                </label>
+              </div>
+            </div>
+            {dataCsvStart || dataCsvEnd ? (
+              <div className="border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-lg overflow-hidden transition-opacity duration-200 ease-out">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-[#FAFAFA] dark:bg-[#1A1A1A]">
+                      <tr>
+                        {[
+                          "timestamp",
+                          "app",
+                          "direction",
+                          "sender",
+                          "content",
+                          "conversation_name",
+                          "file_type",
+                          "artifact_id",
+                          "device_id",
+                          "source",
+                        ].map((h) => (
+                          <th
+                            key={h}
+                            className="text-left px-3 py-2 whitespace-nowrap border-b border-[#E0E0E0] dark:border-[#2A2A2A]"
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filterByDateRange(
+                        Array.isArray(results) ? results : [],
+                        dataCsvStart,
+                        dataCsvEnd,
+                      )
+                        .map(transformRowForDataCsv)
+                        .slice(0, 10)
+                        .map((r, i) => (
+                          <tr
+                            key={i}
+                            className="odd:bg-white even:bg-[#FAFAFA] dark:odd:bg-[#121212] dark:even:bg-[#171717]"
+                          >
+                            {[
+                              "timestamp",
+                              "app",
+                              "direction",
+                              "sender",
+                              "content",
+                              "conversation_name",
+                              "file_type",
+                              "artifact_id",
+                              "device_id",
+                              "source",
+                            ].map((c) => (
+                              <td
+                                key={c}
+                                className="px-3 py-2 align-top max-w-[280px] truncate"
+                                title={String(r?.[c] ?? "")}
+                              >
+                                {String(r?.[c] ?? "")}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="text-xs text-[#666] dark:text-[#999] italic">
+                Select a date range to preview.
+              </div>
+            )}
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={() => setIsDataCsvOpen(false)}
+                className="border-[#E0E0E0] dark:border-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={downloadDataCsv}
+                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+              >
+                Download CSV
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isTimelineCsvOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-200 ease-out">
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-200 ease-out"
+            onClick={() => setIsTimelineCsvOpen(false)}
+          />
+          <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A] transition-transform duration-200 ease-out will-change-transform">
+            <button
+              onClick={() => setIsTimelineCsvOpen(false)}
+              className="absolute top-3 right-3 p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent focus:ring-0 focus:outline-none"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0] mb-2">
+              Export Timelines
+            </h2>
+            <div className="text-sm text-[#666] dark:text-[#999] mb-4">
+              Choose date range and options. Preview shows first 10 rows.
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div className="sm:col-span-1">
+                <label className="text-xs text-[#666] dark:text-[#999]">
+                  Start date
+                </label>
+                <input
+                  type="date"
+                  value={timelineStart}
+                  onChange={(e) => setTimelineStart(e.target.value)}
+                  className="w-full mt-1 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A] bg-transparent px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="sm:col-span-1">
+                <label className="text-xs text-[#666] dark:text-[#999]">
+                  End date
+                </label>
+                <input
+                  type="date"
+                  value={timelineEnd}
+                  onChange={(e) => setTimelineEnd(e.target.value)}
+                  className="w-full mt-1 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A] bg-transparent px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                <label className="flex items-center gap-2 p-2 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A]">
+                  <input
+                    type="checkbox"
+                    checked={timelineRedactPii}
+                    onChange={(e) => setTimelineRedactPii(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm">Redact PII</span>
+                </label>
+                <div className="flex items-center gap-2 p-2 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A]">
+                  <span className="text-sm">Bucket by:</span>
+                  <div className="ml-auto">
+                    <Tabs
+                      value={timelineBucket}
+                      onValueChange={(v) => setTimelineBucket(v as any)}
+                    >
+                      <TabsList className="h-8 p-[3px] transition-colors duration-200">
+                        <TabsTrigger
+                          value="none"
+                          className="px-3 data-[state=active]:border-[#FF7F50] data-[state=active]:text-[#FF7F50] data-[state=active]:bg-white dark:data-[state=active]:bg-[#0F0F0F]"
+                        >
+                          Raw Events
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="day"
+                          className="px-3 data-[state=active]:border-[#FF7F50] data-[state=active]:text-[#FF7F50] data-[state=active]:bg-white dark:data-[state=active]:bg-[#0F0F0F]"
+                        >
+                          Day
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="hour"
+                          className="px-3 data-[state=active]:border-[#FF7F50] data-[state=active]:text-[#FF7F50] data-[state=active]:bg-white dark:data-[state=active]:bg-[#0F0F0F]"
+                        >
+                          Hour
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {timelineStart || timelineEnd ? (
+              <div className="border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-lg overflow-hidden transition-opacity duration-200 ease-out">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-[#FAFAFA] dark:bg-[#1A1A1A]">
+                      <tr>
+                        {timelineBucket === "none"
+                          ? [
+                              "timestamp",
+                              "app",
+                              "sender",
+                              "content",
+                              "source",
+                            ].map((h) => (
+                              <th
+                                key={h}
+                                className="text-left px-3 py-2 whitespace-nowrap border-b border-[#E0E0E0] dark:border-[#2A2A2A]"
+                              >
+                                {h}
+                              </th>
+                            ))
+                          : [
+                              "timestamp_bucket",
+                              "total_events",
+                              "unique_apps",
+                              "unique_senders",
+                            ].map((h) => (
+                              <th
+                                key={h}
+                                className="text-left px-3 py-2 whitespace-nowrap border-b border-[#E0E0E0] dark:border-[#2A2A2A]"
+                              >
+                                {h}
+                              </th>
+                            ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {buildTimelineRows(
+                        filterByDateRange(
+                          Array.isArray(results) ? results : [],
+                          timelineStart,
+                          timelineEnd,
+                        ),
+                      )
+                        .slice(0, 10)
+                        .map((r: any, i: number) => (
+                          <tr
+                            key={i}
+                            className="odd:bg-white even:bg-[#FAFAFA] dark:odd:bg-[#121212] dark:even:bg-[#171717]"
+                          >
+                            {(timelineBucket === "none"
+                              ? [
+                                  "timestamp",
+                                  "app",
+                                  "sender",
+                                  "content",
+                                  "source",
+                                ]
+                              : [
+                                  "timestamp_bucket",
+                                  "total_events",
+                                  "unique_apps",
+                                  "unique_senders",
+                                ]
+                            ).map((c) => (
+                              <td
+                                key={c}
+                                className="px-3 py-2 align-top max-w-[280px] truncate"
+                                title={String(r?.[c] ?? "")}
+                              >
+                                {String(r?.[c] ?? "")}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="text-xs text-[#666] dark:text-[#999] italic">
+                Select a date range to preview.
+              </div>
+            )}
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={() => setIsTimelineCsvOpen(false)}
+                className="border-[#E0E0E0] dark:border-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={downloadTimelineCsv}
+                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+              >
+                Download CSV
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isRawJsonOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={() => setIsRawJsonOpen(false)}
+          />
+          <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-3xl mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A] max-h-[80vh] flex flex-col">
+            <button
+              onClick={() => setIsRawJsonOpen(false)}
+              className="absolute top-3 right-3 p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent focus:ring-0 focus:outline-none"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0] mb-2">
+              Raw Artifacts (JSON)
+            </h2>
+            <div className="text-sm text-[#666] dark:text-[#999] mb-4">
+              Preview of the JSON payload to be exported.
+            </div>
+            <div className="flex-1 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A] bg-[#F8F8F8] dark:bg-[#0F0F0F] overflow-hidden">
+              <div className="bg-[#F8F8F8] dark:bg-[#2A2A2A] px-3 py-2 text-xs text-[#666] dark:text-[#999] border-b border-[#E0E0E0] dark:border-[#2A2A2A]">
+                {`${caseId}.json`}
+              </div>
+              <div className="overflow-auto p-3 max-h-[60vh]">
+                <pre className="text-xs text-[#2A2A2A] dark:text-[#E0E0E0] whitespace-pre-wrap break-words">
+                  {JSON.stringify(getRawArtifactsPayload(), null, 2)}
+                </pre>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={() => setIsRawJsonOpen(false)}
+                className="border-[#E0E0E0] dark:border-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={copyRawArtifactsToClipboard}
+                className="border border-[#FF7F50] text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+              >
+                Copy JSON
+              </button>
+              <button
+                onClick={downloadRawArtifactsJson}
+                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+              >
+                Download JSON
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isExportOptionsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={() => setIsExportOptionsOpen(false)}
+          />
+
+          <div className="relative bg-[#FEFEFE] dark:bg-[#1A1A1A] rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-[#E0E0E0] dark:border-[#2A2A2A]">
+            <button
+              onClick={() => setIsExportOptionsOpen(false)}
+              className="absolute top-3 right-3 p-2 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent focus:ring-0 focus:outline-none"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="mb-4">
+              <h2 className="text-lg font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
+                Export Court Report
+              </h2>
+              <p className="text-sm text-[#666] dark:text-[#999]">
+                Choose sections to include for management-friendly reports.
+              </p>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A] bg-[#F8F8F8] dark:bg-[#1A1A1A] opacity-60 cursor-not-allowed">
+                <input
+                  type="checkbox"
+                  checked={includeReportInfo}
+                  disabled
+                  className="mt-0.5"
+                />
+                <div>
+                  <div className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
+                    Report Information
+                  </div>
+                  <div className="text-xs text-[#666] dark:text-[#999]">
+                    Always included
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A] bg-[#FEFEFE] dark:bg-[#0F0F0F]">
+                <input
+                  type="checkbox"
+                  checked={includeChain}
+                  onChange={(e) => setIncludeChain(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <div>
+                  <div className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
+                    Chain of Custody
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A] bg-[#FEFEFE] dark:bg-[#0F0F0F]">
+                <input
+                  type="checkbox"
+                  checked={includeSources}
+                  onChange={(e) => setIncludeSources(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <div>
+                  <div className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
+                    Evidence Sources
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A] bg-[#FEFEFE] dark:bg-[#0F0F0F]">
+                <input
+                  type="checkbox"
+                  checked={includeExecutive}
+                  onChange={(e) => setIncludeExecutive(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <div>
+                  <div className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
+                    Executive Summary
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-[#E0E0E0] dark:border-[#2A2A2A] bg-[#FEFEFE] dark:bg-[#0F0F0F]">
+                <input
+                  type="checkbox"
+                  checked={includeDetailed}
+                  onChange={(e) => setIncludeDetailed(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <div>
+                  <div className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
+                    Detailed Examination Results
+                  </div>
+                  <div className="text-xs text-[#666] dark:text-[#999]">
+                    Leave off for high-level reports
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setIsExportOptionsOpen(false)}
+                className="border-[#E0E0E0] dark:border-[#2A2A2A] text-[#4A4A4A] dark:text-[#B0B0B0] hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmExportCourtReport}
+                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+              >
+                Generate PDF
               </button>
             </div>
           </div>

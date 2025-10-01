@@ -163,7 +163,7 @@ export interface EvidenceItem {
   app: string;
   timestamp: string;
   sender: string;
-  tagBadges: string[];
+  tag_badges: string[];
   content: string;
   source: string;
   direction: "Incoming" | "Outgoing";
@@ -179,7 +179,6 @@ export interface EvidenceItem {
   jid?: string | null;
   status?: string;
   recovery_status?: string;
-  raw_data?: SearchResult;
 }
 
 export async function searchQuery(
@@ -308,7 +307,7 @@ export async function searchQuery(
         app: appName,
         timestamp,
         sender,
-        tagBadges: tagBadges.length > 0 ? tagBadges : ["General message"],
+        tag_badges: tagBadges.length > 0 ? tagBadges : ["General message"],
         content:
           content.substring(0, 500) + (content.length > 500 ? "..." : ""),
         source: result.source_path || result.source || "Unknown source",
@@ -325,7 +324,6 @@ export async function searchQuery(
         jid: jid,
         status: status,
         recovery_status: recoveryStatus,
-        raw_data: result,
       };
     });
 

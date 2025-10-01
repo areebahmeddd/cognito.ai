@@ -94,7 +94,7 @@ export default function CasePage() {
 
     if (selectedType !== "All Types") {
       filtered = filtered.filter((ev) => {
-        const category = ev.raw_data?.category?.toLowerCase() || "";
+        const category = ev.file_type?.toLowerCase() || "";
         const fileType = ev.file_type?.toLowerCase() || "";
         const app = ev.app?.toLowerCase() || "";
 
@@ -189,7 +189,10 @@ export default function CasePage() {
     const SESSION_TIMEOUT = 30 * 60 * 1000;
 
     for (const event of sortedResults) {
-      const eventTime = new Date(event.timestamp).getTime();
+      const eventTime = parseFlexibleTimestamp(event.timestamp);
+      if (isNaN(eventTime)) {
+        return;
+      }
 
       if (
         currentSession &&
@@ -236,7 +239,7 @@ export default function CasePage() {
           hasSuspiciousContent: false,
           suspiciousKeywords: [],
           participants: new Set([event.sender]),
-          preview: event.content?.substring(0, 100) || "",
+          preview: event.content || "",
           priority: "normal",
         };
 
@@ -300,12 +303,14 @@ export default function CasePage() {
           return stats;
         }, {});
 
-        const startTime = new Date(
-          Math.min(...daySessions.map((s) => s.startTime)),
+        const startMs = Math.min(
+          ...(daySessions || []).map((s: any) => s.startTime),
         );
-        const endTime = new Date(
-          Math.max(...daySessions.map((s) => s.endTime)),
+        const endMs = Math.max(
+          ...(daySessions || []).map((s: any) => s.endTime),
         );
+        const startTime = new Date(startMs);
+        const endTime = new Date(endMs);
 
         return {
           date,
@@ -394,28 +399,15 @@ export default function CasePage() {
     results.forEach((result) => {
       const senderFields = [
         result.sender,
-        result.raw_data?.sender,
-        result.raw_data?.from,
-        result.raw_data?.display_from,
-        result.raw_data?.caller,
-        result.raw_data?.sending_party,
-        result.raw_data?.phone_number,
-        result.raw_data?.email,
-        result.raw_data?.username,
-        result.raw_data?.display_name,
-        result.raw_data?.contact_name,
+        result.phone_number,
+        result.email,
+        result.jid,
       ].filter(Boolean);
 
       const recipientFields = [
-        result.raw_data?.recipient,
-        result.raw_data?.to,
-        result.raw_data?.display_to,
-        result.raw_data?.callee,
-        result.raw_data?.phone_number,
-        result.raw_data?.email,
-        result.raw_data?.username,
-        result.raw_data?.display_name,
-        result.raw_data?.contact_name,
+        result.phone_number,
+        result.email,
+        result.jid,
       ].filter(Boolean);
 
       [...senderFields, ...recipientFields].forEach((contact) => {
@@ -704,8 +696,8 @@ export default function CasePage() {
   };
 
   const filteredResults = filterResults(results);
-  const timelineSessions = groupEventsIntoSessions(results);
-  const allDailySummaries = getDailySummaries(timelineSessions);
+  const timelineSessions = groupEventsIntoSessions(results || []);
+  const allDailySummaries = getDailySummaries(timelineSessions || []);
   const filteredDailySummaries = filterDailySummaries(allDailySummaries);
 
   const allNetworkContacts = analyzeSuspiciousContacts(
@@ -870,6 +862,61 @@ export default function CasePage() {
       setLoading(false);
     }
   };
+
+  const ExpandableText = ({
+    text,
+    collapsedChars = 280,
+  }: {
+    text: string;
+    collapsedChars?: number;
+  }) => {
+    const [expanded, setExpanded] = useState(false);
+    const needsCollapse = (text || "").length > collapsedChars;
+    const shown =
+      expanded || !needsCollapse ? text : (text || "").slice(0, collapsedChars);
+    return (
+      <>
+        <span>{shown}</span>
+        {needsCollapse && !expanded && <span>…</span>}
+        {needsCollapse && (
+          <button
+            type="button"
+            className="ml-1 text-[#FF7F50] hover:underline"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded ? "less" : "more"}
+          </button>
+        )}
+      </>
+    );
+  };
+
+  function parseFlexibleTimestamp(ts?: string): number {
+    if (!ts) return NaN;
+    const native = new Date(ts);
+    if (!isNaN(native.getTime())) return native.getTime();
+    const parts = ts.split(",");
+    const datePart = parts[0]?.trim();
+    const timePart = (parts[1] || "").trim();
+    if (!datePart) return NaN;
+    const dateSegs = datePart.split(/[\/-]/);
+    if (dateSegs.length !== 3) return NaN;
+    const d = parseInt(dateSegs[0] || "", 10);
+    const m = parseInt(dateSegs[1] || "", 10);
+    const y = parseInt(dateSegs[2] || "", 10);
+    if (!y || !m || !d) return NaN;
+    let hh = 0,
+      mi = 0,
+      ss = 0;
+    if (timePart) {
+      const [hStr, miStr, sStr] = timePart.split(":");
+      hh = parseInt(hStr || "0", 10) || 0;
+      mi = parseInt(miStr || "0", 10) || 0;
+      ss = parseInt(sStr || "0", 10) || 0;
+    }
+    const dt = new Date(y, (m || 1) - 1, d, hh, mi, ss);
+    return isNaN(dt.getTime()) ? NaN : dt.getTime();
+  }
 
   return (
     <div className="h-screen bg-[#F8F8F8] dark:bg-[#0F0F0F]">
@@ -1229,14 +1276,16 @@ export default function CasePage() {
                                 <div className="mb-4">
                                   <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">
                                     {ev.sender} →{" "}
-                                    {ev.raw_data?.recipient ||
-                                      ev.raw_data?.to ||
-                                      ev.raw_data?.display_to ||
+                                    {ev.phone_number ||
+                                      ev.email ||
+                                      ev.jid ||
                                       "Unknown"}
                                   </div>
                                   <div className="bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg p-4 border border-[#FF7F50] dark:border-[#FF7F50]">
                                     <div className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
-                                      {ev.content}
+                                      <ExpandableText
+                                        text={String(ev.content || "")}
+                                      />
                                     </div>
                                   </div>
                                 </div>
@@ -1311,9 +1360,9 @@ export default function CasePage() {
 
                                 {(() => {
                                   const allTags = [
-                                    ...(ev.tagBadges || []),
-                                    ev.raw_data?.data_type,
-                                    ev.raw_data?.category,
+                                    ...(ev.tag_badges || []),
+                                    ev.message_type,
+                                    ev.file_type,
                                   ].filter(Boolean) as string[];
 
                                   return allTags.length > 0 ? (
@@ -1747,14 +1796,19 @@ export default function CasePage() {
 
                                             <div className="mb-2">
                                               <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">
-                                                Participants:{" "}
-                                                {Array.from(
-                                                  session.participants,
-                                                ).join(", ")}
+                                                <ExpandableText
+                                                  text={`Participants: ${Array.from(session.participants).join(", ")}`}
+                                                  collapsedChars={160}
+                                                />
                                               </div>
                                               <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-3">
                                                 <div className="text-sm text-slate-800 dark:text-slate-200">
-                                                  {session.preview}...
+                                                  <ExpandableText
+                                                    text={String(
+                                                      session.preview || "",
+                                                    )}
+                                                    collapsedChars={200}
+                                                  />
                                                 </div>
                                               </div>
                                             </div>
@@ -2384,7 +2438,7 @@ export default function CasePage() {
                               <div className="text-4xl font-bold text-red-500 mb-2">
                                 {
                                   results.filter((r) =>
-                                    r.tagBadges.some(
+                                    (r.tag_badges || []).some(
                                       (tag) =>
                                         tag.includes("Cryptocurrency") ||
                                         tag.includes("Financial") ||
@@ -2471,9 +2525,10 @@ export default function CasePage() {
                             <div className="max-w-md mx-auto space-y-4">
                               {(() => {
                                 const timelineSessions =
-                                  groupEventsIntoSessions(results);
-                                const dailySummaries =
-                                  getDailySummaries(timelineSessions);
+                                  groupEventsIntoSessions(results || []);
+                                const dailySummaries = getDailySummaries(
+                                  timelineSessions || [],
+                                );
                                 const totalSessions = dailySummaries.reduce(
                                   (sum, day) => sum + day.sessions.length,
                                   0,

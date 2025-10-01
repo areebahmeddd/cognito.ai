@@ -68,28 +68,31 @@ def process_file(
     classification: Optional[Dict[str, str]] = None,
     file_hash: str = None,
 ) -> int:
-    if not os.path.exists(tsv_path) or os.path.getsize(tsv_path) == 0:
+    try:
+        if not os.path.exists(tsv_path) or os.path.getsize(tsv_path) == 0:
+            return 0
+
+        rows = read_tsv(tsv_path)
+        if not rows:
+            return 0
+
+        documents = []
+        for i, row in enumerate(rows):
+            try:
+                doc = create_doc(row, i, tsv_path, classification, file_hash)
+                documents.append(doc)
+            except Exception:
+                continue
+
+        if not documents:
+            return 0
+
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(documents, f, indent=2, ensure_ascii=False)
+
+        return len(documents)
+    except Exception:
         return 0
-
-    rows = read_tsv(tsv_path)
-    if not rows:
-        return 0
-
-    documents = []
-    for i, row in enumerate(rows):
-        try:
-            doc = create_doc(row, i, tsv_path, classification, file_hash)
-            documents.append(doc)
-        except Exception:
-            continue
-
-    if not documents:
-        return 0
-
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(documents, f, indent=2, ensure_ascii=False)
-
-    return len(documents)
 
 
 def extract_files(zip_path: str, tsv_files: List[str], input_dir: str) -> List[str]:
@@ -99,17 +102,18 @@ def extract_files(zip_path: str, tsv_files: List[str], input_dir: str) -> List[s
         for tsv_filename in tsv_files:
             try:
                 file_info = zip_ref.getinfo(tsv_filename)
+                safe_filename = os.path.basename(file_info.filename)
                 safe_filename = "".join(
-                    c
-                    for c in os.path.basename(file_info.filename)
-                    if c.isalnum() or c in "._-"
+                    c for c in safe_filename if c.isalnum() or c in "._-"
                 )
                 if not safe_filename.endswith(".tsv"):
                     safe_filename += ".tsv"
 
                 safe_path = os.path.join(input_dir, safe_filename)
-                with zip_ref.open(file_info) as source, open(safe_path, "wb") as target:
-                    target.write(source.read())
+                with zip_ref.open(file_info) as source:
+                    content = source.read()
+                    with open(safe_path, "wb") as target:
+                        target.write(content)
 
                 extracted_files.append(safe_path)
             except KeyError:
@@ -122,9 +126,15 @@ def read_tsv(tsv_path: str) -> List[Dict[str, str]]:
     with open(tsv_path, "r", encoding="utf-8-sig", errors="replace") as f:
         reader = csv.DictReader(f, delimiter="\t")
         headers = reader.fieldnames
+
         if headers:
-            reader.fieldnames = [clean_header(h) for h in headers]
-        return list(reader) if headers else []
+            cleaned_headers = [clean_header(header) for header in headers]
+            reader.fieldnames = cleaned_headers
+
+        if not headers:
+            return []
+
+        return list(reader)
 
 
 def create_doc(
@@ -157,6 +167,7 @@ def create_doc(
 
     for header, value in row.items():
         if value and str(value).strip():
-            doc[clean_header(header)] = clean_value(value)
+            clean_header_name = clean_header(header)
+            doc[clean_header_name] = clean_value(value)
 
     return doc

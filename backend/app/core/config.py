@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     app_description: str = "Natural language interface for digital forensic evidence"
     app_version: str = "1.0.0"
     # debug: bool = False
+
     cors_origins: list[str] = ["*"]
     cors_methods: list[str] = ["*"]
     cors_headers: list[str] = ["*"]

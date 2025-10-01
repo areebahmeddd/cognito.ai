@@ -1,5 +1,5 @@
-import json
 import os
+import json
 import time
 from typing import Any, Dict, List
 
@@ -15,10 +15,10 @@ index_name = settings.elasticsearch_index
 
 def bulk_index(
     dir_path: str,
-    case_id: str | None = None,
-    device_id: str | None = None,
-    file_hash: str | None = None,
-    zip_name: str | None = None,
+    case_id: str = None,
+    device_id: str = None,
+    file_hash: str = None,
+    zip_name: str = None,
 ) -> Dict[str, Any]:
     def iter_docs(paths: List[str]):
         for path in paths:
@@ -399,10 +399,12 @@ def delete_upload(case_id: str, zip_name: str) -> Dict[str, Any]:
                 }
             }
         }
+
         response = es_client.delete_by_query(
             index=index_name, body=query, conflicts="proceed"
         )
         es_client.indices.refresh(index=index_name)
+
         return {"deleted_count": response.get("deleted", 0), "status": "success"}
     except Exception as e:
         return {"deleted_count": 0, "status": "error", "error": str(e)}

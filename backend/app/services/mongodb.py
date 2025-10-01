@@ -62,11 +62,13 @@ async def get_cases() -> List[Dict[str, Any]]:
         async for case in cursor:
             case["_id"] = str(case["_id"])
             case_id = case.get("case_id")
-            case["total_files_count"] = (
-                await files_collection.count_documents({"case_id": case_id})
-                if case_id
-                else 0
-            )
+            if case_id:
+                file_count = await files_collection.count_documents(
+                    {"case_id": case_id}
+                )
+                case["total_files_count"] = file_count
+            else:
+                case["total_files_count"] = 0
             cases.append(case)
         return cases
     except Exception as e:

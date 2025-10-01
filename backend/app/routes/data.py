@@ -95,7 +95,11 @@ async def upload_file(
         mongodb_result = {"stored_files": 0, "total_records": 0, "files": []}
         if temp_dir and os.path.isdir(temp_dir):
             mongodb_result = await store_files(
-                case_id, device_id, temp_dir, file.filename, file.size
+                case_id or f"CASE-{device_id[:8]}",
+                device_id,
+                temp_dir,
+                file.filename,
+                file.size,
             )
 
         metadata = {
