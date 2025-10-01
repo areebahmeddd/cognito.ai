@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "build": "next build",
+    "start": "next start",
     "dev": "next dev",
-    "lint": "next lint",
-    "start": "next start"
+    "format": "npx prettier --write ."
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
