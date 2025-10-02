@@ -48,7 +48,8 @@ export default function CreateCaseModal({
     Array.from(files).forEach((file) => {
       if (
         file.type === "application/zip" ||
-        file.name.toLowerCase().endsWith(".zip")
+        file.name.toLowerCase().endsWith(".zip") ||
+        file.name.toLowerCase().endsWith(".ufdr")
       ) {
         validFiles.push(file);
       } else {
@@ -57,7 +58,7 @@ export default function CreateCaseModal({
     });
 
     if (invalidFiles.length > 0) {
-      const msg = `Invalid file types: ${invalidFiles.join(", ")}. Only ZIP files are allowed.`;
+      const msg = `Invalid file types: ${invalidFiles.join(", ")}. Only ZIP and UFDR files are allowed.`;
       setError(msg);
       toast.error("Invalid files", { description: msg });
     }
@@ -452,7 +453,7 @@ export default function CreateCaseModal({
                 multiple
                 onChange={(e) => handleFileSelect(e.target.files)}
                 className="hidden"
-                accept=".udfr,.zip,application/x-zip-compressed"
+                accept=".zip,.ufdr,application/x-zip-compressed"
                 disabled={isUploading}
               />
             </div>

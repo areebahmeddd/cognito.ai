@@ -377,7 +377,8 @@ export default function CaseSidebar({
     Array.from(files).forEach((file) => {
       if (
         file.type === "application/zip" ||
-        file.name.toLowerCase().endsWith(".zip")
+        file.name.toLowerCase().endsWith(".zip") ||
+        file.name.toLowerCase().endsWith(".ufdr")
       ) {
         validFiles.push(file);
       } else {
@@ -386,7 +387,7 @@ export default function CaseSidebar({
     });
 
     if (invalidFiles.length > 0) {
-      const msg = `Invalid file types: ${invalidFiles.join(", ")}. Only ZIP files are allowed.`;
+      const msg = `Invalid file types: ${invalidFiles.join(", ")}. Only ZIP and UFDR files are allowed.`;
       setError(msg);
       toast.error("Invalid files", { description: msg });
     }
@@ -1490,7 +1491,7 @@ export default function CaseSidebar({
                 multiple
                 onChange={(e) => handleFileSelect(e.target.files)}
                 className="hidden"
-                accept=".zip"
+                accept=".zip,.ufdr"
                 disabled={isUploading}
               />
             </div>
@@ -1513,7 +1514,8 @@ export default function CaseSidebar({
                             {file.name}
                           </p>
                           <p className="text-xs text-[#666] dark:text-[#999]">
-                            {(file.size / 1024).toFixed(1)} KB • {file.type}
+                            {(file.size / 1024).toFixed(1)} KB •{" "}
+                            {file.type || "application/x-zip-compressed"}
                           </p>
                         </div>
                       </div>
