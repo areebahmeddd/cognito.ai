@@ -1582,8 +1582,8 @@ export default function CaseSidebar({
               Export Data Tables
             </h2>
             <div className="text-sm text-[#666] dark:text-[#999] mb-4">
-              Filter by date range and select options. Preview shows first 10
-              rows.
+              Filter by date range and select options. (Preview shows first 10
+              rows)
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               <div className="sm:col-span-1">
@@ -1738,7 +1738,7 @@ export default function CaseSidebar({
               Export Timelines
             </h2>
             <div className="text-sm text-[#666] dark:text-[#999] mb-4">
-              Choose date range and options. Preview shows first 10 rows.
+              Choose date range and options. (Preview shows first 10 rows)
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               <div className="sm:col-span-1">

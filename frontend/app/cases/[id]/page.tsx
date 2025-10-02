@@ -630,7 +630,7 @@ export default function CasePage() {
         font: { color: "white", size: 12, face: "Arial" },
         size: Math.min(Math.max(contact.communicationCount / 5, 15), 40),
         shape: "circle",
-        title: `${contact.name}\nType: ${contact.type}\nCommunications: ${contact.communicationCount}\nLast: ${new Date(contact.lastCommunication).toLocaleDateString()}`,
+        title: `${contact.name}\nType: ${contact.type}\nCommunications: ${contact.communicationCount}\nLast: ${formatSafeDateOnly(contact.lastCommunication)}`,
         chosen: false,
       })),
     ];
@@ -916,6 +916,38 @@ export default function CasePage() {
     }
     const dt = new Date(y, (m || 1) - 1, d, hh, mi, ss);
     return isNaN(dt.getTime()) ? NaN : dt.getTime();
+  }
+
+  function formatSafeDate(timestamp?: string): string {
+    if (!timestamp) return "No date";
+
+    const timestampMs = parseFlexibleTimestamp(timestamp);
+    if (!isNaN(timestampMs)) {
+      return new Date(timestampMs).toLocaleString();
+    }
+
+    const directDate = new Date(timestamp);
+    if (!isNaN(directDate.getTime())) {
+      return directDate.toLocaleString();
+    }
+
+    return timestamp;
+  }
+
+  function formatSafeDateOnly(timestamp?: string): string {
+    if (!timestamp) return "No date";
+
+    const timestampMs = parseFlexibleTimestamp(timestamp);
+    if (!isNaN(timestampMs)) {
+      return new Date(timestampMs).toLocaleDateString();
+    }
+
+    const directDate = new Date(timestamp);
+    if (!isNaN(directDate.getTime())) {
+      return directDate.toLocaleDateString();
+    }
+
+    return timestamp;
   }
 
   return (
@@ -2200,9 +2232,9 @@ export default function CasePage() {
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <div className="text-xs text-slate-500">
-                                          {new Date(
+                                          {formatSafeDateOnly(
                                             contact.lastCommunication,
-                                          ).toLocaleDateString()}
+                                          )}
                                         </div>
                                         <svg
                                           className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
@@ -2252,9 +2284,9 @@ export default function CasePage() {
                                                     Last Contact:
                                                   </span>
                                                   <span className="text-slate-700 dark:text-slate-300">
-                                                    {new Date(
+                                                    {formatSafeDate(
                                                       contact.lastCommunication,
-                                                    ).toLocaleString()}
+                                                    )}
                                                   </span>
                                                 </div>
                                               </div>
