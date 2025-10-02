@@ -1258,7 +1258,7 @@ export default function CaseSidebar({
                                 </button>
                               )}
                               <button
-                                className="p-1 rounded dark:hover:bg-[#2A1A1A]"
+                                className="p-1 rounded"
                                 title="Delete upload"
                                 onClick={() => handleDeleteUpload(f.file_name)}
                               >
