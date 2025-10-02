@@ -1,7 +1,6 @@
 "use client";
 
 import AuthModal from "@/components/auth/AuthModal";
-import { MobileNav } from "@/components/MobileNav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { clearUser, setUser } from "@/lib/user";
@@ -81,7 +80,7 @@ export default function Navbar() {
       </div>
 
       <div className="flex flex-1 justify-end items-center gap-2">
-        <div className="hidden md:flex items-center gap-4">
+        <div className="flex items-center gap-4">
           <ThemeToggle />
 
           {isAuthenticated ? (
@@ -103,9 +102,6 @@ export default function Navbar() {
               Sign In
             </Button>
           )}
-        </div>
-        <div className="md:hidden">
-          <MobileNav />
         </div>
       </div>
 
