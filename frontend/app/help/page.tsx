@@ -89,7 +89,7 @@ export default function HelpPage() {
                   <button
                     onClick={() =>
                       window.open(
-                        "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                        "https://www.youtube.com/watch?v=nPmozZFyn9Q",
                         "_blank",
                       )
                     }

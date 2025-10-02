@@ -58,7 +58,7 @@ export default function CreateCaseModal({
     });
 
     if (invalidFiles.length > 0) {
-      const msg = `Invalid file types: ${invalidFiles.join(", ")}. Only ZIP and UFDR files are allowed.`;
+      const msg = `Invalid file types: ${invalidFiles.join(", ")}. Only UFDR files are allowed.`;
       setError(msg);
       toast.error("Invalid files", { description: msg });
     }
@@ -183,7 +183,7 @@ export default function CreateCaseModal({
       uploadFiles.length > 0
         ? [
             "Uploading forensic files...",
-            "Unzipping compressed archives...",
+            "Processing UFDR files...",
             "Processing digital evidence...",
             "Extracting file metadata...",
             "Matching forensic patterns...",

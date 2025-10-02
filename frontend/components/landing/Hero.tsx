@@ -145,7 +145,7 @@ export default function Hero() {
                 size="lg"
                 onClick={() =>
                   window.open(
-                    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                    "https://www.youtube.com/watch?v=nPmozZFyn9Q",
                     "_blank",
                   )
                 }
@@ -175,7 +175,7 @@ export default function Hero() {
                   <Github className="h-6 w-6" />
                 </a>
                 <a
-                  href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                  href="https://www.youtube.com/watch?v=nPmozZFyn9Q"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-lg p-3 text-[#4A4A4A] dark:text-[#B0B0B0] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"

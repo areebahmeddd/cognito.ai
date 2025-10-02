@@ -73,7 +73,7 @@ export default function DashboardNavbar() {
           </a>
 
           <a
-            href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            href="https://www.youtube.com/watch?v=nPmozZFyn9Q"
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-sm p-2 text-[#4A4A4A] dark:text-[#B0B0B0] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
