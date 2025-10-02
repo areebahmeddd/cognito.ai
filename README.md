@@ -17,6 +17,8 @@
 - **Visual Analytics**: timeline and network views, case drill-downs, exportable reports.
 - **Dev-Friendly Setup**: Docker Compose for ES + Mongo; FastAPI + Next.js local dev.
 
+**[📄 Sample AI-Generated Report](frontend/public/sample_report.pdf)** - See an example of our platform's comprehensive forensic analysis output.
+
 ## 🗂️ Project Structure
 
 ```
@@ -43,10 +45,18 @@
 └── docker-compose.yaml          # Local Elasticsearch
 ```
 
-## 🏗️ Project Architecture
+## 🏗️ Project Design
 
 <p align="center">
   <img src="frontend/public/architecture.png" alt="System Architecture">
+  <br>
+  System Architecture
+</p>
+
+<p align="center">
+  <img src="frontend/public/sequence.png" alt="Sequence Diagram">
+  <br>
+  Sequence Diagram
 </p>
 
 ## 🎯 Project Milestones
@@ -66,9 +76,14 @@
 
 ### In Progress:
 
-- [ ] Upgrade NLQ layer with Mixtral NeMo (7B SLM) support ([@anish](https://github.com/Av7danger)) [Draft PR [#9](https://github.com/areebahmeddd/cognito.ai/pull/9)]
-- [ ] Develop pipelines for additional file types ([@hamad](https://github.com/therealhamad)) [Draft PR [#14](https://github.com/areebahmeddd/cognito.ai/pull/14)]
-- [ ] Write unit and integration tests ([@avantika](https://github.com/avii09)) [Open Issue [#4](https://github.com/areebahmeddd/cognito.ai/issues/4)]
+- [ ] Upgrade NLQ layer with Mixtral NeMo (12B SLM) support ([@anish](https://github.com/Av7danger))
+- [ ] Upgrade ETL pipeline to better sync with multiple services ([@areeb](https://github.com/areebahmeddd))
+- [ ] Develop ETL pipeline for additional file types ([@hamad](https://github.com/therealhamad))
+- [ ] Write Pytest tests ([@avantika](https://github.com/avii09))
+- [ ] Write Cypress tests ([@shivansh](https://github.com/SpaceTesla))
+- [ ] Configure NGINX ([@areeb](https://github.com/areebahmeddd))
+- [ ] Set up CI workflow to generate dynamic docs on merges to `testing` branch ([@bhavana](https://github.com/bhaaaav))
+- [ ] Add Redis caching for search results ([@avantika](https://github.com/avii09))
 
 ## 🖼️ Project Preview
 
@@ -93,7 +108,13 @@
 <p align="center">
   <img src="frontend/public/upload.png" alt="Create Modal">
   <br>
-  Create Modal
+  Create Case Modal
+</p>
+
+<p align="center">
+  <img src="frontend/public/viewer.png" alt="Artifact Modal">
+  <br>
+  UFDR Artifact Inspector
 </p>
 
 <p align="center">
@@ -105,19 +126,19 @@
 <p align="center">
   <img src="frontend/public/timeline.png" alt="Timeline Page">
   <br>
-  Timeline Page
+  Timeline Analysis Page
 </p>
 
 <p align="center">
   <img src="frontend/public/network.png" alt="Nework Page">
   <br>
-  Netowrk Page
+  Network Correlation Page
 </p>
 
 <p align="center">
-  <img src="frontend/public/summary.png" alt="Upload Page">
+  <img src="frontend/public/summary.png" alt="Summary Page">
   <br>
-  Summary Page
+  Case Summary Page
 </p>
 
 ## ⚙️ Setup for Development
@@ -168,7 +189,7 @@ Swagger UI: `http://localhost:8000/docs`
 
 ```bash
 cd frontend
-npm install --legacy-peer-deps
+npm clean-install
 npm run dev
 ```
 
