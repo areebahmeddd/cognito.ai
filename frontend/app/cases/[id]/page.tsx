@@ -2426,7 +2426,7 @@ export default function CasePage() {
                         </div>
                       </div>
                     </div>
-                    <div className="p-4">
+                    <div className="">
                       {searchData.totalResults === 0 ? (
                         <div className="flex items-center justify-center h-full min-h-[400px]">
                           <div className="text-center">
