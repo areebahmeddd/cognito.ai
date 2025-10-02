@@ -1070,7 +1070,7 @@ export default function CaseSidebar({
     <>
       <aside className="w-80 h-full flex flex-col border-r border-[#E0E0E0] dark:border-[#2A2A2A] bg-[#F8F8F8] dark:bg-[#0F0F0F] overflow-hidden min-h-0">
         <div className="p-4 border-b border-[#E0E0E0] dark:border-[#2A2A2A]">
-          <div className="mb-3 mx-1 p-3 rounded-lg bg-[#F8F8F8] dark:bg-[#0F0F0F] border border-[#E0E0E0] dark:border-[#2A2A2A]">
+          <div className="p-3 rounded-lg bg-[#F8F8F8] dark:bg-[#0F0F0F] border border-[#E0E0E0] dark:border-[#2A2A2A]">
             <div className="flex items-center justify-between mb-2">
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-[#2A2A2A] dark:text-[#E0E0E0] break-words">
