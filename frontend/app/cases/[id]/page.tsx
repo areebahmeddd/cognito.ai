@@ -1246,7 +1246,7 @@ export default function CasePage() {
                                 ? "Analyzing..."
                                 : hasSearched
                                   ? "No evidence found"
-                                  : "Ready to analyze"}
+                                  : "Ready to analyze?"}
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
                               {loading
