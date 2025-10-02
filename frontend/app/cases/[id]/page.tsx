@@ -1649,7 +1649,7 @@ export default function CasePage() {
                                 className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden"
                               >
                                 <div
-                                  className="bg-gradient-to-r from-[#FFF5F0] to-[#FFF8F5] dark:from-[#2A1A0F] dark:to-[#2A1F15] border-b border-[#FF7F50] dark:border-[#FF7F50] p-4 cursor-pointer hover:from-[#FFF0E6] hover:to-[#FFF5F0] dark:hover:from-[#2A1F15] dark:hover:to-[#2A1A0F] transition-all"
+                                  className="bg-gradient-to-r from-[#FFF5F0] to-[#FFF8F5] dark:from-[#2A1A0F] dark:to-[#2A1F15]  p-4 cursor-pointer hover:from-[#FFF0E6] hover:to-[#FFF5F0] dark:hover:from-[#2A1F15] dark:hover:to-[#2A1A0F] transition-all"
                                   onClick={() => toggleDateExpansion(day.date)}
                                 >
                                   <div className="flex items-center justify-between">
