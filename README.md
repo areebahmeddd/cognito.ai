@@ -4,7 +4,7 @@
 
 # 🧠 Project Description
 
-**cognito.ai** is a natural‑language forensic evidence discovery engine for UFDR (Universal Forensic Extraction Device Report) data. It ingests UFDR exports, normalizes heterogeneous schemas with deterministic IDs, and indexes into Elasticsearch search engine using category‑aware mappings. [ [Project Demo](https://www.youtube.com/watch?v=dQw4w9WgXcQ) | [Project PPT](https://docs.google.com/presentation/d/1n7_xvl8xx3r6QOR7TCP-oiH9NknoiszoKVyfP6TVlBM/edit?usp=sharing) ]
+**cognito.ai** is a natural‑language forensic evidence discovery engine for UFDR (Universal Forensic Extraction Device Report) data. It ingests UFDR exports, normalizes heterogeneous schemas with deterministic IDs, and indexes into Elasticsearch search engine using category‑aware mappings. [ [Project Demo](https://www.youtube.com/watch?v=nPmozZFyn9Q) | [Project Abstract](https://docs.google.com/document/d/1MFKM0IF8x_RIVlebnfSWHOk4HerEkuZhx3HQc1r5wIs/edit?usp=sharing) | [Project PPT](https://docs.google.com/presentation/d/1n7_xvl8xx3r6QOR7TCP-oiH9NknoiszoKVyfP6TVlBM/edit?usp=sharing) ]
 
 **Built for** [Smart India Hackathon - 2025](https://sih.gov.in)
 
@@ -17,7 +17,7 @@
 - **Visual Analytics**: timeline and network views, case drill-downs, exportable reports.
 - **Dev-Friendly Setup**: Docker Compose for ES + Mongo; FastAPI + Next.js local dev.
 
-**[📄 Sample AI-Generated Report](frontend/public/sample_report.pdf)** - See an example of our platform's comprehensive forensic analysis output.
+**[📄 Sample AI-Generated Report](https://trycognito-ai.vercel.app/sample_report.pdf)** - See an example of our platform's comprehensive forensic analysis output.
 
 ## 🗂️ Project Structure
 
@@ -191,6 +191,31 @@ Swagger UI: `http://localhost:8000/docs`
 cd frontend
 npm clean-install
 npm run dev
+```
+
+## 🧰 Scripts
+
+### 1. Nuke Infra (Fresh Start)
+
+Wipes Elasticsearch index (and wildcard) and then MongoDB database.
+
+- Uses env vars with these defaults:
+  - `ELASTICSEARCH_URL=http://localhost:9200`
+  - `ELASTICSEARCH_INDEX=cognito`
+  - `MONGODB_CONNECTION_STRING=mongodb://localhost:27017/cognito`
+
+Run with Python from project root:
+
+```bash
+python scripts/nuke_infra.py
+```
+
+### 2. Generate Mock UFDR ZIPs (for testing)
+
+Creates synthetic UFDR-like TSV bundles as ZIPs at the project root: `Test_UFDR-1.zip`, `Test_UFDR-2.zip`, `Test_UFDR-3.zip`.
+
+```bash
+python scripts/mock_zip.py
 ```
 
 ## 📜 License
