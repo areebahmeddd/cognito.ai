@@ -9,6 +9,7 @@ from .core.config import settings
 from .routes.data import router as data_router
 from .routes.search import router as search_router
 from .routes.case import router as case_router
+from .routes.auth import router as auth_router
 from .services.elasticsearch import (
     wait_elasticsearch,
     create_index,
@@ -33,6 +34,7 @@ app.add_middleware(
 app.include_router(data_router, prefix="/api/v1/data", tags=["data"])
 app.include_router(search_router, prefix="/api/v1/search", tags=["search"])
 app.include_router(case_router, prefix="/api/v1/cases", tags=["case"])
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
 
 
 @app.on_event("startup")

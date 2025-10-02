@@ -9,17 +9,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ChevronDown, Eye, EyeOff, Lock, Mail, User, X } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (userData: {
-    username: string;
-    email: string;
-    role: string;
-  }) => void;
+  onSuccess: () => void;
 }
 
 type AuthMode = "signin" | "signup" | "forgot";
@@ -51,85 +48,116 @@ export default function AuthModal({
     setIsLoading(true);
     setError("");
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Client-side validation
+    if (mode === "signup") {
+      if (!formData.username.trim()) {
+        setError("Username is required");
+        toast.error("Invalid input", { description: "Username is required" });
+        setIsLoading(false);
+        return;
+      }
+      if (!formData.email.trim()) {
+        setError("Email is required");
+        toast.error("Invalid input", { description: "Email is required" });
+        setIsLoading(false);
+        return;
+      }
+      if (formData.username.length < 3) {
+        setError("Username must be at least 3 characters long");
+        toast.error("Invalid input", {
+          description: "Username must be at least 3 characters long",
+        });
+        setIsLoading(false);
+        return;
+      }
+      if (formData.password.length < 6) {
+        setError("Password must be at least 6 characters long");
+        toast.error("Invalid input", {
+          description: "Password must be at least 6 characters long",
+        });
+        setIsLoading(false);
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        setError("Passwords do not match");
+        toast.error("Invalid input", { description: "Passwords do not match" });
+        setIsLoading(false);
+        return;
+      }
+      if (!formData.email.includes("@")) {
+        setError("Please enter a valid email address");
+        toast.error("Invalid input", {
+          description: "Please enter a valid email address",
+        });
+        setIsLoading(false);
+        return;
+      }
+    } else {
+      if (!formData.username.trim() && !formData.email.trim()) {
+        setError("Username or email is required");
+        toast.error("Invalid input", {
+          description: "Username or email is required",
+        });
+        setIsLoading(false);
+        return;
+      }
+      if (!formData.password.trim()) {
+        setError("Password is required");
+        toast.error("Invalid input", { description: "Password is required" });
+        setIsLoading(false);
+        return;
+      }
+    }
 
     try {
-      if (mode === "signin") {
-        const users = JSON.parse(localStorage.getItem("cognito-users") || "[]");
-        const user = users.find(
-          (u: any) =>
-            (u.username === formData.username ||
-              u.email === formData.username) &&
-            u.password === formData.password,
+      const result = await signIn("credentials", {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+        mode: mode,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
+      if (result?.ok) {
+        toast.success(
+          mode === "signin"
+            ? "Signed in successfully"
+            : "Account created successfully",
+          {
+            description:
+              mode === "signin"
+                ? "Welcome back!"
+                : "Your account has been created",
+          },
         );
-
-        if (!user) {
-          throw new Error("Invalid username or password");
-        }
-
-        localStorage.setItem("cognito-auth", "true");
-        localStorage.setItem(
-          "cognito-current-user",
-          JSON.stringify({
-            username: user.username,
-            email: user.email,
-            role: user.role,
-          }),
-        );
-
-        onSuccess({
-          username: user.username,
-          email: user.email,
-          role: user.role,
-        });
-      } else if (mode === "signup") {
-        const users = JSON.parse(localStorage.getItem("cognito-users") || "[]");
-        const existingUser = users.find(
-          (u: any) =>
-            u.username === formData.username || u.email === formData.email,
-        );
-
-        if (existingUser) {
-          throw new Error("Username or email already exists");
-        }
-
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error("Passwords do not match");
-        }
-
-        const newUser = {
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role,
-          createdAt: new Date().toISOString(),
-        };
-
-        users.push(newUser);
-        localStorage.setItem("cognito-users", JSON.stringify(users));
-
-        localStorage.setItem("cognito-auth", "true");
-        localStorage.setItem(
-          "cognito-current-user",
-          JSON.stringify({
-            username: newUser.username,
-            email: newUser.email,
-            role: newUser.role,
-          }),
-        );
-
-        onSuccess({
-          username: newUser.username,
-          email: newUser.email,
-          role: newUser.role,
-        });
-      } else if (mode === "forgot") {
-        throw new Error("Password reset functionality not implemented yet");
+        onSuccess();
+        onClose();
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "An error occurred";
       setError(message);
-      toast.error("Authentication failed", { description: message });
+
+      // Show different toast messages based on the error
+      if (
+        message.includes("Incorrect username or password") ||
+        message.includes("No account found")
+      ) {
+        toast.error("Sign in failed", { description: message });
+      } else if (
+        message.includes("already taken") ||
+        message.includes("already exists")
+      ) {
+        toast.error("Registration failed", { description: message });
+      } else if (message.includes("must be at least")) {
+        toast.error("Invalid input", { description: message });
+      } else {
+        toast.error("Authentication failed", { description: message });
+      }
     } finally {
       setIsLoading(false);
     }

@@ -3,12 +3,15 @@
 import DashboardNavbar from "@/components/DashboardNavbar";
 import Footer from "@/components/Footer";
 import { Trash2, X } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -19,21 +22,14 @@ export default function SettingsPage() {
   });
   const { theme, setTheme } = useTheme();
 
+  const isAuthenticated = !!session;
+  const isLoading = status === "loading";
+
   useEffect(() => {
-    const checkAuth = () => {
-      const mockAuth = localStorage.getItem("cognito-auth");
-      setIsAuthenticated(mockAuth === "true");
-    };
-
-    checkAuth();
-
-    if (
-      typeof window !== "undefined" &&
-      !localStorage.getItem("cognito-auth")
-    ) {
-      window.location.href = "/";
+    if (status === "unauthenticated") {
+      router.push("/");
     }
-  }, []);
+  }, [status, router]);
 
   useEffect(() => {
     if (theme === undefined) {
@@ -48,7 +44,7 @@ export default function SettingsPage() {
     }));
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error("Passwords don't match", {
         description: "Please ensure both passwords are identical",
@@ -61,23 +57,78 @@ export default function SettingsPage() {
       });
       return;
     }
-    setShowChangePassword(false);
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-    toast.success("Password updated successfully", {
-      description: "Your password has been changed",
-    });
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/change-password`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.accessToken || ""}`,
+          },
+          body: JSON.stringify({
+            current_password: passwordData.currentPassword,
+            new_password: passwordData.newPassword,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Failed to change password");
+      }
+
+      setShowChangePassword(false);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      toast.success("Password updated successfully", {
+        description: "Your password has been changed",
+      });
+    } catch (error) {
+      toast.error("Failed to change password", {
+        description:
+          error instanceof Error ? error.message : "An error occurred",
+      });
+    }
   };
 
-  const handleDeleteAccount = () => {
-    localStorage.removeItem("cognito-auth");
-    toast.success("Account deleted", {
-      description: "Your account has been permanently deleted",
-    });
-    window.location.href = "/";
+  const handleDeleteAccount = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.accessToken || ""}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Failed to delete account");
+      }
+
+      toast.success("Account deleted successfully", {
+        description: "Your account has been permanently deleted",
+      });
+
+      // Sign out the user and redirect to home page
+      await signOut({
+        callbackUrl: "/",
+        redirect: true,
+      });
+    } catch (error) {
+      toast.error("Failed to delete account", {
+        description:
+          error instanceof Error ? error.message : "An error occurred",
+      });
+    }
   };
 
   const toggleTheme = () => {
@@ -85,7 +136,7 @@ export default function SettingsPage() {
     setTheme(newTheme);
   };
 
-  if (isAuthenticated === null) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F8F8] dark:bg-[#0F0F0F]">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E0E0E0] border-t-[#FF7F50]"></div>

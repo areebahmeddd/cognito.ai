@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional, Union, List, Dict, Any
 from datetime import datetime
 
@@ -159,6 +159,56 @@ class UFDRDocument(BaseModel):
     creation_timestamp: Optional[Union[datetime, str]] = None
     last_updated_timestamp: Optional[Union[datetime, str]] = None
     duration: Optional[Union[str, int]] = None
+
+
+# User Authentication Models
+class UserBase(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    email: EmailStr
+    role: str = Field(..., pattern="^(Analyst|Officer|Supervisor)$")
+
+
+class UserCreate(UserBase):
+    password: str = Field(..., min_length=6, max_length=100)
+
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = Field(None, min_length=3, max_length=50)
+    email: Optional[EmailStr] = None
+    role: Optional[str] = Field(None, pattern="^(Analyst|Officer|Supervisor)$")
+    password: Optional[str] = Field(None, min_length=6, max_length=100)
+
+
+class UserInDB(UserBase):
+    id: str = Field(alias="_id")
+    hashed_password: str
+    created_at: datetime
+    updated_at: datetime
+    is_active: bool = True
+
+    class Config:
+        populate_by_name = True
+
+
+class User(UserBase):
+    id: str = Field(alias="_id")
+    created_at: datetime
+    updated_at: datetime
+    is_active: bool = True
+
+    class Config:
+        populate_by_name = True
+
+
+class UserLogin(BaseModel):
+    username_or_email: str
+    password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: User
 
     # System and technical metadata
     record_id: Optional[str] = None

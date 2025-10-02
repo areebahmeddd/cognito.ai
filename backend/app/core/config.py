@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     elasticsearch_index: str
     gemini_api_key: str
     mongodb_connection_string: str
+    jwt_secret_key: str = "your-secret-key-change-in-production"
 
     class Config:
         env_file = ".env"
