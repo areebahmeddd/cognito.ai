@@ -99,7 +99,6 @@ cython_debug/
 *.tsv
 *.csv
 *.txt
-*.pdf
 *.docx
 *.doc
 *.xls
