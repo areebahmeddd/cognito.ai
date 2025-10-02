@@ -259,9 +259,6 @@ export default function CasesHome() {
 
   return (
     <>
-      {isModalOpen && (
-        <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]" />
-      )}
       <div className="mx-auto max-w-7xl px-6 py-8">
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -485,7 +482,7 @@ export default function CasesHome() {
             <button
               aria-label="Close"
               onClick={() => setDeleteConfirm(null)}
-              className="absolute top-3 right-3 text-[#666] dark:text-[#999] hover:text-[#FF7F50] transition-colors p-1 rounded-md"
+              className="absolute top-3 right-3 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors p-1 rounded-md"
             >
               <svg
                 className="h-5 w-5"

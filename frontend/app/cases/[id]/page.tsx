@@ -1417,7 +1417,7 @@ export default function CasePage() {
                                 })()}
 
                                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
+                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors">
                                     <svg
                                       className="w-3 h-3"
                                       fill="none"
@@ -1433,7 +1433,7 @@ export default function CasePage() {
                                     </svg>
                                     Add to Report
                                   </button>
-                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
+                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors">
                                     <svg
                                       className="w-3 h-3"
                                       fill="none"
@@ -1449,7 +1449,7 @@ export default function CasePage() {
                                     </svg>
                                     View Thread
                                   </button>
-                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
+                                  <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors">
                                     <svg
                                       className="w-3 h-3"
                                       fill="none"
@@ -1870,7 +1870,7 @@ export default function CasePage() {
                                             )}
 
                                             <div className="flex items-center justify-end gap-2">
-                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
+                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors">
                                                 <svg
                                                   className="w-3 h-3"
                                                   fill="none"
@@ -1886,7 +1886,7 @@ export default function CasePage() {
                                                 </svg>
                                                 Expand Session
                                               </button>
-                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
+                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors">
                                                 <svg
                                                   className="w-3 h-3"
                                                   fill="none"
@@ -2339,7 +2339,7 @@ export default function CasePage() {
                                           </div>
 
                                           <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-                                            <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
+                                            <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors">
                                               <svg
                                                 className="w-3 h-3"
                                                 fill="none"
@@ -2355,7 +2355,7 @@ export default function CasePage() {
                                               </svg>
                                               View Evidence
                                             </button>
-                                            <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] transition-colors">
+                                            <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors">
                                               <svg
                                                 className="w-3 h-3"
                                                 fill="none"

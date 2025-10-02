@@ -69,7 +69,7 @@ export default function ViewCaseModal({
         <button
           aria-label="Close"
           onClick={handleClose}
-          className="absolute top-3 right-3 text-[#666] dark:text-[#999] hover:text-[#FF7F50] transition-colors p-1 rounded-md"
+          className="absolute top-3 right-3 text-[#666] dark:text-[#999] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors p-1 rounded-md"
         >
           <X className="h-5 w-5" />
         </button>

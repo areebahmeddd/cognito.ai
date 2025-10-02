@@ -169,7 +169,7 @@ export default function Hero() {
                   href="https://github.com/areebahmeddd/cognito.ai"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg p-3 text-[#4A4A4A] dark:text-[#B0B0B0] hover:text-[#FF7F50] transition-colors"
+                  className="rounded-lg p-3 text-[#4A4A4A] dark:text-[#B0B0B0] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
                   title="GitHub Repository"
                 >
                   <Github className="h-6 w-6" />
@@ -178,8 +178,8 @@ export default function Hero() {
                   href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg p-3 text-[#4A4A4A] dark:text-[#B0B0B0] hover:text-[#FF7F50] transition-colors"
-                  title="YouTube Channel"
+                  className="rounded-lg p-3 text-[#4A4A4A] dark:text-[#B0B0B0] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
+                  title="YouTube Video"
                 >
                   <Youtube className="h-6 w-6" />
                 </a>
@@ -187,7 +187,7 @@ export default function Hero() {
                   href="https://docs.google.com/presentation/d/1n7_xvl8xx3r6QOR7TCP-oiH9NknoiszoKVyfP6TVlBM/edit?usp=sharing"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg p-3 text-[#4A4A4A] dark:text-[#B0B0B0] hover:text-[#FF7F50] transition-colors"
+                  className="rounded-lg p-3 text-[#4A4A4A] dark:text-[#B0B0B0] hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
                   title="Project Presentation"
                 >
                   <FileSpreadsheet className="h-6 w-6" />
