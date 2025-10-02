@@ -59,7 +59,7 @@ export default function Navbar() {
         <div className="flex flex-1 items-center justify-start">
           <Link
             href="/"
-            className="flex items-center gap-2 rounded-sm p-2 text-[#2A2A2A] dark:text-[#E0E0E0] transition-colors duration-200 hover:bg-[#F5F5F5] dark:hover:bg-[#2A2A2A]"
+            className="flex items-center gap-2 rounded-sm p-2 text-[#2A2A2A] dark:text-[#E0E0E0] transition-colors duration-200 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors"
           >
             <span className="text-md font-medium">cognito.ai</span>
           </Link>
