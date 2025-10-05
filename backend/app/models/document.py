@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Union, List, Dict, Any
 from datetime import datetime
+from typing import Optional, Union, List, Dict, Any
 
 
 class UFDRDocument(BaseModel):
@@ -182,14 +182,3 @@ class UFDRDocument(BaseModel):
     class Config:
         extra = "allow"
         populate_by_name = True
-
-
-class QueryRequest(BaseModel):
-    query: str
-    case_id: str
-
-
-class CreateCaseRequest(BaseModel):
-    title: str
-    description: Optional[str] = None
-    priority_tag: Optional[str] = None

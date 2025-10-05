@@ -3,56 +3,24 @@
 import AuthModal from "@/components/auth/AuthModal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { clearUser, setUser } from "@/lib/user";
 import { LogOut } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 
 export default function Navbar() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: session, status } = useSession();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = () => {
-      const authStatus = localStorage.getItem("cognito-auth");
-      setIsAuthenticated(authStatus === "true");
-      setIsLoading(false);
-    };
-
-    checkAuth();
-  }, []);
 
   const handleSignIn = () => {
     setIsAuthModalOpen(true);
   };
 
-  const handleAuthSuccess = (userData: {
-    username: string;
-    email: string;
-    role: string;
-  }) => {
-    setIsAuthenticated(true);
-    setIsAuthModalOpen(false);
-    setUser({
-      name: userData.username,
-      email: userData.email,
-      role: userData.role,
-    });
-    window.location.reload();
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/" });
   };
 
-  const handleSignOut = () => {
-    clearUser();
-    setIsAuthenticated(false);
-    toast.success("Signed out successfully", {
-      description: "You have been logged out",
-    });
-    window.location.href = "/";
-  };
-
-  if (isLoading) {
+  if (status === "loading") {
     return (
       <nav className="relative z-30 flex items-center justify-between p-4">
         <div className="flex flex-1 items-center justify-start">
@@ -83,7 +51,7 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           <ThemeToggle />
 
-          {isAuthenticated ? (
+          {session ? (
             <Button
               variant="ghost"
               size="sm"
@@ -108,7 +76,6 @@ export default function Navbar() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={handleAuthSuccess}
       />
     </nav>
   );

@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { apiClient } from "@/lib/api";
 import {
   Archive,
   ArchiveRestore,
@@ -21,8 +22,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface BackendCase {
   case_id: string;
@@ -39,11 +38,7 @@ interface BackendCase {
 
 async function loadCases(): Promise<CaseItem[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/cases/`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch cases");
-    }
-    const data = await response.json();
+    const data = (await apiClient.getCases()) as { cases?: BackendCase[] };
     const backendCases: BackendCase[] = data.cases || [];
 
     return backendCases.map((caseData) => {
@@ -73,10 +68,8 @@ async function loadCases(): Promise<CaseItem[]> {
 
 async function deleteCase(caseId: string): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/cases/${caseId}`, {
-      method: "DELETE",
-    });
-    return response.ok;
+    await apiClient.deleteCase(caseId);
+    return true;
   } catch (error) {
     return false;
   }
@@ -84,10 +77,8 @@ async function deleteCase(caseId: string): Promise<boolean> {
 
 async function archiveCase(caseId: string): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/cases/${caseId}/archive`, {
-      method: "POST",
-    });
-    return response.ok;
+    await apiClient.archiveCase(caseId);
+    return true;
   } catch (error) {
     return false;
   }
@@ -95,10 +86,8 @@ async function archiveCase(caseId: string): Promise<boolean> {
 
 async function activateCase(caseId: string): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/cases/${caseId}/activate`, {
-      method: "POST",
-    });
-    return response.ok;
+    await apiClient.activateCase(caseId);
+    return true;
   } catch (error) {
     return false;
   }
@@ -146,7 +135,7 @@ export default function CasesHome() {
       setIndexById(indexMap);
     } catch (error) {
       toast.error("Failed to load cases", {
-        description: "Please try again later",
+        description: "Unable to load your cases. Please try again later.",
       });
     }
   };
@@ -181,9 +170,13 @@ export default function CasesHome() {
             typeof window !== "undefined" ? window.location.origin : "";
           const link = `${origin}/cases/${id}`;
           await navigator.clipboard.writeText(link);
-          toast.success("Link copied to clipboard");
+          toast.success("Link copied to clipboard successfully", {
+            description: "Case link has been copied to your clipboard.",
+          });
         } catch (error) {
-          toast.error("Failed to copy link");
+          toast.error("Failed to copy link", {
+            description: "Unable to copy the case link to clipboard.",
+          });
         }
         break;
       case "delete":
@@ -197,19 +190,27 @@ export default function CasesHome() {
       case "archive":
         const success = await archiveCase(id);
         if (success) {
-          toast.success("Case archived");
+          toast.success("Case archived successfully", {
+            description: "The case has been moved to archived cases.",
+          });
           fetchCases();
         } else {
-          toast.error("Failed to archive case");
+          toast.error("Failed to archive case", {
+            description: "Unable to archive the case. Please try again.",
+          });
         }
         break;
       case "unarchive":
         const activateSuccess = await activateCase(id);
         if (activateSuccess) {
-          toast.success("Case activated");
+          toast.success("Case activated successfully", {
+            description: "The case has been restored from archived cases.",
+          });
           fetchCases();
         } else {
-          toast.error("Failed to activate case");
+          toast.error("Failed to activate case", {
+            description: "Unable to restore the case. Please try again.",
+          });
         }
         break;
     }
@@ -220,10 +221,14 @@ export default function CasesHome() {
       setIsDeletingCase(true);
       const success = await deleteCase(deleteConfirm.id);
       if (success) {
-        toast.success("Case deleted");
+        toast.success("Case deleted successfully", {
+          description: "The case has been permanently removed.",
+        });
         fetchCases();
       } else {
-        toast.error("Failed to delete case");
+        toast.error("Failed to delete case", {
+          description: "Unable to delete the case. Please try again.",
+        });
       }
       setIsDeletingCase(false);
       setDeleteConfirm(null);
@@ -232,25 +237,18 @@ export default function CasesHome() {
 
   const handleEditSuccess = async (updatedCase: CaseItem) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/cases/${updatedCase.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          case_name: updatedCase.title,
-          description: updatedCase.description,
-        }),
+      await apiClient.updateCase(updatedCase.id, {
+        case_name: updatedCase.title,
+        description: updatedCase.description,
       });
-
-      if (response.ok) {
-        toast.success("Case updated");
-        fetchCases();
-      } else {
-        toast.error("Failed to update case");
-      }
+      toast.success("Case updated successfully", {
+        description: "Your case information has been saved.",
+      });
+      fetchCases();
     } catch (error) {
-      toast.error("Failed to update case");
+      toast.error("Failed to update case", {
+        description: "Unable to save your changes. Please try again.",
+      });
     }
 
     setIsEditModalOpen(false);

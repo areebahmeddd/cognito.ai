@@ -1,8 +1,6 @@
 "use client";
 
-import AuthModal from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
-import { setUser } from "@/lib/user";
 import {
   ArrowRight,
   FileSpreadsheet,
@@ -12,9 +10,11 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-export default function Hero() {
-  const [isSignedIn, setIsSignedIn] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+interface HeroProps {
+  onSignIn?: () => void;
+}
+
+export default function Hero({ onSignIn }: HeroProps) {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [loadingComplete, setLoadingComplete] = useState(false);
@@ -36,22 +36,9 @@ export default function Hero() {
   ];
 
   const handleSignIn = () => {
-    setIsAuthModalOpen(true);
-  };
-
-  const handleAuthSuccess = (userData: {
-    username: string;
-    email: string;
-    role: string;
-  }) => {
-    setIsSignedIn(true);
-    setIsAuthModalOpen(false);
-    setUser({
-      name: userData.username,
-      email: userData.email,
-      role: userData.role,
-    });
-    window.location.reload();
+    if (onSignIn) {
+      onSignIn();
+    }
   };
 
   useEffect(() => {
@@ -197,12 +184,6 @@ export default function Hero() {
           )}
         </div>
       </div>
-
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={handleAuthSuccess}
-      />
     </section>
   );
 }

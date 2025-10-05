@@ -2,11 +2,13 @@
 
 import DashboardNavbar from "@/components/DashboardNavbar";
 import Footer from "@/components/Footer";
+import { ApiClient } from "@/lib/api";
+import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export default function HelpPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { data: session, status } = useSession();
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [emailName, setEmailName] = useState("");
@@ -17,22 +19,12 @@ export default function HelpPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const mockAuth = localStorage.getItem("cognito-auth");
-      setIsAuthenticated(mockAuth === "true");
-    };
-
-    checkAuth();
-
-    if (
-      typeof window !== "undefined" &&
-      !localStorage.getItem("cognito-auth")
-    ) {
+    if (status === "unauthenticated") {
       window.location.href = "/";
     }
-  }, []);
+  }, [status]);
 
-  if (isAuthenticated === null) {
+  if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F8F8] dark:bg-[#0F0F0F]">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E0E0E0] border-t-[#FF7F50]"></div>
@@ -40,7 +32,7 @@ export default function HelpPage() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!session) {
     return null;
   }
 
@@ -369,16 +361,10 @@ Attachments: if any"
                       form.append("message", emailBody);
                       emailFiles.forEach((f) => form.append("attachments", f));
 
-                      const res = await fetch(
-                        `${process.env.NEXT_PUBLIC_API_URL}/users/email`,
-                        {
-                          method: "POST",
-                          body: form,
-                        },
-                      );
-                      if (!res.ok) throw new Error("Failed to send email");
+                      const apiClient = new ApiClient();
+                      await apiClient.sendSupportEmail(form);
 
-                      toast.success("Support request sent", {
+                      toast.success("Support request sent successfully", {
                         description: "Thanks, we'll reply within 24 hours.",
                       });
                       setIsEmailModalOpen(false);
@@ -388,11 +374,11 @@ Attachments: if any"
                       setEmailBody("");
                       setEmailFiles([]);
                     } catch (e) {
-                      toast.error("Email not sent", {
+                      toast.error("Failed to send email", {
                         description:
                           e instanceof Error
                             ? e.message
-                            : "Something went wrong. Please try again.",
+                            : "Unable to send your support request. Please try again.",
                       });
                     }
                   }}

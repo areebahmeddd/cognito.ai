@@ -49,20 +49,7 @@ export default function StatsGrid() {
   });
 
   useEffect(() => {
-    const fetchUserStats = async () => {
-      try {
-        const mockStats: UserStats = {
-          name: "Areeb",
-          timeSaved: 24.5,
-          filesAnalyzed: 156,
-          casesCreated: 8,
-          searchesPerformed: 342,
-        };
-        setStats(mockStats);
-      } catch (error) {}
-    };
-
-    fetchUserStats();
+    // TODO: Add API call to fetch user stats from backend
   }, []);
 
   const statsData = [

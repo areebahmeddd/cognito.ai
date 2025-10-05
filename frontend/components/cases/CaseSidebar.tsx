@@ -2,6 +2,7 @@
 
 import CreateCaseModal from "@/components/cases/CreateCaseModal";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ApiClient } from "@/lib/api";
 import {
   ChevronDown,
   ChevronRight,
@@ -49,8 +50,6 @@ interface StoredCase {
   priority_tag?: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
 interface BackendCase {
   case_id: string;
   case_name: string;
@@ -66,11 +65,8 @@ interface BackendCase {
 
 async function getCase(caseId: string): Promise<StoredCase | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/cases/${caseId}`);
-    if (!response.ok) {
-      return null;
-    }
-    const caseData: BackendCase = await response.json();
+    const apiClient = new ApiClient();
+    const caseData = (await apiClient.getCase(caseId)) as BackendCase;
 
     const files: any[] = [];
     if (caseData.metadata) {
@@ -122,11 +118,8 @@ async function getCase(caseId: string): Promise<StoredCase | null> {
 
 async function getAllCases(): Promise<StoredCase[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/cases/`);
-    if (!response.ok) {
-      return [];
-    }
-    const data = await response.json();
+    const apiClient = new ApiClient();
+    const data = (await apiClient.getCases()) as { cases?: BackendCase[] };
     const backendCases: BackendCase[] = data.cases || [];
     const activeCases = backendCases.filter((c) => c.status !== "archived");
 
@@ -196,11 +189,8 @@ async function getAllCases(): Promise<StoredCase[]> {
 
 async function getCaseFiles(caseId: string): Promise<any[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/cases/${caseId}/files`);
-    if (!response.ok) {
-      return [];
-    }
-    const data = await response.json();
+    const apiClient = new ApiClient();
+    const data = (await apiClient.getCaseFiles(caseId)) as { files?: any[] };
     return data.files || [];
   } catch (error) {
     return [];
@@ -222,6 +212,7 @@ export default function CaseSidebar({
   const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [pendingDeleteZip, setPendingDeleteZip] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
@@ -235,7 +226,7 @@ export default function CaseSidebar({
     Map<number, number>
   >(new Map());
   const [isExportOptionsOpen, setIsExportOptionsOpen] = useState(false);
-  const [includeReportInfo] = useState(true); // locked ON
+  const [includeReportInfo] = useState(true);
   const [includeChain, setIncludeChain] = useState(true);
   const [includeSources, setIncludeSources] = useState(true);
   const [includeExecutive, setIncludeExecutive] = useState(true);
@@ -261,25 +252,21 @@ export default function CaseSidebar({
 
   const fetchFilesGrouped = useCallback(async (cid: string) => {
     try {
-      const caseRes = await fetch(`${API_BASE_URL}/cases/${cid}`);
-      if (caseRes.ok) {
-        const caseData = await caseRes.json();
-        const md = caseData?.metadata;
-        if (md && md.file_name) {
-          return [
-            {
-              file_name: md.file_name,
-              files_list: Array.isArray(md.files_list) ? md.files_list : [],
-              files_count: Number(md.files_count || 0),
-              record_count: Number(md.files_count || 0),
-            },
-          ];
-        }
+      const apiClient = new ApiClient();
+      const caseData = (await apiClient.getCase(cid)) as BackendCase;
+      const md = caseData?.metadata;
+      if (md && md.file_name) {
+        return [
+          {
+            file_name: md.file_name,
+            files_list: Array.isArray(md.files_list) ? md.files_list : [],
+            files_count: Number(md.files_count || 0),
+            record_count: Number(md.files_count || 0),
+          },
+        ];
       }
 
-      const res = await fetch(`${API_BASE_URL}/cases/${cid}/files`);
-      if (!res.ok) return [] as any[];
-      const data = await res.json();
+      const data = (await apiClient.getCaseFiles(cid)) as { uploads?: any[] };
       const uploads: any[] = Array.isArray(data.uploads) ? data.uploads : [];
 
       const groups: {
@@ -347,19 +334,15 @@ export default function CaseSidebar({
     async (fileName: string) => {
       setIsLoadingContent(true);
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/cases/${caseId}/files/${encodeURIComponent(fileName)}`,
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setFileContent(data);
-          setViewingFile(fileName);
-        } else {
-          toast.error("Failed to load file content");
-        }
+        const apiClient = new ApiClient();
+        const data = await apiClient.getCaseFile(caseId, fileName);
+        setFileContent(data);
+        setViewingFile(fileName);
       } catch (error) {
-        toast.error("Error loading file content");
+        toast.error("Failed to load file content", {
+          description:
+            "Please try again or contact support if the issue persists.",
+        });
       } finally {
         setIsLoadingContent(false);
       }
@@ -389,7 +372,7 @@ export default function CaseSidebar({
     if (invalidFiles.length > 0) {
       const msg = `Invalid file types: ${invalidFiles.join(", ")}. Only UFDR files are allowed.`;
       setError(msg);
-      toast.error("Invalid files", { description: msg });
+      toast.error("Invalid file format", { description: msg });
     }
 
     setSelectedFiles((prev) => [...prev, ...validFiles]);
@@ -420,33 +403,8 @@ export default function CaseSidebar({
   );
 
   const uploadFile = async (file: File, caseId: string): Promise<any> => {
-    return new Promise((resolve, reject) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("case_id", caseId);
-
-      const xhr = new XMLHttpRequest();
-
-      xhr.addEventListener("load", () => {
-        if (xhr.status === 200) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            resolve(response);
-          } catch (error) {
-            reject(new Error("Failed to parse response"));
-          }
-        } else {
-          reject(new Error("Upload failed"));
-        }
-      });
-
-      xhr.addEventListener("error", () => {
-        reject(new Error("Network error"));
-      });
-
-      xhr.open("POST", `${process.env.NEXT_PUBLIC_API_URL}/data/upload`);
-      xhr.send(formData);
-    });
+    const apiClient = new ApiClient();
+    return await apiClient.uploadFile(file, caseId);
   };
 
   const handleUploadFiles = useCallback(async () => {
@@ -481,25 +439,22 @@ export default function CaseSidebar({
       await refreshCaseData();
 
       if (successCount > 0) {
-        toast.success("Files uploaded", {
-          description: `${successCount} succeeded${duplicateCount ? `, ${duplicateCount} duplicate` : ""}${failedCount ? `, ${failedCount} failed` : ""}`,
+        toast.success("Files uploaded successfully", {
+          description: `${successCount} file(s) uploaded${duplicateCount ? `, ${duplicateCount} duplicate(s)` : ""}${failedCount ? `, ${failedCount} failed` : ""}`,
         });
       } else if (duplicateCount > 0 && !failedCount) {
-        toast.warning?.("Duplicate upload", {
+        toast.warning("Duplicate files detected", {
           description: `${duplicateCount} file(s) were already uploaded for this case`,
-        }) ||
-          toast("Duplicate upload", {
-            description: `${duplicateCount} file(s) were already uploaded for this case`,
-          });
+        });
       } else if (failedCount > 0) {
-        toast.error("Upload failed", {
+        toast.error("Failed to upload files", {
           description: `${failedCount} file(s) failed. Please try again.`,
         });
       }
     } catch (error) {
       const message = "Failed to upload files. Please try again.";
       setError(message);
-      toast.error("Upload failed", { description: message });
+      toast.error("Failed to upload files", { description: message });
     } finally {
       setIsUploading(false);
     }
@@ -536,22 +491,8 @@ export default function CaseSidebar({
         },
       };
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/data/export`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(apiResponse),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Export failed");
-      }
-
-      const blob = await response.blob();
+      const apiClient = new ApiClient();
+      const blob = await apiClient.exportReport(apiResponse);
 
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -563,7 +504,7 @@ export default function CaseSidebar({
       window.URL.revokeObjectURL(url);
       setIsExportOptionsOpen(false);
     } catch (error) {
-      toast.error("Export failed", {
+      toast.error("Failed to export court report", {
         description:
           error instanceof Error
             ? error.message
@@ -622,7 +563,7 @@ export default function CaseSidebar({
       window.URL.revokeObjectURL(url);
       setIsRawJsonOpen(false);
     } catch (error) {
-      toast.error("Export failed", {
+      toast.error("Failed to export raw data", {
         description:
           error instanceof Error
             ? error.message
@@ -636,11 +577,13 @@ export default function CaseSidebar({
       const payload = getRawArtifactsPayload();
       const json = JSON.stringify(payload, null, 2);
       await navigator.clipboard.writeText(json);
-      toast.success("Copied to clipboard");
+      toast.success("Copied to clipboard successfully", {
+        description: "JSON data has been copied to your clipboard.",
+      });
     } catch (error) {
-      toast.error("Copy failed", {
+      toast.error("Failed to copy to clipboard", {
         description:
-          error instanceof Error ? error.message : "Unable to copy JSON.",
+          error instanceof Error ? error.message : "Unable to copy JSON data.",
       });
     }
   }, [getRawArtifactsPayload]);
@@ -675,7 +618,7 @@ export default function CaseSidebar({
     const startMs = start ? new Date(start).getTime() : null;
     const endMs = end
       ? new Date(end).getTime() + 24 * 60 * 60 * 1000 - 1
-      : null; // inclusive
+      : null;
     return rows.filter((r) => {
       const tsMs = parseTimestamp(r?.timestamp);
       if (tsMs === null) return false;
@@ -816,7 +759,7 @@ export default function CaseSidebar({
 
   const openDataCsvModal = useCallback(() => {
     if (!results || results.length === 0) {
-      toast.info("No data to export", {
+      toast.info("No data available for export", {
         description: "Run a search to generate exportable data tables.",
       });
       return;
@@ -826,7 +769,7 @@ export default function CaseSidebar({
 
   const openTimelineCsvModal = useCallback(() => {
     if (!results || results.length === 0) {
-      toast.info("No data to export", {
+      toast.info("No data available for export", {
         description: "Run a search to generate exportable timelines.",
       });
       return;
@@ -936,23 +879,15 @@ export default function CaseSidebar({
         setFiles(groups);
       } else {
         try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/cases/`,
+          const apiClient = new ApiClient();
+          const data = (await apiClient.getCases()) as { cases?: any[] };
+          const backendCase = data.cases?.find(
+            (caseItem: any) => caseItem.id === caseId,
           );
-
-          if (response.ok) {
-            const data = await response.json();
-            const backendCase = data.cases.find(
-              (caseItem: any) => caseItem.id === caseId,
-            );
-            if (backendCase) {
-              setTitle(backendCase.title || `Case ${caseId.slice(0, 8)}`);
-              const groups = await fetchFilesGrouped(caseId);
-              setFiles(groups);
-            } else {
-              setTitle(`Case ${caseId.slice(0, 8)}`);
-              setFiles(await fetchFilesGrouped(caseId));
-            }
+          if (backendCase) {
+            setTitle(backendCase.title || `Case ${caseId.slice(0, 8)}`);
+            const groups = await fetchFilesGrouped(caseId);
+            setFiles(groups);
           } else {
             setTitle(`Case ${caseId.slice(0, 8)}`);
             setFiles(await fetchFilesGrouped(caseId));
@@ -960,8 +895,8 @@ export default function CaseSidebar({
         } catch (error) {
           setTitle(`Case ${caseId.slice(0, 8)}`);
           setFiles(await fetchFilesGrouped(caseId));
-          toast.error("Failed to load case", {
-            description: "Using local case data",
+          toast.error("Failed to load case data", {
+            description: "Using local case data as fallback.",
           });
         }
       }
@@ -1017,8 +952,6 @@ export default function CaseSidebar({
       window.removeEventListener("focus", handleFocus);
     };
   }, [caseId]);
-
-  // Note: intentionally removed duplicate click-outside effect to prevent double handlers
 
   useEffect(() => {
     if ((files || []).length > 0 && expandedFiles.size === 0) {
@@ -2253,33 +2186,36 @@ export default function CaseSidebar({
                 Cancel
               </button>
               <button
-                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 py-2 px-4 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isDeleting}
                 onClick={async () => {
                   if (!pendingDeleteZip) return;
+                  setIsDeleting(true);
                   try {
-                    const response = await fetch(
-                      `${API_BASE_URL}/cases/${caseId}/uploads/${encodeURIComponent(pendingDeleteZip)}`,
-                      { method: "DELETE" },
+                    const apiClient = new ApiClient();
+                    await apiClient.deleteUpload(caseId, pendingDeleteZip);
+                    setFiles((prev) =>
+                      (prev || []).filter(
+                        (g: any) => g.file_name !== pendingDeleteZip,
+                      ),
                     );
-                    if (!response.ok) {
-                      toast.error("Failed to delete upload");
-                    } else {
-                      setFiles((prev) =>
-                        (prev || []).filter(
-                          (g: any) => g.file_name !== pendingDeleteZip,
-                        ),
-                      );
-                      toast.success("Upload deleted");
-                    }
+                    toast.success("Upload deleted successfully", {
+                      description:
+                        "The uploaded file has been removed from this case.",
+                    });
                   } catch (e) {
-                    toast.error("Error deleting upload");
+                    toast.error("Failed to delete upload", {
+                      description:
+                        "Please try again or contact support if the issue persists.",
+                    });
                   } finally {
+                    setIsDeleting(false);
                     setIsDeleteConfirmOpen(false);
                     setPendingDeleteZip(null);
                   }
                 }}
               >
-                Delete
+                {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

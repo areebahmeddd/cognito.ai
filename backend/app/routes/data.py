@@ -6,8 +6,9 @@ import tempfile
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, File, UploadFile, Form
+from fastapi import APIRouter, HTTPException, File, UploadFile, Form, Depends
 from fastapi.responses import JSONResponse, FileResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from ..services.elasticsearch import (
     get_count,
@@ -19,11 +20,21 @@ from ..services.elasticsearch import (
 )
 from ..services.parser import process_files
 from ..services.pdf import generate_report
-from ..services.mongodb import store_files
+from ..services.mongodb import store_files, update_case
 from ..utils.helpers import calculate_hash, check_duplicate, validate_case
+from ..services.jwt import get_user
+from ..services.user import get_by_id
 
 
+security = HTTPBearer()
 router = APIRouter()
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> str:
+    token = credentials.credentials
+    return get_user(token)
 
 
 @router.post("/upload")
@@ -31,8 +42,10 @@ async def upload_file(
     file: UploadFile = File(...),
     case_id: Optional[str] = Form(None),
     device_id: Optional[str] = Form(None),
+    current_user: str = Depends(get_current_user),
 ):
     temp_dir = None
+
     try:
         if not file.filename.endswith(".zip"):
             raise HTTPException(status_code=400, detail="Only ZIP files are supported")
@@ -58,7 +71,11 @@ async def upload_file(
                 }
             )
 
-        if case_id and not await validate_case(case_id):
+        user = await get_by_id(current_user)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if case_id and not await validate_case(case_id, user.id):
             raise HTTPException(status_code=400, detail="Invalid case ID provided")
 
         if not case_id:
@@ -95,6 +112,7 @@ async def upload_file(
         mongodb_result = {"stored_files": 0, "total_records": 0, "files": []}
         if temp_dir and os.path.isdir(temp_dir):
             mongodb_result = await store_files(
+                user.id,
                 case_id or f"CASE-{device_id[:8]}",
                 device_id,
                 temp_dir,
@@ -112,14 +130,12 @@ async def upload_file(
             "files_list": tsv_list,
         }
 
-        from ..services.mongodb import update_case
-
-        await update_case(case_id, {"metadata": metadata})
+        await update_case(case_id, {"metadata": metadata}, user.id)
 
         indexing_result = {"success_count": 0, "error_count": 0, "files_processed": 0}
         if temp_dir and os.path.isdir(temp_dir):
             indexing_result = bulk_index(
-                temp_dir, case_id, device_id, file_hash, file.filename
+                temp_dir, user.id, case_id, device_id, file_hash, file.filename
             )
 
         if indexing_result["success_count"] > 0:

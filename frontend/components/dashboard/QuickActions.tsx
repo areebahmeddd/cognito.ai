@@ -99,8 +99,9 @@ export default function QuickActions({ onCreateCase }: QuickActionsProps) {
         </svg>
       ),
       onClick: () => {
-        toast.info("File upload coming soon", {
-          description: "This feature will be available in a future update",
+        toast.info("Feature coming soon", {
+          description:
+            "File upload functionality will be available in a future update.",
         });
       },
       color: "bg-[#FF7F50]",
@@ -112,12 +113,12 @@ export default function QuickActions({ onCreateCase }: QuickActionsProps) {
       <h2 className="text-xl font-light text-[#2A2A2A] dark:text-[#E0E0E0] mb-6">
         Quick <span className="text-[#FF7F50]">Actions</span>
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 justify-items-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
         {actions.map((action, index) => (
           <button
             key={index}
             onClick={action.onClick}
-            className={`${action.color} text-white rounded-lg p-6 flex items-center gap-4 text-left w-full max-w-xs transition-all duration-200 hover:scale-[1.02]`}
+            className={`${action.color} text-white rounded-lg p-6 flex items-center gap-4 text-left w-full h-24 transition-all duration-200 hover:scale-[1.02]`}
           >
             <div className="flex-shrink-0 w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
               {action.icon}

@@ -11,30 +11,15 @@ gemini_model = genai.GenerativeModel(model_name="gemini-2.5-flash")
 
 
 def analyze_intent(query: str) -> Dict[str, Any]:
-    # temporary disable gemini due to ai rate limit
-    # try:
     print(f"[agent] analyze: '{query}'", flush=True)
     text = create_prompt(query)
     response = gemini_model.generate_content(text)
     content = (getattr(response, "text", "") or "").strip()
-    # except Exception:
-    #     return {
-    #         "search_types": ["general"],
-    #         "exact_match": False,
-    #         "keywords": [query],
-    #         "query_intent": "forensic_analysis",
-    #     }
 
     if "```json" in content:
-        try:
-            content = content.split("```json")[1].split("```")[0].strip()
-        except Exception:
-            pass
+        content = content.split("```json")[1].split("```")[0].strip()
     elif "```" in content:
-        try:
-            content = content.split("```")[1].strip()
-        except Exception:
-            pass
+        content = content.split("```")[1].strip()
 
     intent_plan: Dict[str, Any] = {}
 

@@ -89,11 +89,11 @@ def clean_header(header: str) -> str:
     return cleaned
 
 
-async def validate_case(case_id: str) -> bool:
+async def validate_case(case_id: str, user_id: str) -> bool:
     try:
         from ..services.mongodb import get_case
 
-        return await get_case(case_id) is not None
+        return await get_case(case_id, user_id) is not None
     except Exception:
         return False
 

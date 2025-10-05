@@ -28,7 +28,7 @@
 │   │   ├── core/                # Settings, DB/ES bootstrap
 │   │   ├── models/              # Pydantic models (UFDRDocument)
 │   │   ├── routes/              # FastAPI routes
-│   │   ├── services/            # Elasticsearch, parser, classifier, AI intent planner
+│   │   ├── services/            # Elasticsearch, parser, classifier, AI intent planner, auth
 │   │   ├── utils/               # Helpers
 │   │   └── main.py              # FastAPI app entrypoint
 │   ├── data/                    # Sample data (e.g., ufdr.jsonl)
@@ -163,6 +163,9 @@ Create a `.env` file in `backend/`:
 ```
 ELASTICSEARCH_URL=http://localhost:9200
 ELASTICSEARCH_INDEX=cognito
+JWT_SECRET_KEY=<your_jwt_secret_key>
+JWT_ALGORITHM=<your_jwt_algorithm>
+JWT_EXPIRE_MINUTES=<your_jwt_expire_minutes>
 MONGODB_CONNECTION_STRING=mongodb://localhost:27017/cognito
 GEMINI_API_KEY=<your_api_key>
 ```
@@ -170,6 +173,8 @@ GEMINI_API_KEY=<your_api_key>
 Create a `.env` file in `frontend/`:
 
 ```
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=<your_nextauth_secret>
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api/v1
 ```
 
@@ -203,8 +208,6 @@ Wipes Elasticsearch index (and wildcard) and then MongoDB database.
   - `ELASTICSEARCH_URL=http://localhost:9200`
   - `ELASTICSEARCH_INDEX=cognito`
   - `MONGODB_CONNECTION_STRING=mongodb://localhost:27017/cognito`
-
-Run with Python from project root:
 
 ```bash
 python scripts/nuke_infra.py
