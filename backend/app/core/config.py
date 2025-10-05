@@ -12,10 +12,15 @@ class Settings(BaseSettings):
     cors_headers: list[str] = ["*"]
     cors_credentials: bool = True
 
-    elasticsearch_url: str
-    elasticsearch_index: str
-    gemini_api_key: str
-    mongodb_connection_string: str
+    elasticsearch_url: str = "http://localhost:9200"
+    elasticsearch_index: str = "cognito"
+
+    jwt_secret_key: str = "1234567890"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60
+
+    mongodb_connection_string: str = "mongodb://localhost:27017/cognito"
+    gemini_api_key: str = ""
 
     class Config:
         env_file = ".env"

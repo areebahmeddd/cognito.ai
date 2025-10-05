@@ -2,12 +2,14 @@
 
 import DashboardNavbar from "@/components/DashboardNavbar";
 import Footer from "@/components/Footer";
-import { getUser, setUser } from "@/lib/user";
-import { useEffect, useState } from "react";
+import { apiClient } from "@/lib/api";
+import { ChevronDown } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export default function ProfilePage() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { data: session, status } = useSession();
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState({
     fullName: "",
@@ -19,74 +21,98 @@ export default function ProfilePage() {
     email: "",
     role: "",
   });
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const mockAuth = localStorage.getItem("cognito-auth");
-      setIsAuthenticated(mockAuth === "true");
+    if (status === "unauthenticated") {
+      window.location.href = "/";
+    }
 
-      const user = getUser();
-      if (user) {
-        const userInfo = {
-          fullName: user.name,
-          email: user.email,
-          role: user.role,
-        };
-        setUserData(userInfo);
-        setFormData(userInfo);
+    if (session?.user) {
+      if (!session.accessToken) {
+        window.location.href = "/";
+        return;
+      }
+
+      const userInfo = {
+        fullName: session.user.username || "",
+        email: session.user.email || "",
+        role: session.user.role || "",
+      };
+      setUserData(userInfo);
+      setFormData(userInfo);
+    }
+  }, [session, status]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        roleDropdownRef.current &&
+        !roleDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsRoleDropdownOpen(false);
       }
     };
 
-    checkAuth();
-
-    if (
-      typeof window !== "undefined" &&
-      !localStorage.getItem("cognito-auth")
-    ) {
-      window.location.href = "/";
+    if (isRoleDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
     }
-  }, []);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isRoleDropdownOpen]);
 
   const handleEdit = () => {
     setIsEditing(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.fullName.trim()) {
-      toast.error("Full name is required", {
-        description: "Please enter your full name",
+      toast.error("Full name required", {
+        description: "Please enter your full name to continue.",
       });
       return;
     }
     if (!formData.email.trim()) {
-      toast.error("Email is required", {
-        description: "Please enter your email address",
+      toast.error("Email required", {
+        description: "Please enter your email address to continue.",
       });
       return;
     }
     if (!formData.role.trim()) {
-      toast.error("Role is required", {
-        description: "Please enter your role",
+      toast.error("Role required", {
+        description: "Please select your role to continue.",
       });
       return;
     }
 
-    setUser({
-      name: formData.fullName,
-      email: formData.email,
-      role: formData.role,
-    });
+    try {
+      await apiClient.updateUser({
+        username: formData.fullName,
+        email: formData.email,
+        role: formData.role,
+      });
 
-    setUserData({
-      fullName: formData.fullName,
-      email: formData.email,
-      role: formData.role,
-    });
+      setUserData({
+        fullName: formData.fullName,
+        email: formData.email,
+        role: formData.role,
+      });
 
-    setIsEditing(false);
-    toast.success("Profile updated successfully", {
-      description: "Your profile information has been saved",
-    });
+      setIsEditing(false);
+      toast.success("Profile updated successfully", {
+        description: "Your profile information has been saved successfully.",
+      });
+    } catch (error) {
+      toast.error("Failed to update profile", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to save your changes. Please try again.",
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -105,7 +131,7 @@ export default function ProfilePage() {
     }));
   };
 
-  if (isAuthenticated === null) {
+  if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F8F8] dark:bg-[#0F0F0F]">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E0E0E0] border-t-[#FF7F50]"></div>
@@ -113,8 +139,17 @@ export default function ProfilePage() {
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
+  if (!session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8F8F8] dark:bg-[#0F0F0F]">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E0E0E0] border-t-[#FF7F50] mx-auto mb-4"></div>
+          <p className="text-[#4A4A4A] dark:text-[#B0B0B0]">
+            Redirecting to sign in...
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -269,20 +304,72 @@ export default function ProfilePage() {
                     <label className="block text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
                       Role
                     </label>
-                    <div className="mt-1 flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={formData.role}
-                        onChange={(e) =>
-                          handleInputChange("role", e.target.value)
-                        }
-                        disabled={!isEditing}
-                        className={`flex-1 rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FF7F50] ${
-                          isEditing
-                            ? "border-[#E0E0E0] dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] text-[#2A2A2A] dark:text-[#E0E0E0]"
-                            : "border-[#E0E0E0] dark:border-[#2A2A2A] bg-[#F5F5F5] dark:bg-[#2A2A2A] text-[#8A8A8A] dark:text-[#6A6A6A] cursor-not-allowed"
-                        }`}
-                      />
+                    <div className="mt-1 relative">
+                      {isEditing ? (
+                        <div className="relative" ref={roleDropdownRef}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setIsRoleDropdownOpen(!isRoleDropdownOpen)
+                            }
+                            className={`w-full rounded-md border px-3 py-2 text-left focus:outline-none focus:ring-2 focus:ring-[#FF7F50] border-[#E0E0E0] dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] text-[#2A2A2A] dark:text-[#E0E0E0] flex items-center justify-between`}
+                          >
+                            <span>{formData.role || "Select a role"}</span>
+                            <ChevronDown className="h-4 w-4" />
+                          </button>
+
+                          {isRoleDropdownOpen && (
+                            <div className="absolute z-10 mt-1 w-full bg-white dark:bg-[#1A1A1A] border border-[#E0E0E0] dark:border-[#2A2A2A] rounded-md shadow-lg">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleInputChange("role", "Analyst");
+                                  setIsRoleDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50] ${
+                                  formData.role === "Analyst"
+                                    ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]"
+                                    : "text-[#2A2A2A] dark:text-[#E0E0E0]"
+                                }`}
+                              >
+                                Analyst
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleInputChange("role", "Officer");
+                                  setIsRoleDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50] ${
+                                  formData.role === "Officer"
+                                    ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]"
+                                    : "text-[#2A2A2A] dark:text-[#E0E0E0]"
+                                }`}
+                              >
+                                Officer
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleInputChange("role", "Supervisor");
+                                  setIsRoleDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] hover:text-[#FF7F50] ${
+                                  formData.role === "Supervisor"
+                                    ? "bg-[#FFF5F0] dark:bg-[#2A1A0F] text-[#FF7F50]"
+                                    : "text-[#2A2A2A] dark:text-[#E0E0E0]"
+                                }`}
+                              >
+                                Supervisor
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="rounded-md border px-3 py-2 border-[#E0E0E0] dark:border-[#2A2A2A] bg-[#F5F5F5] dark:bg-[#2A2A2A] text-[#8A8A8A] dark:text-[#6A6A6A] cursor-not-allowed">
+                          {formData.role || "No role assigned"}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

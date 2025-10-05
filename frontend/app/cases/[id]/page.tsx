@@ -849,7 +849,7 @@ export default function CasePage() {
         description:
           error instanceof Error
             ? error.message
-            : "Something went wrong during search.",
+            : "Unable to perform search. Please try again.",
       });
       setHasSearched(true);
       setResults([]);
@@ -1267,28 +1267,16 @@ export default function CasePage() {
                               <div className="flex items-center justify-between p-4 border-b border-[#FF7F50] dark:border-[#FF7F50] bg-[#FFF5F0] dark:bg-[#2A1A0F]">
                                 <div className="flex items-center gap-3">
                                   <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-[#FFF5F0] dark:bg-[#2A1A0F] rounded-lg flex items-center justify-center">
-                                      <svg
-                                        className="w-4 h-4 text-[#FF7F50]"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                                        />
-                                      </svg>
+                                    <div className="w-8 h-8 bg-[#FF7F50] dark:bg-[#FF7F50] rounded-lg flex items-center justify-center">
+                                      <span className="text-white font-bold text-sm">
+                                        {index + 1}
+                                      </span>
                                     </div>
                                     <div>
                                       <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                         {ev.app}
                                       </div>
                                       <div className="text-xs text-slate-500">
-                                        Result #
-                                        {String(index + 1).padStart(3, "0")} •
                                         Artifact ID: {ev.artifact_id}
                                       </div>
                                     </div>
@@ -1744,8 +1732,8 @@ export default function CasePage() {
                                 </div>
 
                                 {isExpanded && (
-                                  <div className="relative p-4 bg-slate-50/50 dark:bg-slate-800/50">
-                                    <div className="absolute left-8 top-4 bottom-4 w-0.5 bg-slate-300 dark:bg-slate-600"></div>
+                                  <div className="relative p-4 bg-[#F8F8F8]/50 dark:bg-[#1A1A1A]/50">
+                                    <div className="absolute left-8 top-4 bottom-4 w-0.5 bg-[#E0E0E0] dark:bg-[#2A2A2A]"></div>
 
                                     <div className="space-y-3">
                                       {day.sessions.map(
@@ -1758,10 +1746,10 @@ export default function CasePage() {
                                             className={`relative border rounded-lg p-3 ml-16 ${
                                               session.priority === "high"
                                                 ? "border-red-300 dark:border-red-700 bg-red-50/50 dark:bg-red-900/20"
-                                                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                                                : "border-[#E0E0E0] dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A]"
                                             }`}
                                           >
-                                            <div className="absolute -left-12 top-2 text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap bg-white dark:bg-slate-800 px-1 py-0.5 rounded shadow-sm border border-slate-200 dark:border-slate-600">
+                                            <div className="absolute -left-12 top-2 text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap bg-white dark:bg-[#1A1A1A] px-1 py-0.5 rounded shadow-sm border border-[#E0E0E0] dark:border-[#2A2A2A]">
                                               {new Date(
                                                 session.startTime,
                                               ).toLocaleTimeString([], {
@@ -1833,7 +1821,7 @@ export default function CasePage() {
                                                   collapsedChars={160}
                                                 />
                                               </div>
-                                              <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-3">
+                                              <div className="bg-[#F8F8F8] dark:bg-[#2A2A2A] rounded-lg p-3">
                                                 <div className="text-sm text-slate-800 dark:text-slate-200">
                                                   <ExpandableText
                                                     text={String(
@@ -1902,7 +1890,7 @@ export default function CasePage() {
                                                 </svg>
                                                 Mark Evidence
                                               </button>
-                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] hover:bg-[#FFF5F0] dark:hover:bg-[#2A1A0F] rounded transition-colors">
+                                              <button className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-[#FF7F50] dark:hover:text-[#FF7F50] transition-colors">
                                                 <svg
                                                   className="w-3 h-3"
                                                   fill="none"
@@ -2449,8 +2437,8 @@ export default function CasePage() {
                               No Summary Available
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 max-w-md mx-auto">
-                              Run a search to generate actionable summary of the
-                              case.
+                              Run a search to generate actionable insights and
+                              comprehensive case analysis.
                             </p>
                           </div>
                         </div>

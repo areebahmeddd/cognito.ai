@@ -2,16 +2,20 @@
 
 import DashboardNavbar from "@/components/DashboardNavbar";
 import Footer from "@/components/Footer";
+import { apiClient } from "@/lib/api";
 import { Trash2, X } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { data: session, status } = useSession();
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -20,20 +24,10 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const mockAuth = localStorage.getItem("cognito-auth");
-      setIsAuthenticated(mockAuth === "true");
-    };
-
-    checkAuth();
-
-    if (
-      typeof window !== "undefined" &&
-      !localStorage.getItem("cognito-auth")
-    ) {
+    if (status === "unauthenticated") {
       window.location.href = "/";
     }
-  }, []);
+  }, [status]);
 
   useEffect(() => {
     if (theme === undefined) {
@@ -48,36 +42,66 @@ export default function SettingsPage() {
     }));
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error("Passwords don't match", {
-        description: "Please ensure both passwords are identical",
+        description: "Please ensure both passwords are identical.",
       });
       return;
     }
     if (passwordData.newPassword.length < 6) {
       toast.error("Password too short", {
-        description: "Password must be at least 6 characters long",
+        description: "Password must be at least 6 characters long.",
       });
       return;
     }
-    setShowChangePassword(false);
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-    toast.success("Password updated successfully", {
-      description: "Your password has been changed",
-    });
+
+    setIsChangingPassword(true);
+    try {
+      await apiClient.changePassword({
+        current_password: passwordData.currentPassword,
+        new_password: passwordData.newPassword,
+      });
+
+      setShowChangePassword(false);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      toast.success("Password updated successfully", {
+        description: "Your password has been changed successfully.",
+      });
+    } catch (error) {
+      toast.error("Failed to change password", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to change password. Please try again.",
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
-  const handleDeleteAccount = () => {
-    localStorage.removeItem("cognito-auth");
-    toast.success("Account deleted", {
-      description: "Your account has been permanently deleted",
-    });
-    window.location.href = "/";
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
+      await apiClient.deleteAccount();
+      await signOut({ callbackUrl: "/" });
+      toast.success("Account deleted successfully", {
+        description: "Your account has been permanently deleted.",
+      });
+    } catch (error) {
+      toast.error("Failed to delete account", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to delete account. Please try again.",
+      });
+    } finally {
+      setIsDeletingAccount(false);
+    }
   };
 
   const toggleTheme = () => {
@@ -85,7 +109,7 @@ export default function SettingsPage() {
     setTheme(newTheme);
   };
 
-  if (isAuthenticated === null) {
+  if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F8F8] dark:bg-[#0F0F0F]">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E0E0E0] border-t-[#FF7F50]"></div>
@@ -93,7 +117,7 @@ export default function SettingsPage() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!session) {
     return null;
   }
 
@@ -190,9 +214,10 @@ export default function SettingsPage() {
                         onClick={() =>
                           setShowChangePassword(!showChangePassword)
                         }
-                        className="px-3 py-1.5 bg-[#FF7F50] text-white rounded-md text-sm font-medium whitespace-nowrap w-36"
+                        disabled={isChangingPassword}
+                        className="px-3 py-1.5 bg-[#FF7F50] text-white rounded-md text-sm font-medium whitespace-nowrap w-36 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Change Password
+                        {isChangingPassword ? "Changing..." : "Change Password"}
                       </button>
                     </div>
 
@@ -253,9 +278,12 @@ export default function SettingsPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={handleChangePassword}
-                              className="px-4 py-2 bg-[#FF7F50] text-white rounded-md text-sm font-medium"
+                              disabled={isChangingPassword}
+                              className="px-4 py-2 bg-[#FF7F50] text-white rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              Update Password
+                              {isChangingPassword
+                                ? "Updating..."
+                                : "Update Password"}
                             </button>
                             <button
                               onClick={() => {
@@ -312,9 +340,10 @@ export default function SettingsPage() {
                       </div>
                       <button
                         onClick={() => setShowDeleteConfirm(true)}
-                        className="px-3 py-1.5 bg-red-600 text-white rounded-md text-sm font-medium whitespace-nowrap w-36"
+                        disabled={isDeletingAccount}
+                        className="px-3 py-1.5 bg-red-600 text-white rounded-md text-sm font-medium whitespace-nowrap w-36 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Delete Account
+                        {isDeletingAccount ? "Deleting..." : "Delete Account"}
                       </button>
                     </div>
                   </div>
@@ -365,9 +394,10 @@ export default function SettingsPage() {
               </button>
               <button
                 onClick={handleDeleteAccount}
-                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 py-2 px-4 rounded-lg font-medium"
+                disabled={isDeletingAccount}
+                className="bg-[#2A2A2A] text-white hover:bg-[#1A1A1A] dark:bg-[#E0E0E0] dark:text-[#2A2A2A] dark:hover:bg-[#D0D0D0] transition-all duration-300 py-2 px-4 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Yes, Delete Account
+                {isDeletingAccount ? "Deleting..." : "Yes, Delete Account"}
               </button>
             </div>
           </div>

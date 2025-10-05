@@ -34,15 +34,15 @@ export default function EditCaseModal({
 
   const handleSave = () => {
     if (!caseItem || !caseName.trim()) {
-      toast.error("Case name is required", {
-        description: "Please enter a valid case name",
+      toast.error("Case name required", {
+        description: "Please enter a valid case name to continue.",
       });
       return;
     }
 
     if (caseName.trim().length < 3) {
       toast.error("Case name too short", {
-        description: "Case name must be at least 3 characters",
+        description: "Case name must be at least 3 characters long.",
       });
       return;
     }

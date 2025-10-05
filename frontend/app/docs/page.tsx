@@ -2,23 +2,19 @@
 
 import DashboardNavbar from "@/components/DashboardNavbar";
 import Footer from "@/components/Footer";
-import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
 
 export default function DocsPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { data: session, status } = useSession();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const mockAuth = localStorage.getItem("cognito-auth");
-      setIsAuthenticated(mockAuth === "true");
-    };
+    if (status === "unauthenticated") {
+      window.location.href = "/";
+    }
+  }, [status]);
 
-    checkAuth();
-    window.addEventListener("storage", checkAuth);
-    return () => window.removeEventListener("storage", checkAuth);
-  }, []);
-
-  if (isAuthenticated === null) {
+  if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F8F8] dark:bg-[#0F0F0F]">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E0E0E0] border-t-[#FF7F50]"></div>
@@ -26,8 +22,7 @@ export default function DocsPage() {
     );
   }
 
-  if (!isAuthenticated) {
-    window.location.href = "/";
+  if (!session) {
     return null;
   }
 

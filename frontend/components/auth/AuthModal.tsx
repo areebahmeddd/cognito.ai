@@ -9,26 +9,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ChevronDown, Eye, EyeOff, Lock, Mail, User, X } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (userData: {
-    username: string;
-    email: string;
-    role: string;
-  }) => void;
 }
 
 type AuthMode = "signin" | "signup" | "forgot";
 
-export default function AuthModal({
-  isOpen,
-  onClose,
-  onSuccess,
-}: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [mode, setMode] = useState<AuthMode>("signin");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -55,81 +47,57 @@ export default function AuthModal({
 
     try {
       if (mode === "signin") {
-        const users = JSON.parse(localStorage.getItem("cognito-users") || "[]");
-        const user = users.find(
-          (u: any) =>
-            (u.username === formData.username ||
-              u.email === formData.username) &&
-            u.password === formData.password,
-        );
+        const result = await signIn("credentials", {
+          username: formData.username || formData.email,
+          password: formData.password,
+          redirect: false,
+        });
 
-        if (!user) {
+        if (result?.error) {
           throw new Error("Invalid username or password");
         }
 
-        localStorage.setItem("cognito-auth", "true");
-        localStorage.setItem(
-          "cognito-current-user",
-          JSON.stringify({
-            username: user.username,
-            email: user.email,
-            role: user.role,
-          }),
-        );
-
-        onSuccess({
-          username: user.username,
-          email: user.email,
-          role: user.role,
+        toast.success("Signed in successfully", {
+          description: "Welcome back! You are now logged in.",
         });
+        onClose();
+        resetForm();
       } else if (mode === "signup") {
-        const users = JSON.parse(localStorage.getItem("cognito-users") || "[]");
-        const existingUser = users.find(
-          (u: any) =>
-            u.username === formData.username || u.email === formData.email,
-        );
-
-        if (existingUser) {
-          throw new Error("Username or email already exists");
-        }
-
         if (formData.password !== formData.confirmPassword) {
           throw new Error("Passwords do not match");
         }
 
-        const newUser = {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+          throw new Error("Please enter a valid email address");
+        }
+
+        const result = await signIn("credentials", {
           username: formData.username,
           email: formData.email,
           password: formData.password,
           role: formData.role,
-          createdAt: new Date().toISOString(),
-        };
-
-        users.push(newUser);
-        localStorage.setItem("cognito-users", JSON.stringify(users));
-
-        localStorage.setItem("cognito-auth", "true");
-        localStorage.setItem(
-          "cognito-current-user",
-          JSON.stringify({
-            username: newUser.username,
-            email: newUser.email,
-            role: newUser.role,
-          }),
-        );
-
-        onSuccess({
-          username: newUser.username,
-          email: newUser.email,
-          role: newUser.role,
+          redirect: false,
         });
+
+        if (result?.error) {
+          throw new Error("Username or email already exists");
+        }
+
+        toast.success("Account created successfully", {
+          description: "Welcome to Cognito AI!",
+        });
+        onClose();
+        resetForm();
       } else if (mode === "forgot") {
         throw new Error("Password reset functionality not implemented yet");
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "An error occurred";
       setError(message);
-      toast.error("Authentication failed", { description: message });
+      toast.error("Authentication failed", {
+        description: message || "Unable to authenticate. Please try again.",
+      });
     } finally {
       setIsLoading(false);
     }

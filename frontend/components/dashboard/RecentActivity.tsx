@@ -19,54 +19,7 @@ export default function RecentActivity() {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
-    const fetchRecentActivities = async () => {
-      try {
-        const mockActivities: ActivityItem[] = [
-          {
-            id: "1",
-            type: "case_created",
-            title: "Created new case",
-            description: "Crypto messaging ring investigation",
-            timestamp: "2 hours ago",
-            caseId: "1",
-          },
-          {
-            id: "2",
-            type: "search_performed",
-            title: "Performed search",
-            description: "Found 23 results for 'bitcoin transactions'",
-            timestamp: "4 hours ago",
-          },
-          {
-            id: "3",
-            type: "file_uploaded",
-            title: "Uploaded files",
-            description: "Added 5 WhatsApp export files",
-            timestamp: "1 day ago",
-          },
-          {
-            id: "4",
-            type: "analysis_completed",
-            title: "Analysis completed",
-            description: "Foreign communications sweep - 156 files processed",
-            timestamp: "2 days ago",
-            caseId: "2",
-          },
-          {
-            id: "5",
-            type: "case_created",
-            title: "Created new case",
-            description:
-              "Financial fraud investigation - Bank records analysis",
-            timestamp: "3 days ago",
-            caseId: "3",
-          },
-        ];
-        setActivities(mockActivities);
-      } catch (error) {}
-    };
-
-    fetchRecentActivities();
+    // TODO: Add API call to fetch recent activities from backend
   }, []);
 
   const getActivityIcon = (type: ActivityItem["type"]) => {

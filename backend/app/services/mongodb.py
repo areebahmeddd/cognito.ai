@@ -12,17 +12,27 @@ client = None
 db = None
 cases_collection = None
 files_collection = None
+users_collection = None
 
 
 async def connect_database():
-    global client, db, cases_collection, files_collection
+    global client, db, cases_collection, files_collection, users_collection
     try:
         client = AsyncIOMotorClient(connection_string)
         db = client.cognito
         cases_collection = db.cases
         files_collection = db.files
+        users_collection = db.users
     except Exception as e:
         raise Exception(f"Database connection failed: {str(e)}")
+
+
+def get_database():
+    if db is None:
+        raise Exception(
+            "Database not connected. Please ensure connect_database() has been called."
+        )
+    return db
 
 
 async def check_health() -> str:
@@ -35,9 +45,10 @@ async def check_health() -> str:
         return "error"
 
 
-async def create_case(case_data: Dict[str, Any]) -> str:
+async def create_case(case_data: Dict[str, Any], user_id: str) -> str:
     try:
         case_doc = {
+            "user_id": user_id,
             "case_id": case_data.get("case_id"),
             "case_name": case_data.get("case_name"),
             "device_id": case_data.get("device_id"),
@@ -48,23 +59,28 @@ async def create_case(case_data: Dict[str, Any]) -> str:
             "updated_at": datetime.now().isoformat(),
             "metadata": case_data.get("metadata", {}),
         }
+
         result = await cases_collection.insert_one(case_doc)
-        print(f"[mongo] case created {case_doc.get('case_id')}", flush=True)
+        print(
+            f"[mongo] case created {case_doc.get('case_id')} for user {user_id}",
+            flush=True,
+        )
         return str(result.inserted_id)
     except Exception as e:
         raise Exception(f"Failed to create case: {str(e)}")
 
 
-async def get_cases() -> List[Dict[str, Any]]:
+async def get_cases(user_id: str) -> List[Dict[str, Any]]:
     try:
-        cursor = cases_collection.find({})
+        cursor = cases_collection.find({"user_id": user_id})
         cases = []
+
         async for case in cursor:
             case["_id"] = str(case["_id"])
             case_id = case.get("case_id")
             if case_id:
                 file_count = await files_collection.count_documents(
-                    {"case_id": case_id}
+                    {"case_id": case_id, "user_id": user_id}
                 )
                 case["total_files_count"] = file_count
             else:
@@ -75,32 +91,22 @@ async def get_cases() -> List[Dict[str, Any]]:
         raise Exception(f"Failed to get cases: {str(e)}")
 
 
-async def get_case(case_id: str) -> Dict[str, Any]:
+async def get_case(case_id: str, user_id: str) -> Dict[str, Any]:
     try:
-        case = await cases_collection.find_one({"case_id": case_id})
+        case = await cases_collection.find_one({"case_id": case_id, "user_id": user_id})
         if case:
             case["_id"] = str(case["_id"])
             case["total_files_count"] = await files_collection.count_documents(
-                {"case_id": case_id}
+                {"case_id": case_id, "user_id": user_id}
             )
         return case
     except Exception as e:
         raise Exception(f"Failed to get case: {str(e)}")
 
 
-async def list_files(case_id: str) -> List[Dict[str, Any]]:
-    try:
-        cursor = files_collection.find({"case_id": case_id})
-        files = []
-        async for file_doc in cursor:
-            file_doc["_id"] = str(file_doc["_id"])
-            files.append(file_doc)
-        return files
-    except Exception as e:
-        raise Exception(f"Failed to get case files: {str(e)}")
-
-
-async def update_case(case_id: str, case_data: Dict[str, Any]) -> Dict[str, Any]:
+async def update_case(
+    case_id: str, case_data: Dict[str, Any], user_id: str
+) -> Dict[str, Any]:
     try:
         update_data = {"updated_at": datetime.now().isoformat()}
 
@@ -112,7 +118,7 @@ async def update_case(case_id: str, case_data: Dict[str, Any]) -> Dict[str, Any]
             update_data["priority_tag"] = case_data.get("priority_tag")
 
         if "metadata" in case_data:
-            existing_case = await get_case(case_id)
+            existing_case = await get_case(case_id, user_id)
             existing_meta = (existing_case or {}).get("metadata", {})
             existing_uploads = (
                 existing_meta.get("uploads", [])
@@ -135,49 +141,66 @@ async def update_case(case_id: str, case_data: Dict[str, Any]) -> Dict[str, Any]
             }
 
         result = await cases_collection.update_one(
-            {"case_id": case_id}, {"$set": update_data}
+            {"case_id": case_id, "user_id": user_id}, {"$set": update_data}
         )
         if result.modified_count:
-            print(f"[mongo] case updated {case_id}", flush=True)
-        return await get_case(case_id) if result.modified_count > 0 else None
+            print(f"[mongo] case updated {case_id} for user {user_id}", flush=True)
+        return await get_case(case_id, user_id) if result.modified_count > 0 else None
     except Exception as e:
         raise Exception(f"Failed to update case: {str(e)}")
 
 
-async def delete_case(case_id: str) -> bool:
+async def delete_case(case_id: str, user_id: str) -> bool:
     try:
-        case_result = await cases_collection.delete_one({"case_id": case_id})
-        await files_collection.delete_many({"case_id": case_id})
+        case_result = await cases_collection.delete_one(
+            {"case_id": case_id, "user_id": user_id}
+        )
+
+        await files_collection.delete_many({"case_id": case_id, "user_id": user_id})
         if case_result.deleted_count:
-            print(f"[mongo] case deleted {case_id}", flush=True)
+            print(f"[mongo] case deleted {case_id} for user {user_id}", flush=True)
         return case_result.deleted_count > 0
     except Exception as e:
         raise Exception(f"Failed to delete case: {str(e)}")
 
 
-async def archive_case(case_id: str) -> Dict[str, Any]:
+async def archive_case(case_id: str, user_id: str) -> Dict[str, Any]:
     try:
         result = await cases_collection.update_one(
-            {"case_id": case_id},
+            {"case_id": case_id, "user_id": user_id},
             {"$set": {"status": "archived", "updated_at": datetime.now().isoformat()}},
         )
-        return await get_case(case_id) if result.modified_count > 0 else None
+        return await get_case(case_id, user_id) if result.modified_count > 0 else None
     except Exception as e:
         raise Exception(f"Failed to archive case: {str(e)}")
 
 
-async def activate_case(case_id: str) -> Dict[str, Any]:
+async def activate_case(case_id: str, user_id: str) -> Dict[str, Any]:
     try:
         result = await cases_collection.update_one(
-            {"case_id": case_id},
+            {"case_id": case_id, "user_id": user_id},
             {"$set": {"status": "active", "updated_at": datetime.now().isoformat()}},
         )
-        return await get_case(case_id) if result.modified_count > 0 else None
+        return await get_case(case_id, user_id) if result.modified_count > 0 else None
     except Exception as e:
         raise Exception(f"Failed to activate case: {str(e)}")
 
 
+async def list_files(case_id: str, user_id: str) -> List[Dict[str, Any]]:
+    try:
+        cursor = files_collection.find({"case_id": case_id, "user_id": user_id})
+        files = []
+
+        async for file_doc in cursor:
+            file_doc["_id"] = str(file_doc["_id"])
+            files.append(file_doc)
+        return files
+    except Exception as e:
+        raise Exception(f"Failed to get case files: {str(e)}")
+
+
 async def store_files(
+    user_id: str,
     case_id: str,
     device_id: str,
     json_files_dir: str,
@@ -202,6 +225,7 @@ async def store_files(
 
                 records = data if isinstance(data, list) else [data]
                 file_data = {
+                    "user_id": user_id,
                     "case_id": case_id,
                     "device_id": device_id,
                     "file_name": filename,
@@ -237,6 +261,7 @@ async def store_files(
 async def store_file(file_data: Dict[str, Any]) -> str:
     try:
         file_doc = {
+            "user_id": file_data.get("user_id"),
             "case_id": file_data.get("case_id"),
             "device_id": file_data.get("device_id"),
             "file_name": file_data.get("file_name"),

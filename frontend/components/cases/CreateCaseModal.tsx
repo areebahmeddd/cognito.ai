@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ApiClient } from "@/lib/api";
 import { AlertCircle, File, Loader2, Trash2, Upload, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -60,7 +61,7 @@ export default function CreateCaseModal({
     if (invalidFiles.length > 0) {
       const msg = `Invalid file types: ${invalidFiles.join(", ")}. Only UFDR files are allowed.`;
       setError(msg);
-      toast.error("Invalid files", { description: msg });
+      toast.error("Invalid file format", { description: msg });
     }
 
     const newFiles: UploadFile[] = validFiles.map((file) => ({
@@ -100,78 +101,55 @@ export default function CreateCaseModal({
     uploadFile: UploadFile,
     caseId: string,
   ): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const formData = new FormData();
-      formData.append("file", uploadFile.file);
-      formData.append("case_id", caseId);
+    try {
+      setUploadFiles((prev) =>
+        prev.map((f) =>
+          f.id === uploadFile.id
+            ? { ...f, progress: 0, status: "uploading" }
+            : f,
+        ),
+      );
 
-      const xhr = new XMLHttpRequest();
+      const apiClient = new ApiClient();
+      const result = await apiClient.uploadFile(uploadFile.file, caseId);
 
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const progress = Math.round((e.loaded / e.total) * 100);
-          setUploadFiles((prev) =>
-            prev.map((f) =>
-              f.id === uploadFile.id
-                ? { ...f, progress, status: "uploading" }
-                : f,
-            ),
-          );
-        }
+      setUploadFiles((prev) =>
+        prev.map((f) =>
+          f.id === uploadFile.id
+            ? { ...f, progress: 100, status: "completed" }
+            : f,
+        ),
+      );
+    } catch (error) {
+      setUploadFiles((prev) =>
+        prev.map((f) =>
+          f.id === uploadFile.id
+            ? { ...f, status: "error", error: "Upload failed" }
+            : f,
+        ),
+      );
+      toast.error("Failed to upload files", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Upload failed. Please try again.",
       });
-
-      xhr.addEventListener("load", () => {
-        if (xhr.status === 200) {
-          setUploadFiles((prev) =>
-            prev.map((f) =>
-              f.id === uploadFile.id
-                ? { ...f, progress: 100, status: "completed" }
-                : f,
-            ),
-          );
-          resolve();
-        } else {
-          setUploadFiles((prev) =>
-            prev.map((f) =>
-              f.id === uploadFile.id
-                ? { ...f, status: "error", error: "Upload failed" }
-                : f,
-            ),
-          );
-          toast.error("Upload failed", { description: uploadFile.file.name });
-          reject(new Error("Upload failed"));
-        }
-      });
-
-      xhr.addEventListener("error", () => {
-        setUploadFiles((prev) =>
-          prev.map((f) =>
-            f.id === uploadFile.id
-              ? { ...f, status: "error", error: "Network error" }
-              : f,
-          ),
-        );
-        toast.error("Network error", { description: uploadFile.file.name });
-        reject(new Error("Network error"));
-      });
-
-      xhr.open("POST", `${process.env.NEXT_PUBLIC_API_URL}/data/upload`);
-      xhr.send(formData);
-    });
+      throw error;
+    }
   };
 
   const handleSubmit = async () => {
     if (!caseName.trim()) {
       const message = "Case name is required";
       setError(message);
-      toast.error("Invalid case name", { description: message });
+      toast.error("Case name required", { description: message });
       return;
     }
 
     if (caseName.trim().length < 3) {
       const message = "Case name must be at least 3 characters long";
       setError(message);
-      toast.error("Invalid case name", { description: message });
+      toast.error("Case name required", { description: message });
       return;
     }
 
@@ -207,26 +185,12 @@ export default function CreateCaseModal({
     );
 
     try {
-      const caseResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/cases/case`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: caseName,
-            description: description,
-            priority_tag: priorityTag || undefined,
-          }),
-        },
-      );
-
-      if (!caseResponse.ok) {
-        throw new Error("Failed to create case");
-      }
-
-      const caseData = await caseResponse.json();
+      const apiClient = new ApiClient();
+      const caseData = (await apiClient.createCase({
+        title: caseName,
+        description: description,
+        priority_tag: priorityTag || undefined,
+      })) as { case_id: string };
       const caseId = caseData.case_id;
 
       if (uploadFiles.length > 0) {
@@ -244,7 +208,7 @@ export default function CreateCaseModal({
               await uploadFile(file, caseId);
             } catch (error) {
               toast.error("Failed to upload file", {
-                description: file.file.name,
+                description: `Failed to upload ${file.file.name}. Please try again.`,
               });
               throw error;
             }

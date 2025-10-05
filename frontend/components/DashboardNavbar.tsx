@@ -8,7 +8,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { clearUser, getUser } from "@/lib/user";
 import {
   FileSpreadsheet,
   Github,
@@ -18,35 +17,20 @@ import {
   User,
   Youtube,
 } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function DashboardNavbar() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{
-    name: string;
-    email: string;
-    role: string;
-  } | null>(null);
+  const { data: session } = useSession();
   const pathname = usePathname();
 
-  useEffect(() => {
-    const authStatus = localStorage.getItem("cognito-auth");
-    setIsAuthenticated(authStatus === "true");
-
-    const userData = getUser();
-    setUser(userData);
-  }, []);
-
-  const handleSignOut = () => {
-    clearUser();
-    setIsAuthenticated(false);
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/" });
     toast.success("Signed out successfully", {
       description: "You have been logged out",
     });
-    window.location.href = "/";
   };
 
   return (
@@ -97,16 +81,16 @@ export default function DashboardNavbar() {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-[#2A2A2A] dark:text-[#E0E0E0] focus:outline-none">
                 <div className="h-8 w-8 rounded-full bg-[#FFF5F0] dark:bg-[#2A1A0F] flex items-center justify-center border border-[#FF7F50]/20 dark:border-[#FF7F50]/30">
-                  {user?.name ? (
+                  {session?.user?.username ? (
                     <span className="text-sm font-medium text-[#FF7F50]">
-                      {user.name.charAt(0).toUpperCase()}
+                      {session.user.username.charAt(0).toUpperCase()}
                     </span>
                   ) : (
                     <User className="h-4 w-4 text-[#FF7F50]" />
                   )}
                 </div>
                 <span className="hidden md:inline text-sm font-medium">
-                  {user?.name || "User"}
+                  {session?.user?.username || "User"}
                 </span>
               </button>
             </DropdownMenuTrigger>
@@ -116,10 +100,10 @@ export default function DashboardNavbar() {
             >
               <div className="px-3 py-2">
                 <p className="text-sm font-medium text-[#2A2A2A] dark:text-[#E0E0E0]">
-                  {user?.name || "User"}
+                  {session?.user?.username || "User"}
                 </p>
                 <p className="text-xs text-[#4A4A4A] dark:text-[#B0B0B0]">
-                  {user?.email || "No email"}
+                  {session?.user?.email || "No email"}
                 </p>
               </div>
               <DropdownMenuSeparator />

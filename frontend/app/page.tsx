@@ -1,5 +1,6 @@
 "use client";
 
+import AuthModal from "@/components/auth/AuthModal";
 import CreateCaseModal from "@/components/cases/CreateCaseModal";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
@@ -11,19 +12,15 @@ import Features from "@/components/landing/Features";
 import Hero from "@/components/landing/Hero";
 import HowItWorks from "@/components/landing/HowItWorks";
 import Navbar from "@/components/Navbar";
-import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
 
 export default function HomePage() {
-  const [authed, setAuthed] = useState<boolean | null>(null);
+  const { data: session, status } = useSession();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  useEffect(() => {
-    const mockAuth =
-      typeof window !== "undefined" && localStorage.getItem("cognito-auth");
-    setAuthed(mockAuth === "true");
-  }, []);
-
-  if (authed === null) {
+  if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F8F8] dark:bg-[#0F0F0F]">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E0E0E0] border-t-[#FF7F50]"></div>
@@ -33,7 +30,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#F8F8F8] dark:bg-[#0F0F0F]">
-      {authed ? (
+      {session ? (
         <div className="flex min-h-screen flex-col">
           <DashboardNavbar />
           <main className="flex-1 overflow-y-auto">
@@ -63,11 +60,15 @@ export default function HomePage() {
         <div className="flex min-h-screen flex-col">
           <Navbar />
           <main className="flex-1">
-            <Hero />
+            <Hero onSignIn={() => setIsAuthModalOpen(true)} />
             <Features />
             <HowItWorks />
           </main>
           <Footer />
+          <AuthModal
+            isOpen={isAuthModalOpen}
+            onClose={() => setIsAuthModalOpen(false)}
+          />
         </div>
       )}
     </div>

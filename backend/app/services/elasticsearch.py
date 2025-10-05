@@ -15,6 +15,7 @@ index_name = settings.elasticsearch_index
 
 def bulk_index(
     dir_path: str,
+    user_id: str = None,
     case_id: str = None,
     device_id: str = None,
     file_hash: str = None,
@@ -28,6 +29,8 @@ def bulk_index(
 
                 if isinstance(data, list):
                     for doc in data:
+                        if user_id:
+                            doc["user_id"] = user_id
                         if case_id:
                             doc["case_id"] = case_id
                         if device_id:
@@ -39,6 +42,8 @@ def bulk_index(
                         yield {"_index": index_name, "_source": doc}
                 else:
                     doc = data
+                    if user_id:
+                        doc["user_id"] = user_id
                     if case_id:
                         doc["case_id"] = case_id
                     if device_id:
@@ -336,7 +341,7 @@ def delete_index() -> None:
     es_client.indices.delete(index=index_name, ignore=[400, 404])
 
 
-def delete_documents(case_id: str) -> Dict[str, Any]:
+def delete_case_documents(case_id: str) -> Dict[str, Any]:
     try:
         query = {"query": {"term": {"case_id": case_id}}}
         response = es_client.delete_by_query(index=index_name, body=query)
@@ -408,6 +413,27 @@ def delete_upload(case_id: str, zip_name: str) -> Dict[str, Any]:
         return {"deleted_count": response.get("deleted", 0), "status": "success"}
     except Exception as e:
         return {"deleted_count": 0, "status": "error", "error": str(e)}
+
+
+def delete_documents(user_id: str) -> Dict[str, Any]:
+    try:
+        query = {"query": {"term": {"user_id": user_id}}}
+        response = es_client.delete_by_query(
+            index=index_name, body=query, conflicts="proceed"
+        )
+        es_client.indices.refresh(index=index_name)
+        return {
+            "deleted_count": response.get("deleted", 0),
+            "user_id": user_id,
+            "status": "success",
+        }
+    except Exception as e:
+        return {
+            "deleted_count": 0,
+            "user_id": user_id,
+            "status": "error",
+            "error": str(e),
+        }
 
 
 def ensure_mapping() -> None:

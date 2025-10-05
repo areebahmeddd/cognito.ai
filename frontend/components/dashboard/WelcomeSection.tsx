@@ -1,6 +1,6 @@
 "use client";
 
-import { getUser } from "@/lib/user";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 interface UserStats {
@@ -13,6 +13,7 @@ interface UserStats {
 }
 
 export default function WelcomeSection() {
+  const { data: session } = useSession();
   const [stats, setStats] = useState<UserStats>({
     name: "User",
     role: "Analyst",
@@ -64,24 +65,15 @@ export default function WelcomeSection() {
   };
 
   useEffect(() => {
-    const fetchUserStats = async () => {
-      try {
-        const user = getUser() || { name: "User", email: "", role: "Analyst" };
-
-        const mockStats: UserStats = {
-          name: user.name,
-          role: user.role,
-          timeSaved: 21.5,
-          filesAnalyzed: 156,
-          casesCreated: 8,
-          searchesPerformed: 342,
-        };
-        setStats(mockStats);
-      } catch (error) {}
-    };
-
-    fetchUserStats();
-  }, []);
+    // TODO: Add API call to fetch user stats from backend
+    if (session?.user) {
+      setStats((prev) => ({
+        ...prev,
+        name: session.user.username || "User",
+        role: session.user.role || "Analyst",
+      }));
+    }
+  }, [session]);
 
   useEffect(() => {
     const updateNow = () => setNowString(formatDateTime(new Date()));

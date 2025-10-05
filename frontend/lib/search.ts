@@ -192,25 +192,8 @@ export async function searchQuery(
   processingTime: number;
 }> {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/search/query`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ query, case_id: caseId }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `Search failed: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    const data: SearchResponse = await response.json();
+    const { apiClient } = await import("./api");
+    const data = (await apiClient.searchQuery(query, caseId)) as SearchResponse;
 
     const evidenceItems: EvidenceItem[] = data.results.map((result, index) => {
       const appName =
