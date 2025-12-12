@@ -1,44 +1,44 @@
-version: 2
+# version: 2
 
-updates:
+# updates:
   # Python backend dependencies
-  - package-ecosystem: "pip"
-    directory: "/backend"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 1
-    groups:
-      all-dependencies:
-        patterns:
-          - "*"
-    commit-message:
-      prefix: "chore(be)"
-      include: "scope"
+  # - package-ecosystem: "pip"
+  #   directory: "/backend"
+  #   schedule:
+  #     interval: "monthly"
+  #   open-pull-requests-limit: 1
+  #   groups:
+  #     all-dependencies:
+  #       patterns:
+  #         - "*"
+  #   commit-message:
+  #     prefix: "chore(be)"
+  #     include: "scope"
 
   # Node.js frontend dependencies
-  - package-ecosystem: "npm"
-    directory: "/frontend"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 1
-    groups:
-      all-dependencies:
-        patterns:
-          - "*"
-    commit-message:
-      prefix: "chore(fe)"
-      include: "scope"
+  # - package-ecosystem: "npm"
+  #   directory: "/frontend"
+  #   schedule:
+  #     interval: "monthly"
+  #   open-pull-requests-limit: 1
+  #   groups:
+  #     all-dependencies:
+  #       patterns:
+  #         - "*"
+  #   commit-message:
+  #     prefix: "chore(fe)"
+  #     include: "scope"
 
   # GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 1
-    groups:
-      all-actions:
-        patterns:
-          - "*"
-    commit-message:
-      prefix: "chore(ci)"
-      include: "scope"
+  # - package-ecosystem: "github-actions"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "monthly"
+  #   open-pull-requests-limit: 1
+  #   groups:
+  #     all-actions:
+  #       patterns:
+  #         - "*"
+  #   commit-message:
+  #     prefix: "chore(ci)"
+  #     include: "scope"
