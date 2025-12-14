@@ -1,9 +1,13 @@
 "use client";
 
 import DashboardNavbar from "@/components/DashboardNavbar";
-import Footer from "@/components/Footer";
+// import Footer from "@/components/Footer";
+import { useEffect } from "react";
 
 export default function AnalyticsPage() {
+  useEffect(() => {
+    document.title = "Cognito AI - Analytics";
+  }, []);
   return (
     <div className="min-h-screen bg-[#F8F8F8] dark:bg-[#0F0F0F]">
       <div className="flex min-h-screen flex-col">
@@ -33,7 +37,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     </div>
   );

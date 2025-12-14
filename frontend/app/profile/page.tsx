@@ -1,7 +1,7 @@
 "use client";
 
 import DashboardNavbar from "@/components/DashboardNavbar";
-import Footer from "@/components/Footer";
+// import Footer from "@/components/Footer";
 import { apiClient } from "@/lib/api";
 import { ChevronDown } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -23,6 +23,10 @@ export default function ProfilePage() {
   });
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const roleDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    document.title = "Cognito AI - Profile";
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -377,7 +381,7 @@ export default function ProfilePage() {
             </div>
           </div>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     </div>
   );

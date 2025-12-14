@@ -1,7 +1,7 @@
 "use client";
 
 import DashboardNavbar from "@/components/DashboardNavbar";
-import Footer from "@/components/Footer";
+// import Footer from "@/components/Footer";
 import { apiClient } from "@/lib/api";
 import { Trash2, X } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
@@ -22,6 +22,10 @@ export default function SettingsPage() {
     confirmPassword: "",
   });
   const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    document.title = "Cognito AI - Settings";
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -352,7 +356,7 @@ export default function SettingsPage() {
             </div>
           </div>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
 
       {showDeleteConfirm && (

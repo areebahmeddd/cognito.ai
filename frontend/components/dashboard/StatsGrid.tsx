@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 
 interface UserStats {
-  name: string;
   timeSaved: number;
   filesAnalyzed: number;
   casesCreated: number;
@@ -40,8 +39,7 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
 }
 
 export default function StatsGrid() {
-  const [stats, setStats] = useState<UserStats>({
-    name: "User",
+  const [stats] = useState<UserStats>({
     timeSaved: 0,
     filesAnalyzed: 0,
     casesCreated: 0,

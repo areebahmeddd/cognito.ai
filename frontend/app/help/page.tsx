@@ -1,7 +1,7 @@
 "use client";
 
 import DashboardNavbar from "@/components/DashboardNavbar";
-import Footer from "@/components/Footer";
+// import Footer from "@/components/Footer";
 import { ApiClient } from "@/lib/api";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
@@ -17,6 +17,10 @@ export default function HelpPage() {
   const [emailBody, setEmailBody] = useState("");
   const [emailFiles, setEmailFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    document.title = "Cognito AI - Help & Support";
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -219,7 +223,7 @@ export default function HelpPage() {
             </div>
           </div>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
       {isEmailModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">

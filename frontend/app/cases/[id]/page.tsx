@@ -2,9 +2,10 @@
 
 import CaseSidebar from "@/components/cases/CaseSidebar";
 import DashboardNavbar from "@/components/DashboardNavbar";
-import Footer from "@/components/Footer";
+// import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ApiClient } from "@/lib/api";
 import { EvidenceItem, searchQuery } from "@/lib/search";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -66,6 +67,23 @@ export default function CasePage() {
   );
   const networkRef = useRef<HTMLDivElement>(null);
   const networkInstance = useRef<Network | null>(null);
+
+  useEffect(() => {
+    const fetchCaseName = async () => {
+      if (!caseId) return;
+      try {
+        const apiClient = new ApiClient();
+        const caseData = (await apiClient.getCase(caseId)) as {
+          case_name?: string;
+        };
+        const name = caseData?.case_name || "Case Details";
+        document.title = `Cognito AI - ${name}`;
+      } catch (error) {
+        document.title = "Cognito AI - Case Details";
+      }
+    };
+    fetchCaseName();
+  }, [caseId]);
 
   const toggleDateExpansion = (date: string) => {
     setExpandedDates((prev) => {
@@ -2699,7 +2717,7 @@ export default function CasePage() {
             </div>
           </div>
         </div>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     </div>
   );

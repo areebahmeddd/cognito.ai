@@ -7,18 +7,24 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import StatsGrid from "@/components/dashboard/StatsGrid";
 import WelcomeSection from "@/components/dashboard/WelcomeSection";
 import DashboardNavbar from "@/components/DashboardNavbar";
-import Footer from "@/components/Footer";
+// import Footer from "@/components/Footer";
 import Features from "@/components/landing/Features";
 import Hero from "@/components/landing/Hero";
 import HowItWorks from "@/components/landing/HowItWorks";
 import Navbar from "@/components/Navbar";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function HomePage() {
   const { data: session, status } = useSession();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  useEffect(() => {
+    document.title = session
+      ? "Cognito AI - Home"
+      : "Cognito AI - Natural Language Forensic Evidence Discovery";
+  }, [session]);
 
   if (status === "loading") {
     return (
@@ -47,7 +53,7 @@ export default function HomePage() {
               </div>
             </div>
           </main>
-          <Footer />
+          {/* <Footer /> */}
           <CreateCaseModal
             isOpen={isCreateModalOpen}
             onClose={() => setIsCreateModalOpen(false)}
@@ -64,7 +70,7 @@ export default function HomePage() {
             <Features />
             <HowItWorks />
           </main>
-          <Footer />
+          {/* <Footer /> */}
           <AuthModal
             isOpen={isAuthModalOpen}
             onClose={() => setIsAuthModalOpen(false)}

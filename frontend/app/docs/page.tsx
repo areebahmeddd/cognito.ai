@@ -1,12 +1,16 @@
 "use client";
 
 import DashboardNavbar from "@/components/DashboardNavbar";
-import Footer from "@/components/Footer";
+// import Footer from "@/components/Footer";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 
 export default function DocsPage() {
   const { data: session, status } = useSession();
+
+  useEffect(() => {
+    document.title = "Cognito AI - Documentation";
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -54,7 +58,7 @@ export default function DocsPage() {
           </p>
         </div>
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

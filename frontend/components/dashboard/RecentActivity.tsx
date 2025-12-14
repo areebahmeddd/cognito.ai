@@ -16,7 +16,7 @@ interface ActivityItem {
 }
 
 export default function RecentActivity() {
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [activities] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
     // TODO: Add API call to fetch recent activities from backend
